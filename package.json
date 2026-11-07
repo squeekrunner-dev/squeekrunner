@@ -1,0 +1,20 @@
+{
+  "name": "squeekrunner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SqueekRunner — browser endless runner powered by the live Squeekchain hamster (RPM drives world speed, Squeek blocks drop bonuses).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "phaser": "^3.88.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
