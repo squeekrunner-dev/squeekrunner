@@ -2,6 +2,8 @@
 
 This document provides ready-to-use publication drafts for the project owner. All posts are drafted in a friendly, transparent tone without hype, price speculation, or investment promises. SqueekRunner is an experimental game on Ethereum Sepolia testnet.
 
+This is an application process with manual team review, not a raffle.
+
 Every post is strictly under the 280-character limit (exact character counts are specified in parentheses).
 
 ---
@@ -42,12 +44,12 @@ Every jump, obstacle gap, and score is mathematically reproducible.
 Dive into our game architecture whitepaper:
 <SITE_URL>/whitepaper/
 
-#### Post 5/6 (253 chars)
+#### Post 5/6 (241 chars)
 We are also introducing SqueekRunner Hamsters: 1,000 generative vector NFTs on Sepolia testnet.
 
-100% free mint. Zero gas to enter.
+100% free mint. Zero gas to apply.
 
-Beat the qualifying score, sign an off-chain message for free, and enter the provably fair raffle:
+Score 100k+ with 10/10 coins in ranked mode to apply for manual review (not a raffle):
 <SITE_URL>/whitelist/
 
 #### Post 6/6 (251 chars)
@@ -60,12 +62,12 @@ Jump onto the track and tell us your high score!
 
 ---
 
-### Variant B: Technical Architecture & Provable Fairness Focus
+### Variant B: Technical Architecture & Manual Review Focus
 
-#### Post 1/6 (246 chars)
+#### Post 1/6 (249 chars)
 Can live IoT telemetry power a deterministic arcade game?
 
-We built SqueekRunner: an open-source browser runner paced by Squeekchain's physical hamster wheel, featuring server-verified replays and a zero-gas raffle.
+We built SqueekRunner: an open-source browser runner paced by Squeekchain's physical hamster wheel, featuring chunked map delivery and manual whitelist review.
 
 Try it live:
 <SITE_URL>/play/
@@ -84,19 +86,19 @@ Movement runs at 60 fixed ticks/s with integer milli-pixel coordinates and Mulbe
 
 Raw player inputs (jump ticks) serialize to a compact JSON replay (<1.6 KB/min). The server re-simulates the run step-by-step to verify scores.
 
-#### Post 4/6 (269 chars)
-Zero-gas whitelist entry:
+#### Post 4/6 (240 chars)
+Gasless application (no wallet connect):
 
-Players who beat the qualifying score sign an EIP-4361 (Sign-In with Ethereum) message with their Sepolia wallet.
+After a qualified run (100k+ points & 10/10 coins), paste your Sepolia address manually and link an X verification post.
 
-Nonce, domain, chain ID (11155111), and run duration are verified server-side with viem and Turnstile anti-bot. Zero gas spent.
+No wallet connection, no cryptographic signatures, and zero gas spent.
 
-#### Post 5/6 (257 chars)
-Provably fair on-chain raffle:
+#### Post 5/6 (249 chars)
+Manual team review (not a raffle):
 
-After entries close, we snapshot addresses into an OpenZeppelin StandardMerkleTree and designate a future Sepolia block number.
+The team manually reviews applications against published criteria (run proof, active X post, on-chain address history).
 
-The future block hash seeds a public Fisher-Yates shuffle selecting 700 winners for a free mint.
+No random draw: honest protection against bot farms. Approved wallets get a free mint.
 
 #### Post 6/6 (248 chars)
 Read the full code and contracts:
@@ -120,13 +122,13 @@ A free, community-first generative NFT collection celebrating the fastest runner
 No paid mints. No token purchases. Zero gas to enter.
 <SITE_URL>/whitelist/
 
-#### Post 2/6 (263 chars)
+#### Post 2/6 (272 chars)
 How to get on the allowlist:
 
-1. Play SqueekRunner in your browser (<SITE_URL>/play/)
-2. Dodge crates and catch golden nuts from confirmed blocks
-3. Beat the announced qualifying score threshold
-4. Connect your Sepolia wallet and sign for free to enter the raffle
+1. Play SqueekRunner ranked mode (<SITE_URL>/play/)
+2. Score 100,000+ points & catch 10/10 coins in first 10,000 m
+3. Paste your Sepolia address (no wallet connection) & post on X
+4. Team reviews applications manually (not a raffle)
 
 #### Post 3/6 (265 chars)
 The Art: 1,000 unique vector SVGs.
@@ -136,22 +138,22 @@ The Art: 1,000 unique vector SVGs.
 
 Pure vector art rendered cleanly at any resolution.
 
-#### Post 4/6 (257 chars)
+#### Post 4/6 (275 chars)
 Honest token allocation:
 
 Total supply: strictly 1,000 NFTs on Sepolia testnet.
-• 700 NFTs (70%): Player Raffle (verified game runners)
+• 700 NFTs (70%): Game Whitelist (applications with manual review)
 • 200 NFTs (20%): Community & X challenges
 • 100 NFTs (10%): Team and project treasury
 
 No public sale. Testnet gas only.
 
-#### Post 5/6 (248 chars)
-Provably fair and transparent:
+#### Post 5/6 (254 chars)
+Transparent manual review (not a raffle):
 
-Winners are chosen using an unmined future Sepolia block hash and an open-source verification script.
+Applications are vetted by human review against published rules: verified 100k+ run with 10/10 coins, real X account, and on-chain history.
 
-Anyone can run the script and independently verify the exact winning addresses against our published Merkle root.
+Obvious bot farms are rejected; team decision is final.
 
 #### Post 6/6 (236 chars)
 SqueekRunner is an independent community build for Squeekchain Genesis Code Lane.
@@ -163,46 +165,48 @@ Start practicing your jumps today:
 
 ---
 
-## 2. Raffle Launch Thread
+## 2. Whitelist Launch Thread
 
-#### Post 1/5 (239 chars)
-The SqueekRunner Whitelist Raffle portal is officially LIVE!
+#### Post 1/5 (254 chars)
+The SqueekRunner Whitelist Application portal is officially LIVE!
 
 1,000 SqueekRunner Hamsters on Sepolia testnet. Free mint.
 
-Qualify by mastering the wheel, beating the score threshold, and signing for free.
+Score 100,000+ points and catch 10/10 coins to apply (manual review, not a raffle).
 
-Enter here:
+Apply here:
 <SITE_URL>/whitelist/
 
-#### Post 2/5 (255 chars)
-Step-by-step entry guide:
+#### Post 2/5 (249 chars)
+Step-by-step application guide:
 
 1. Open <SITE_URL>/play/ (ranked mode)
-2. Dodge crates and catch golden nuts
-3. Reach or beat the qualifying score: <THRESHOLD> pts
-4. Submit replay & connect your Sepolia wallet
-5. Sign a free off-chain SIWE message (zero gas!)
+2. Score 100,000+ pts & collect 10/10 coins
+3. Click Apply within 24 hours
+4. Paste your Sepolia address (no wallet connect!)
+5. Post on X with your code & link your tweet
 
-#### Post 3/5 (257 chars)
+#### Post 3/5 (266 chars)
 How we keep it fair:
 
-• Server-side replay simulation (re-runs physics step-by-step)
-• Real-time timing check (no instant bot uploads)
-• Cloudflare Turnstile anti-bot challenge
-• Strictly 1 ticket per wallet address
+• Map delivered in chunks (no offline solver)
+• Server-side 60 Hz physics replay check
+• Real-time timing check & Turnstile
+• Input rhythm analysis & IP clusters
+• Manual review of on-chain wallet history
 
-Only authentic human runs earn a ticket!
+Not a raffle: bots get pruned!
 
-#### Post 4/5 (231 chars)
-Raffle Timeline:
+#### Post 4/5 (264 chars)
+Application Timeline:
 
-• Entries open: NOW
-• Snapshot deadline: <DEADLINE>
-• Target Sepolia block announced: <TARGET_BLOCK_DATE>
-• Winners announced & claim open: <MINT_DATE>
+• Applications open: NOW
+• Submission window: 24h after qualifying run
+• Application deadline: <DEADLINE>
+• Review period: ongoing
+• Approved allowlist published: <MINT_DATE>
 
-Check live entry counts on the portal:
+Check requirements on the portal:
 <SITE_URL>/whitelist/
 
 #### Post 5/5 (253 chars)
@@ -215,45 +219,46 @@ Good luck on the track, runners!
 
 ---
 
-## 3. Threshold Announcement Post (Template)
+## 3. Qualification Threshold Announcement Post (Template)
 
-#### Post (268 chars)
-QUALIFYING THRESHOLD ANNOUNCED!
+#### Post (246 chars)
+QUALIFYING CRITERIA ANNOUNCED!
 
-After analyzing gameplay telemetry across all wheel speeds, the SqueekRunner raffle threshold is set to:
+To apply for the SqueekRunner Hamsters whitelist (not a raffle), runners must achieve:
 
-🎯 <THRESHOLD> POINTS
+🎯 100,000+ POINTS
+🪙 10 / 10 COINS (in first 10,000 m)
 
-Any ranked run meeting or beating this score earns a raffle ticket!
+In a server-verified ranked run.
 
 Run to qualify:
 <SITE_URL>/whitelist/
 
 ---
 
-## 4. Target Block & Merkle Root Post (Template)
+## 4. Application Deadline Post (Template)
 
-#### Post (267 chars)
-RAFFLE SNAPSHOT FROZEN!
+#### Post (269 chars)
+WHITELIST APPLICATIONS CLOSED!
 
-Entries are now closed. Here are the cryptographic draw parameters:
+Submissions are now closed. The team is completing manual review of all applications against published criteria.
 
-📦 Snapshot SHA-256: <SNAPSHOT_HASH>
-🌳 Merkle Root: <MERKLE_ROOT>
-🎲 Target Sepolia Block: #<TARGET_BLOCK>
+📦 Total submissions: <SUBMISSION_COUNT>
 
-Once block #<TARGET_BLOCK> is mined, its hash picks 700 winners!
+Approved addresses will be compiled into the Merkle tree shortly! (not a raffle)
 
 ---
 
-## 5. Raffle Results Post (Template)
+## 5. Approved Allowlist Results Post (Template)
 
-#### Post (254 chars)
-THE WINNERS ARE DRAWN!
+#### Post (276 chars)
+APPROVED ALLOWLIST IS LIVE!
 
-Sepolia block #<TARGET_BLOCK> has been mined, and the provably fair raffle script has selected 700 winners!
+Manual review of all whitelist applications is complete (this was an application with manual review, not a raffle)!
 
-Check if your address won and verify the open-source draw:
+🌳 Merkle Root: <MERKLE_ROOT>
+
+Check if your address was approved:
 <CLAIM_URL>
 
 Free minting is now open on Sepolia testnet! 🐹🎉
