@@ -248,7 +248,7 @@ export class RunScene extends Phaser.Scene {
     this.add.rectangle(205, 502, 166, 5, 0x2b3d3f).setOrigin(0, 0.5).setDepth(15);
     this.speedBar = this.add.rectangle(205, 502, 1, 5, COLORS.lime).setOrigin(0, 0.5).setDepth(15);
 
-    this.shieldText = label(this, 932, 466, 'DOUBLE JUMPS  20', 16, '#ffcf75', true).setOrigin(1, 0).setDepth(15);
+    this.shieldText = label(this, 932, 466, `DOUBLE JUMPS  ${CONFIG.doubleJumps.start}`, 16, '#ffcf75', true).setOrigin(1, 0).setDepth(15);
     this.add.image(400, 501, TEXTURES.coin).setScale(0.5).setDepth(15);
     this.coinText = label(this, 414, 494, `0 / ${CONFIG.coins.count}`, 15, '#ffcf75', true).setDepth(15);
     label(this, 932, 495, 'SPACE / ↑ / TAP    ·    P PAUSES    ·    M MUTE', 13, '#8b9ba6', true).setOrigin(1, 0).setDepth(15);
@@ -279,7 +279,7 @@ export class RunScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setAlign('center')
       .setFontStyle('bold');
-    const hint = label(this, 480, 280, '20 double jumps per run. Golden nuts: a shield and +5 double jumps.', 17, '#b6c2bc').setOrigin(0.5);
+    const hint = label(this, 480, 280, `${CONFIG.doubleJumps.start} double jumps per run. Golden nuts: a shield and +${CONFIG.doubleJumps.perNut} double jumps.`, 17, '#b6c2bc').setOrigin(0.5);
 
     const button = this.add.rectangle(480, 332, 294, 48, COLORS.lime).setInteractive({ useHandCursor: true });
     const call = label(this, 480, 332, 'START RUN  →', 22, '#131b27').setOrigin(0.5).setFontStyle('bold');

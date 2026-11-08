@@ -2,21 +2,21 @@
   "idle": {
     "score": 626,
     "endTick": 310,
-    "hash": "9ed4304d"
+    "hash": "14890635"
   },
   "rpm-dropout": {
     "score": 1372,
     "endTick": 360,
-    "hash": "121c6e71"
+    "hash": "4328d641"
   },
   "nuts-and-resets": {
     "score": 1021,
     "endTick": 430,
-    "hash": "dad081ef"
+    "hash": "d2432820"
   },
   "minute-run": {
     "score": 13980,
     "endTick": 3725,
-    "hash": "0d011672"
+    "hash": "e05f866b"
   }
 }
