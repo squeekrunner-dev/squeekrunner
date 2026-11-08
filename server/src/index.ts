@@ -1,9 +1,10 @@
 import { SIM_VERSION } from '../../src/sim/core';
+import { CONFIG } from '../../src/config';
 import { MAX_REPLAY_BYTES } from '../../src/sim/replay';
 import { TelemetryCollector, timeline } from './telemetry';
 import { authoritativeRun, checkRun, type SessionRow } from './verification';
 import { enter, SIWE_STATEMENT } from './entry';
-import { ApiError, digest, entriesOpen, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
+import { ApiError, digest, entriesOpen, requiredCoins, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
   textField, threshold, turnstile, type Env, type Runtime } from './security';
 export { TelemetryCollector };
 
@@ -17,7 +18,8 @@ async function stats(env: Env) {
   }
   const edges = [0, 500, 1000, 2000, 5000, 10000, 25000, 100000];
   const histogram = await env.DB.batch(edges.map((lower, i) => env.DB.prepare('SELECT COUNT(*) AS count FROM runs WHERE score>=? AND score<?').bind(lower, edges[i + 1] ?? Number.MAX_SAFE_INTEGER)));
-  return { verifiedRuns: count, percentiles, histogram: edges.map((from, i) => ({ from, to: edges[i + 1] ?? null, count: (histogram[i].results[0] as { count: number }).count })) };
+  const coins = await env.DB.prepare('SELECT coins, COUNT(*) AS count FROM runs GROUP BY coins ORDER BY coins').all<{ coins: number; count: number }>();
+  return { verifiedRuns: count, coinsCollected: coins.results, percentiles, histogram: edges.map((from, i) => ({ from, to: edges[i + 1] ?? null, count: (histogram[i].results[0] as { count: number }).count })) };
 }
 
 async function route(request: Request, env: Env, rt: Runtime): Promise<Response> {
@@ -43,7 +45,7 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
   if (request.method === 'GET' && path === '/v1/stats') return Response.json(await stats(env));
   if (request.method === 'GET' && path === '/v1/raffle/status') {
     const row = await env.DB.prepare('SELECT COUNT(*) AS count FROM entries').first<{ count: number }>();
-    return Response.json({ threshold: threshold(env), entriesOpen: entriesOpen(env, now), entriesCount: row?.count ?? 0, snapshotAt: env.SNAPSHOT_AT || null, deadline: env.ENTRY_DEADLINE || null });
+    return Response.json({ threshold: threshold(env), requiredCoins: requiredCoins(env, CONFIG.coins.count), entriesOpen: entriesOpen(env, now), entriesCount: row?.count ?? 0, snapshotAt: env.SNAPSHOT_AT || null, deadline: env.ENTRY_DEADLINE || null });
   }
   if (request.method === 'GET' && path === '/v1/nonce') {
     await rateLimit(env, hash, 'nonce', 10, now);
@@ -75,10 +77,11 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     // Claim before expensive verification: a bad final score consumes the session too.
     const page = await timeline(env, session.started_at, session.started_at + replay.endTick * 1000 / 60);
     const result = authoritativeRun(replay, session, page.points);
-    const minimum = threshold(env), eligible = minimum !== null && result.score >= minimum;
+    // Raffle rule: reach the threshold AND collect every raffle coin.
+    const minimum = threshold(env), eligible = minimum !== null && result.score >= minimum && result.coins >= requiredCoins(env, CONFIG.coins.count);
     const runToken = randomToken(), runId = randomToken();
-    await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,created_at,ip_hash,eligible,token_hash,token_expires)
-      VALUES(?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, now, hash, eligible ? 1 : 0, await digest(runToken), now + 24 * 3600000).run();
+    await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,coins,created_at,ip_hash,eligible,token_hash,token_expires)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, result.coins, now, hash, eligible ? 1 : 0, await digest(runToken), now + 24 * 3600000).run();
     return Response.json({ ...result, eligible, runToken, runId });
   }
   if (request.method === 'POST' && path === '/v1/entry') {

@@ -4,6 +4,8 @@ export interface Env {
   SIWE_DOMAIN: string; SIWE_URI: string; ALLOWED_ORIGINS: string;
   TURNSTILE_SECRET: string; ADMIN_TOKEN: string; IP_HASH_SALT: string;
   ENTRY_DEADLINE?: string; SNAPSHOT_AT?: string;
+  /** Optional override of the coins required for the raffle (default: every coin, CONFIG.coins.count). */
+  REQUIRED_COINS?: string;
 }
 export interface Runtime { now: () => number; fetcher: typeof fetch }
 export const runtime: Runtime = { now: () => Date.now(), fetcher: (...args) => fetch(...args) };
@@ -35,6 +37,11 @@ export function threshold(env: Env): number | null {
   if (!env.THRESHOLD?.trim()) return null;
   if (!/^\d+$/.test(env.THRESHOLD) || !Number.isSafeInteger(Number(env.THRESHOLD))) fail(503, 'configuration', 'Service unavailable');
   return Number(env.THRESHOLD);
+}
+export function requiredCoins(env: Env, all: number): number {
+  if (!env.REQUIRED_COINS?.trim()) return all;
+  if (!/^\d+$/.test(env.REQUIRED_COINS) || Number(env.REQUIRED_COINS) > all) fail(503, 'configuration', 'Service unavailable');
+  return Number(env.REQUIRED_COINS);
 }
 export function entriesOpen(env: Env, now: number): boolean {
   const dates = [env.ENTRY_DEADLINE, env.SNAPSHOT_AT].filter(Boolean).map(v => Date.parse(v!));

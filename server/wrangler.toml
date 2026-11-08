@@ -8,7 +8,7 @@ cpu_ms = 1000
 
 [vars]
 ENVIRONMENT = "production"
-THRESHOLD = ""
+THRESHOLD = "100000"
 ENTRIES_OPEN = "false"
 SIWE_DOMAIN = "squeekrunner.app"
 SIWE_URI = "https://squeekrunner.app/whitelist/"

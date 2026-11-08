@@ -1,7 +1,7 @@
 import { CONFIG } from '../config';
 
 /** Changing rules, constants or operation order requires a new sim version. */
-export const SIM_VERSION = 'squeek-1';
+export const SIM_VERSION = 'squeek-2';
 export const TICK_HZ = 60;
 export const UNIT = 1000; // milli-pixels; velocities are milli-pixels / second
 export const MAX_TICKS = 30 * 60 * TICK_HZ;
@@ -11,10 +11,13 @@ export const HITBOX = CONFIG.hitboxes;
 
 export interface Obstacle { id: number; kind: number; x: number; width: number; height: number }
 export interface Nut { id: number; x: number }
+/** A raffle coin: `at` is the travel (milli-px) at which the coin is level with the player. */
+export interface Coin { id: number; at: number }
+export interface CoinState { schedule: number[]; next: number; active: Coin | null; collected: number; missed: number }
 export interface SimState {
   tick: number; rng: number; nextId: number;
   player: { y: number; vy: number; jumps: number; lastGrounded: number; queuedAt: number | null };
-  obstacles: Obstacle[]; nut: Nut | null;
+  obstacles: Obstacle[]; nut: Nut | null; coins: CoinState;
   rpmMilli: number | null; speed: number; travel: number; score: number;
   bonus: number; spawnAt: number; shieldUntil: number; invulnerableUntil: number;
   gameOver: boolean; endReason: 'collision' | 'limit' | null;
@@ -26,7 +29,7 @@ export interface TickInput {
   /** Chain installation/height reset: clear an outstanding nut before any new spawn. */
   resetNut?: boolean;
 }
-export type SimEvent = 'jump' | 'airJump' | 'nut' | 'collect' | 'shieldHit' | 'gameOver';
+export type SimEvent = 'jump' | 'airJump' | 'nut' | 'collect' | 'shieldHit' | 'coinSpawn' | 'coin' | 'coinMissed' | 'gameOver';
 export interface Rect { left: number; top: number; right: number; bottom: number }
 
 export function createSim(seed: number): SimState {
@@ -34,14 +37,31 @@ export function createSim(seed: number): SimState {
   return {
     tick: 0, rng: seed, nextId: 1,
     player: { y: CONFIG.groundY * UNIT, vy: 0, jumps: 0, lastGrounded: 0, queuedAt: null },
-    obstacles: [], nut: null, rpmMilli: null, speed: CONFIG.speed.base * UNIT,
+    obstacles: [], nut: null, coins: { schedule: coinSchedule(seed), next: 0, active: null, collected: 0, missed: 0 },
+    rpmMilli: null, speed: CONFIG.speed.base * UNIT,
     travel: 0, score: 0, bonus: 0, spawnAt: Math.ceil(CONFIG.obstacles.firstDelaySeconds * TICK_HZ),
     shieldUntil: 0, invulnerableUntil: 0, gameOver: false, endReason: null,
   };
 }
 
+/**
+ * Raffle coins: one per equal segment of [firstMetres, lastMetres], at a random point inside it.
+ * A separate PRNG stream (seed mixed with a constant) keeps the obstacle sequence unchanged.
+ */
+export function coinSchedule(seed: number): number[] {
+  const c = CONFIG.coins;
+  const holder = { rng: (seed ^ 0x9e3779b9) >>> 0 };
+  const segment = Math.floor((c.lastMetres - c.firstMetres) / c.count);
+  const schedule: number[] = [];
+  for (let i = 0; i < c.count; i++) {
+    const metres = c.firstMetres + i * segment + rangeOf(holder, c.segmentMarginMetres, segment - c.segmentMarginMetres);
+    schedule.push(metres * CONFIG.pixelsPerMetre * UNIT);
+  }
+  return schedule;
+}
+
 /** Mulberry32; uint32 wrap and imul have specified ECMAScript integer semantics. */
-function random(s: SimState): number {
+function random(s: { rng: number }): number {
   s.rng = (s.rng + 0x6d2b79f5) >>> 0;
   let t = s.rng;
   t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -49,8 +69,20 @@ function random(s: SimState): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
-function range(s: SimState, min: number, max: number): number {
+function rangeOf(s: { rng: number }, min: number, max: number): number {
   return min + Math.floor(random(s) * (max - min + 1) / 0x100000000);
+}
+const range = (s: SimState, min: number, max: number): number => rangeOf(s, min, max);
+
+/** Screen x (milli-px) of a coin; it scrolls with the world like obstacles. */
+export function coinX(s: SimState, coin: Coin): number { return CONFIG.playerX * UNIT + coin.at - s.travel; }
+export const COIN_Y = (CONFIG.groundY - CONFIG.coins.heightAboveGround) * UNIT;
+
+function playerTouches(player: Rect, cx: number, cy: number, radius: number): boolean {
+  const dx = cx - Math.max(player.left, Math.min(player.right, cx));
+  const dy = cy - Math.max(player.top, Math.min(player.bottom, cy));
+  const r = radius * UNIT;
+  return dx * dx + dy * dy <= r * r;
 }
 
 export function distance(s: SimState): number { return s.travel / (UNIT * CONFIG.pixelsPerMetre); }
@@ -159,6 +191,24 @@ export function step(s: SimState, input: TickInput = {}): SimEvent[] {
     events.push('collect');
   }
   if (s.nut && s.nut.x < -80 * UNIT) s.nut = null;
+
+  // Raffle coins: high enough that only a well-timed double jump reaches them.
+  const coins = s.coins;
+  if (!coins.active && coins.next < coins.schedule.length &&
+      coins.schedule[coins.next] - s.travel <= (CONFIG.width + 40 - CONFIG.playerX) * UNIT) {
+    coins.active = { id: s.nextId++, at: coins.schedule[coins.next++] };
+    events.push('coinSpawn');
+  }
+  if (!s.gameOver && coins.active) {
+    const x = coinX(s, coins.active);
+    if (playerTouches(rect, x, COIN_Y, CONFIG.coins.radius)) {
+      coins.active = null; coins.collected++;
+      events.push('coin');
+    } else if (x + CONFIG.coins.radius * UNIT < rect.left) {
+      coins.active = null; coins.missed++;
+      events.push('coinMissed');
+    }
+  }
   s.score = Math.floor(s.travel * CONFIG.pointsPerMetre / (UNIT * CONFIG.pixelsPerMetre)) + s.bonus;
   s.tick++;
   if (!s.gameOver && s.tick >= MAX_TICKS) { s.gameOver = true; s.endReason = 'limit'; }

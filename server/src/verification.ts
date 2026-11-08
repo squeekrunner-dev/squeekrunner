@@ -28,5 +28,5 @@ export function authoritativeRun(replay: ReturnType<typeof checkRun>, session: S
   if (!state.gameOver || state.tick !== replay.endTick || state.score !== replay.clientScore) {
     throw new ApiError(409, 'score_mismatch', 'Replay differs from the server timeline. This run is not eligible.', { score: state.score, endTick: state.tick, eligible: false });
   }
-  return { score: state.score, distance: distance(state), endTick: state.tick };
+  return { score: state.score, distance: distance(state), endTick: state.tick, coins: state.coins.collected };
 }

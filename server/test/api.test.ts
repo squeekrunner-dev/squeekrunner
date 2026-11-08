@@ -71,7 +71,7 @@ describe('sessions and authoritative runs', () => {
   });
 
   it('scores an honest run from the server timeline, once', async () => {
-    const h = harness({ THRESHOLD: '1' });
+    const h = harness({ THRESHOLD: '1', REQUIRED_COINS: '0' });
     seedTelemetry(h);
     const s = await session(h);
     const replay = play(h, s, [150, 151]);
@@ -80,6 +80,18 @@ describe('sessions and authoritative runs', () => {
     const run = await json<{ score: number; eligible: boolean; endTick: number }>(reply);
     expect(run).toMatchObject({ score: replay.clientScore, endTick: replay.endTick, eligible: true });
     expect((await h.call('POST', '/v1/run', { sessionId: s.sessionId, replay })).status).toBe(409);
+  });
+
+  it('by default a run is raffle-eligible only with the threshold AND all 10 coins', async () => {
+    const h = harness({ THRESHOLD: '1' });
+    seedTelemetry(h);
+    const s = await session(h);
+    const run = await json<{ score: number; coins: number; eligible: boolean }>(await submit(h, s, play(h, s)));
+    expect(run.score).toBeGreaterThanOrEqual(1);
+    expect(run.coins).toBe(0);
+    expect(run.eligible).toBe(false);
+    const status = await json<{ requiredCoins: number }>(await h.call('GET', '/v1/raffle/status'));
+    expect(status.requiredCoins).toBe(10);
   });
 
   it('rejects submissions faster than real time and very late ones', async () => {
@@ -125,7 +137,7 @@ describe('sessions and authoritative runs', () => {
 });
 
 describe('SIWE raffle entries', () => {
-  const open = { THRESHOLD: '1', ENTRIES_OPEN: 'true' };
+  const open = { THRESHOLD: '1', ENTRIES_OPEN: 'true', REQUIRED_COINS: '0' };
 
   it('accepts the message produced by the website formatter (lowercase wallet address)', async () => {
     const h = harness(open);
@@ -180,7 +192,7 @@ describe('SIWE raffle entries', () => {
     h.clock.now += 6 * 60000;
     expect((await h.call('POST', '/v1/entry', { runToken: run.runToken, ...stale, turnstileToken: 't' })).status).toBe(403);
 
-    const closed = harness({ THRESHOLD: '1', ENTRIES_OPEN: 'false' });
+    const closed = harness({ THRESHOLD: '1', ENTRIES_OPEN: 'false', REQUIRED_COINS: '0' });
     const closedRun = await eligibleRun(closed);
     const closedEntry = await siwe(closed, closedRun.runId);
     expect((await closed.call('POST', '/v1/entry', { runToken: closedRun.runToken, ...closedEntry, turnstileToken: 't' })).status).toBe(403);
@@ -199,7 +211,7 @@ describe('stats, export and transport rules', () => {
   });
 
   it('exports entries for build-merkle only with the admin token', async () => {
-    const h = harness({ THRESHOLD: '1', ENTRIES_OPEN: 'true' });
+    const h = harness({ THRESHOLD: '1', ENTRIES_OPEN: 'true', REQUIRED_COINS: '0' });
     const run = await eligibleRun(h);
     const entry = await siwe(h, run.runId);
     expect((await h.call('POST', '/v1/entry', { runToken: run.runToken, ...entry, turnstileToken: 't' })).status).toBe(200);

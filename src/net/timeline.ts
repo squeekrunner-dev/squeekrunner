@@ -12,7 +12,7 @@ export interface SessionReply {
   sessionId: string; seed: number; startedAt: number; expiresAt: number; simVersion: string;
   timeline: TimelinePage;
 }
-export interface RunReply { score: number; distance: number; endTick: number; eligible: boolean; runToken: string; runId: string }
+export interface RunReply { score: number; distance: number; endTick: number; coins: number; eligible: boolean; runToken: string; runId: string }
 
 /** Identical chronological interpretation in the browser and verifier. No wall clock reads. */
 export class TimelineCursor {

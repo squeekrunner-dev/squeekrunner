@@ -73,7 +73,8 @@ export class GameOverScene extends Phaser.Scene {
       },
     });
 
-    label(this, 310, 236, `${result.distance} m travelled`, 15, '#b6c2bc').setOrigin(0.5).setDepth(12);
+    label(this, 310, 236, `${result.distance} m  ·  coins ${result.coins} / ${CONFIG.coins.count}`, 15,
+      result.coins === CONFIG.coins.count ? '#ffcf75' : '#b6c2bc').setOrigin(0.5).setDepth(12);
 
     // Vertical Divider Line in Card
     const divider = this.add.graphics().setDepth(11);
@@ -180,7 +181,7 @@ export class GameOverScene extends Phaser.Scene {
               window.location.assign(new URL('../whitelist/', window.location.href).href);
             });
         } else if (outcome.status === 'verified') {
-          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · NOT RAFFLE-ELIGIBLE (THRESHOLD TBA OR NOT REACHED)`).setColor('#c4ef6e');
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · ${outcome.coins}/${CONFIG.coins.count} COINS · NOT RAFFLE-ELIGIBLE YET`).setColor('#c4ef6e');
         } else {
           verdict.setText(`RUN NOT VERIFIED · ${outcome.message.toUpperCase()}`.slice(0, 80)).setColor('#ec8a79');
         }

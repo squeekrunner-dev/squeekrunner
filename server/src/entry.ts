@@ -1,6 +1,7 @@
 import { verifyMessage, isAddress } from 'viem';
+import { CONFIG } from '../../src/config';
 import { parseSiweMessage } from 'viem/siwe';
-import { digest, entriesOpen, fail, fields, textField, threshold, turnstile, type Env, type Runtime } from './security';
+import { digest, entriesOpen, requiredCoins, fail, fields, textField, threshold, turnstile, type Env, type Runtime } from './security';
 
 export const SIWE_STATEMENT = 'Enter the SqueekRunner whitelist raffle. No transaction or fee.';
 interface NonceRow { nonce: string; created_at: number; expires_at: number; ip_hash: string }
@@ -39,8 +40,8 @@ export async function enter(body: Record<string, unknown>, env: Env, hash: strin
   try {
     const row = await env.DB.prepare(`INSERT INTO entries(address,run_id,nonce,created_at)
       SELECT ?,r.id,n.nonce,? FROM runs r JOIN nonces n ON n.nonce=?
-      WHERE r.token_hash=? AND r.eligible=1 AND r.score>=? AND r.token_expires>? AND n.expires_at>? AND n.ip_hash=?
-      RETURNING address`).bind(address, rt.now(), p.nonce, tokenHash, threshold(env), rt.now(), rt.now(), hash).first();
+      WHERE r.token_hash=? AND r.eligible=1 AND r.score>=? AND r.coins>=? AND r.token_expires>? AND n.expires_at>? AND n.ip_hash=?
+      RETURNING address`).bind(address, rt.now(), p.nonce, tokenHash, threshold(env), requiredCoins(env, CONFIG.coins.count), rt.now(), rt.now(), hash).first();
     if (!row) fail(409, 'consumed', 'Challenge or run token is no longer available');
   } catch { fail(409, 'duplicate_entry', 'Wallet, nonce or run token already used, or challenge expired'); }
   return { address, entered: true };

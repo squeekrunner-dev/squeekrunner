@@ -5,7 +5,7 @@ import type { ApiClient } from '../net/api';
 
 /** Outcome of server verification for a ranked (raffle-eligible) run. */
 export type RankedOutcome =
-  | { status: 'verified'; score: number; eligible: boolean }
+  | { status: 'verified'; score: number; coins: number; eligible: boolean }
   | { status: 'rejected'; message: string }
   | { status: 'error'; message: string };
 
@@ -29,4 +29,6 @@ export interface RunResult {
   demo: boolean;
   /** True when the run was played on a server session and is being verified. */
   ranked?: boolean;
+  /** Raffle coins collected in this run (all 10 are required for the raffle). */
+  coins: number;
 }

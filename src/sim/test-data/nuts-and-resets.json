@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "simVersion": "squeek-1",
+  "simVersion": "squeek-2",
   "seed": 123456789,
   "tickHz": 60,
   "inputs": [],

@@ -24,7 +24,7 @@ export async function submitRanked(api: ApiClient, ranked: RankedRun, replay: Re
   try {
     const run = await api.run(ranked.session.sessionId, replay);
     rememberRun(run);
-    return { status: 'verified', score: run.score, eligible: run.eligible };
+    return { status: 'verified', score: run.score, coins: run.coins, eligible: run.eligible };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Verification failed';
     if (error instanceof NetworkError && error.status >= 400 && error.status < 500) return { status: 'rejected', message };
