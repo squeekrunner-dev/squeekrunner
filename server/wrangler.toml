@@ -9,7 +9,7 @@ cpu_ms = 1000
 [vars]
 ENVIRONMENT = "production"
 THRESHOLD = "100000"
-APPLICATIONS_OPEN = "false"
+APPLICATIONS_OPEN = "true"
 SITE_URL = "https://squeekrunner.app"
 ALLOWED_ORIGINS = "https://squeekrunner.app,https://www.squeekrunner.app"
 APPLICATION_DEADLINE = ""
