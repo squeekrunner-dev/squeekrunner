@@ -19,7 +19,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header wrap">
     <a class="brand" href="./" aria-label="SqueekRunner — home"><img src="./site/favicon.svg" width="38" height="38" alt="" /><span>Squeek<span class="brand-light">Runner</span></span></a>
-    <nav aria-label="Primary navigation"><a href="#how">How to play</a><a href="./whitepaper/">Whitepaper</a><a href="./whitelist/">Whitelist</a><a href="./collection/">Collection</a><a class="nav-play" href="./play/">Play <span aria-hidden="true">↗</span></a></nav>
+    <nav aria-label="Primary navigation"><a href="#how">How to play</a><a href="#squeekchain">Squeekchain</a><a href="./whitepaper/">Whitepaper</a><a href="./whitelist/">Whitelist</a><a href="./collection/">Collection</a><a class="nav-play" href="./play/">Play <span aria-hidden="true">↗</span></a></nav>
   </header>
   <main id="main">
     <section class="hero wrap" aria-labelledby="hero-title">
@@ -89,6 +89,109 @@
       <div><p class="eyebrow">Fewer buttons. More jumps.</p><h2 id="controls-title">Paws on the mark.</h2><p>Phones play best in landscape mode.</p></div>
       <dl class="controls"><div><dt><kbd>Space</kbd> / <kbd>↑</kbd></dt><dd>Start and jump. Press again in midair for a double jump.</dd></div><div><dt>Click / tap</dt><dd>The exact same thing, with a single touch.</dd></div><div><dt><kbd>P</kbd> / <kbd>Esc</kbd></dt><dd>Pause. After a crash, Space or tap starts a new run.</dd></div></dl>
     </div></section>
+
+    <section class="wrap section-space" id="squeekchain" aria-labelledby="squeekchain-title">
+      <div class="section-heading">
+        <p class="eyebrow">Ecosystem Integration · Genesis Code Lane</p>
+        <h2 id="squeekchain-title">Built on Squeekchain.</h2>
+        <p class="section-lead" style="max-width: 65ch; font-size: 1.1rem; color: var(--muted); margin-bottom: 36px;">
+          SqueekRunner is powered by Squeekchain's physical hamster wheel. We are passionate ecosystem builders and proud fans, building an arcade runner that pulses with the living rhythm of the chain.
+        </p>
+      </div>
+
+      <!-- Meet Squeektoshi card -->
+      <div class="squeektoshi-card">
+        <div class="squeektoshi-info">
+          <p class="eyebrow" style="margin-bottom: 8px;">The Real Runner</p>
+          <h3>Meet Squeektoshi</h3>
+          <p>Squeektoshi is a male Syrian hamster who generates physical proof-of-work on Squeekchain's WHEELY9000 setup. Each pass of his wheel magnet records one unit of work, which SqueekCore anchors to Ethereum to seal new Squeek blocks.</p>
+          <p>Squeektoshi runs primarily at night (UTC), and the community livestream usually broadcasts during UTC evening and night hours. During the day, the wheel usually rests — and SqueekRunner glides at a steady baseline speed.</p>
+          <div class="squeektoshi-action">
+            <a class="button" href="https://sepolia.squeekchain.com/#live" target="_blank" rel="noopener">Watch him live <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- What SqueekRunner takes from Squeekchain (4 points) -->
+      <div class="integration-block">
+        <div class="section-heading" style="margin-bottom: 24px;">
+          <p class="eyebrow">Deep Integration</p>
+          <h3 style="font-size: clamp(1.4rem, 2.5vw, 2rem);">What SqueekRunner takes from Squeekchain</h3>
+        </div>
+        <ol class="steps" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+          <li class="integration-item">
+            <span class="step-number">01</span>
+            <h4>RPM → World Speed</h4>
+            <p>Live wheel velocity streams directly from WHEELY9000 sensors. Game pace scales smoothly from 1.0× when idle up to a 2.7× sprint at peak RPM.</p>
+          </li>
+          <li class="integration-item">
+            <span class="step-number">02</span>
+            <h4>Squeek Blocks → Golden Nuts</h4>
+            <p>Every time Squeekchain seals a new block on Ethereum Sepolia, a lucky golden nut spawns on track (+150 points and 12 seconds of shield protection).</p>
+          </li>
+          <li class="integration-item">
+            <span class="step-number">03</span>
+            <h4>Authoritative Replay Check</h4>
+            <p>Our ranked replay verifier polls the same public Squeekchain status stream every ~10 seconds, re-simulating inputs against identical wheel physics.</p>
+          </li>
+          <li class="integration-item">
+            <span class="step-number">04</span>
+            <h4>Whitelist Values $SQK &amp; Squeeks</h4>
+            <p>During manual review for the free NFT whitelist, on-chain activity on Squeekchain (holding Squeeks, staking, $SQK history) gives applicants extra weight.</p>
+          </li>
+        </ol>
+      </div>
+
+      <!-- Live card: Squeekchain right now -->
+      <div class="squeekchain-live-card" data-squeekchain-live>
+        <div class="live-card-head">
+          <div class="live-indicator">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span class="eyebrow" style="margin-bottom: 0;">Squeekchain Right Now</span>
+          </div>
+          <span class="live-card-sub">Live on-chain economy &amp; physical telemetry</span>
+        </div>
+
+        <div class="live-card-metrics">
+          <div class="live-metric-box">
+            <span class="live-metric-label">Current round</span>
+            <strong class="live-metric-value" data-sqk-round>669</strong>
+            <span class="live-metric-note">10-minute work settlements</span>
+          </div>
+          <div class="live-metric-box">
+            <span class="live-metric-label">$SQK minted</span>
+            <strong class="live-metric-value" data-sqk-minted>221.8 M SQK</strong>
+            <span class="live-metric-note" data-sqk-cap>10.6% of the 2.1B cap</span>
+          </div>
+          <div class="live-metric-box">
+            <span class="live-metric-label">Confirmed Squeek block</span>
+            <strong class="live-metric-value" data-sqk-block>—</strong>
+            <span class="live-metric-note">Drops golden nuts in-game</span>
+          </div>
+          <div class="live-metric-box">
+            <span class="live-metric-label">Squeektoshi status</span>
+            <strong class="live-metric-value" data-sqk-status>Connecting...</strong>
+            <span class="live-metric-note" data-sqk-rpm>Live wheel speed</span>
+          </div>
+        </div>
+
+        <p class="live-card-status" data-sqk-error style="display: none; margin-top: 14px; margin-bottom: 0; font-size: .85rem; color: var(--muted);">Live data unavailable right now</p>
+      </div>
+
+      <!-- Links band: Watch Squeektoshi · Explore Squeekchain · Join Genesis · Read the docs · Get a Squeek -->
+      <div class="squeekchain-links-grid">
+        <a class="button squeekchain-link-btn" href="https://sepolia.squeekchain.com/#live" target="_blank" rel="noopener">Watch Squeektoshi <span aria-hidden="true">↗</span></a>
+        <a class="button squeekchain-link-btn" href="https://squeekchain.com/" target="_blank" rel="noopener">Explore Squeekchain <span aria-hidden="true">↗</span></a>
+        <a class="button squeekchain-link-btn" href="https://squeekchain.com/genesis" target="_blank" rel="noopener">Join Genesis <span aria-hidden="true">↗</span></a>
+        <a class="button squeekchain-link-btn" href="https://docs.squeekchain.com/" target="_blank" rel="noopener">Read the docs <span aria-hidden="true">↗</span></a>
+        <a class="button squeekchain-link-btn" href="https://sepolia.squeekchain.com/" target="_blank" rel="noopener">Get a Squeek <span aria-hidden="true">↗</span></a>
+      </div>
+
+      <!-- Mandatory independence statement -->
+      <p class="squeekchain-disclaimer">
+        SqueekRunner is an independent community project built on Squeekchain. Not affiliated with or endorsed by the Squeekchain team.
+      </p>
+    </section>
 
     <section class="whitelist-steps wrap section-space" id="whitelist" aria-labelledby="whitelist-title">
       <div class="section-heading">

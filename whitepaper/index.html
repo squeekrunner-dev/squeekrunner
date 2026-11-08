@@ -49,7 +49,7 @@
           <p class="eyebrow">01 / Abstract</p>
           <h2>Living rhythm. Personal best.</h2>
           <p>SqueekRunner is a free, client-first browser endless runner. The player controls a hamster: jumping over crates, collecting golden nuts, and trying to run farther. World speed responds to the RPM of Squeekchain's real hamster wheel, while newly confirmed Squeek block heights drop bonus nuts.</p>
-          <p>The game remains fully playable when the wheel is idle or telemetry is unavailable. Starting a casual run requires no account, wallet, or installation. For competitive players, an optional server-verified ranked mode allows runners to qualify for an application with manual review for the free testnet NFT whitelist. This is an application with manual review, not a raffle. This document describes <strong>our game</strong>; the underlying network design is documented in the <a href="https://docs.squeekchain.com/whitepaper/">official Squeekchain whitepaper v1.1</a>.</p>
+          <p>The game remains fully playable when the wheel is idle or telemetry is unavailable. Starting a casual run requires no account, wallet, or installation. For competitive players, an optional server-verified ranked mode allows runners to qualify for an application with manual review for the free testnet NFT whitelist. This is an application with manual review, not a raffle. This document describes <strong>our game</strong>; the underlying network design is documented in <a href="https://docs.squeekchain.com/whitepaper/" target="_blank" rel="noopener">the Squeekchain whitepaper (in active development)</a>.</p>
         </section>
         <section id="idea">
           <p class="eyebrow">02 / Concept</p>
@@ -60,10 +60,23 @@
         <section id="squeekchain">
           <p class="eyebrow">03 / Context</p>
           <h2>Behind the wheel.</h2>
-          <p>According to the Squeekchain v1.1 whitepaper, the physical <strong>WHEELY9000</strong> wheel counts magnet passes across a sensor. One pass equals one unit of work. This is physical wheel work, not CPU hash computation. Work is aggregated into 10-minute rounds, submitted via signed Oracle/Reporter pathways, and settled by the Core contract.</p>
+          <p>According to the Squeekchain whitepaper (in active development), Squeekchain is a hamster-powered proof-of-work toychain on Ethereum. The physical <strong>WHEELY9000</strong> wheel counts magnet passes across a sensor. One pass equals one unit of work. This is physical wheel work, not CPU hash computation. Work is aggregated into 10-minute rounds, submitted via signed Oracle/Reporter pathways, and settled by the Core contract on Ethereum to seal Squeek blocks.</p>
           <p>RPM is instantaneous wheel tempo. A Squeek block is the result of accumulated work meeting target difficulty. A high RPM therefore does not mean an immediate block confirmation. For the game, these two signals are independent: RPM drives world speed, while confirmed height drives golden nuts.</p>
-          <p>The Squeekchain ecosystem includes SQK and a collection of 9,999 Squeeks with levels 1–10. Network rewards accrue to staking accounts. SqueekRunner only reads public telemetry; staking participation, NFT ownership, and token transactions are not required to play. In-game score and nuts are not SQK.</p>
-          <p class="small-note">Facts verified against whitepaper v1.1 and technical inspection on November 7, 2026. Verified deployment: Sepolia, chain ID 11155111, installation <code>sepolia-core-sepolia-20261103</code>. This describes the verified release, not a guarantee that the external network will remain unchanged. <a href="#sources">Sources →</a></p>
+          <p>The Squeekchain ecosystem includes $SQK (capped at 2.1 billion tokens, issued via halving schedules into Staking) and a collection of 9,999 Genesis Squeeks across levels 1–10. Depositing Squeeks and staking $SQK provides account power and a share of network rewards. SqueekRunner only reads public telemetry; staking participation, NFT ownership, and token transactions are not required to play. In-game score and nuts are not SQK.</p>
+
+          <h3>Meet Squeektoshi on the wheel</h3>
+          <p>The living engine of Squeekchain is <strong>Squeektoshi</strong>, a male Syrian hamster who runs on the physical WHEELY9000 wheel. Squeektoshi runs primarily at night (UTC), and the community livestream (<a href="https://sepolia.squeekchain.com/#live" target="_blank" rel="noopener">sepolia.squeekchain.com/#live</a>) typically broadcasts during UTC evening and night hours. During daytime hours, the wheel usually rests — during which SqueekRunner continues smoothly at balanced baseline speed.</p>
+
+          <h3>How SqueekRunner supports Squeekchain</h3>
+          <p>SqueekRunner is crafted by builders and passionate fans of the Squeekchain ecosystem, actively participating in the <strong>Squeekchain Genesis Code Lane</strong>. Our integration runs deep across four core dimensions:</p>
+          <ol>
+            <li><strong>RPM drives game velocity:</strong> Real-time wheel rotation from the public status API (<code>https://api.squeekchain.com/v1/status</code>) scales in-game run speed from 1.0× at 0 RPM up to 2.7× at peak speed (~98.3 RPM).</li>
+            <li><strong>Squeek blocks drop golden nuts:</strong> Each newly sealed block confirmed on Ethereum Sepolia triggers a lucky golden nut spawn in-game, granting +150 points and a 12-second collision shield.</li>
+            <li><strong>Authoritative replay verification:</strong> Ranked competitive replays are verified by our companion server, which samples the same public Squeekchain timeline every ~10 seconds and re-simulates physics tick-by-tick against authoritative wheel history.</li>
+            <li><strong>Whitelist values ecosystem participation:</strong> Manual evaluation of applications for the free testnet SqueekRunner Hamsters NFT whitelist recognizes player activity across Squeekchain, including holding Squeeks, staking, and $SQK on-chain history.</li>
+          </ol>
+
+          <p class="small-note">Facts verified against the Squeekchain documentation and technical inspection on November 8, 2026. Verified deployment: Sepolia, chain ID 11155111, installation <code>sepolia-core-sepolia-20261103</code>. SqueekRunner is an independent community project built on Squeekchain. Not affiliated with or endorsed by the Squeekchain team. <a href="#sources">Sources →</a></p>
         </section>
         <section id="mechanics">
           <p class="eyebrow">04 / Gameplay mechanics</p>
@@ -271,14 +284,16 @@
         <section id="sources">
           <p class="eyebrow">11 / Sources</p>
           <h2>Where the facts come from.</h2>
-          <p>Network facts are limited to the verified technical inspection of November 7, 2026, based on public documentation and the read API. Game balance figures come from <code>src/config.ts</code> and are verified against the table above by automated tests.</p>
+          <p>Network facts are limited to the verified technical inspection of November 8, 2026, based on public documentation and the read API. Game balance figures come from <code>src/config.ts</code> and are verified against the table above by automated tests.</p>
           <ol>
-            <li><a href="https://docs.squeekchain.com/whitepaper/">Official Squeekchain Whitepaper</a> — version v1.1, WHEELY9000, work, rounds, and network model.</li>
-            <li><a href="https://docs.squeekchain.com/developers/api/">Public API Documentation</a> — response contract and rate limits.</li>
-            <li><a href="https://docs.squeekchain.com/assets/deployments/sepolia.json">Sepolia Deployment</a> — published deployment parameters.</li>
-            <li><a href="https://squeekchain.com/">Squeekchain Website</a> — ecosystem context.</li>
+            <li><a href="https://docs.squeekchain.com/whitepaper/" target="_blank" rel="noopener">Squeekchain Whitepaper</a> — in active development, WHEELY9000, work, rounds, and network model.</li>
+            <li><a href="https://docs.squeekchain.com/developers/api/" target="_blank" rel="noopener">Public API Documentation</a> — response contract and rate limits.</li>
+            <li><a href="https://docs.squeekchain.com/assets/deployments/sepolia.json" target="_blank" rel="noopener">Sepolia Deployment</a> — published deployment parameters.</li>
+            <li><a href="https://squeekchain.com/" target="_blank" rel="noopener">Squeekchain Website</a> — ecosystem context and architecture.</li>
+            <li><a href="https://squeekchain.com/genesis" target="_blank" rel="noopener">Squeekchain Genesis</a> — Aura, leaderboard, Squeeks whitelist, and Code Lane.</li>
+            <li><a href="https://sepolia.squeekchain.com/" target="_blank" rel="noopener">Sepolia Testnet &amp; Livestream</a> — test mints, smart contracts, and Squeektoshi live wheel camera.</li>
           </ol>
-          <p><a href="../#github">Project GitHub — link will appear once the repository is public.</a> SqueekRunner claims no official partnership with or endorsement by Squeekchain.</p>
+          <p><a href="../#github">Project GitHub — link will appear once the repository is public.</a> SqueekRunner is an independent community project built on Squeekchain. Not affiliated with or endorsed by the Squeekchain team.</p>
         </section>
       </article>
     </div>

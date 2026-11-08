@@ -457,3 +457,42 @@ th:first-child { width: 48%; }
   .wheel-block { padding: 24px 18px; }
   .community-first-box { padding: 18px 18px; }
 }
+
+/* Built on Squeekchain section */
+#squeekchain { scroll-margin-top: 24px; }
+.squeektoshi-card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 36px 32px; margin-bottom: 32px; }
+.squeektoshi-info h3 { font-size: clamp(1.4rem, 2.5vw, 2.2rem); margin-bottom: 12px; }
+.squeektoshi-info p { max-width: 65ch; color: var(--muted); font-size: .95rem; }
+.squeektoshi-action { margin-top: 24px; }
+
+.integration-block { margin-bottom: 36px; }
+.integration-item { border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: var(--surface); display: flex; flex-direction: column; }
+.integration-item h4 { font-size: 1.15rem; margin: 0 0 8px; line-height: 1.25; }
+.integration-item p { font-size: .9rem; color: var(--muted); margin-bottom: 0; }
+
+.squeekchain-live-card { border: 1px solid var(--line); border-top: 4px solid var(--live); border-radius: 16px; background: var(--surface); padding: 32px; margin-bottom: 32px; }
+.live-card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.live-indicator { display: flex; align-items: center; gap: 8px; }
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); flex-shrink: 0; }
+.live-card-sub { font-size: .82rem; color: var(--muted); }
+.live-card-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.live-metric-box { display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line); }
+.live-metric-label { font: 700 .72rem Consolas, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.live-metric-value { font-size: 1.55rem; font-weight: 700; letter-spacing: -.03em; color: var(--ink); line-height: 1.15; }
+.live-metric-note { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+.squeekchain-links-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 28px; }
+.squeekchain-link-btn { font-size: 1rem; padding: 14px 20px; min-height: 52px; gap: 16px; box-shadow: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.squeekchain-link-btn:hover { background: var(--accent); color: var(--button-ink); border-color: var(--accent-ink); }
+
+.squeekchain-disclaimer { font-size: .85rem; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--line); padding-top: 20px; margin-bottom: 0; }
+
+@media (max-width: 960px) {
+  .live-card-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .squeektoshi-card { padding: 24px 18px; }
+  .squeekchain-live-card { padding: 24px 18px; }
+  .live-card-metrics { grid-template-columns: 1fr; }
+  .squeekchain-link-btn { width: 100%; justify-content: space-between; }
+}
