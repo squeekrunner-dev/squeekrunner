@@ -2,7 +2,7 @@
 
 An isolated ERC-721 project for **Sepolia (chain ID 11155111)**. Collection: maximum
 **1000 NFTs**, free mint, only network gas is paid. This is an application process with manual review, not a raffle:
-game score validation, SIWE, backend, or minting from the game UI do not exist in the contract: it
+game score validation, applications, backend, or minting from the game UI do not exist in the contract: it
 accepts the final allowlist prepared according to decision D-0001.
 
 The contract is not deployed to any public network. The deployment script is run only by the owner.

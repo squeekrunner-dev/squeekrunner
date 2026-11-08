@@ -63,7 +63,7 @@ Enable application submissions so runners completing a qualified run can submit 
 
 ## Phase 3: Application Review in Admin Panel
 
-As runners submit applications, the team reviews them in the admin dashboard.
+As runners submit applications, the team reviews them in the admin panel at https://squeekrunner.app/admin/ (paste the ADMIN_TOKEN; it stays in that browser tab only).
 
 ### Review Signals in Admin Panel:
 1. **Gameplay & Replay Integrity:**
@@ -71,10 +71,10 @@ As runners submit applications, the team reviews them in the admin dashboard.
    - All 10 / 10 coins collected (within the first 10,000 m).
    - Replay physics re-simulated cleanly at 60 Hz integer physics.
    - Run duration matches real-world elapsed time (no speedhacks).
-   - Input rhythm: human-like jump intervals, variance in press durations (not rigid robotic tick scripts).
+   - Input rhythm: jump lead to obstacles and double-jump delay (mean ± deviation); near-zero variance suggests a script.
    - Number of attempts and session history.
 2. **X Account Verification:**
-   - oEmbed status: post exists, belongs to the stated handle, contains the unique application code and score.
+   - oEmbed status: post exists, belongs to the stated handle and contains the unique application code. Applications flagged UNCHECKED (oEmbed was unavailable) must be opened and checked by hand.
    - Account age and organic activity (not an empty burner created yesterday).
 3. **On-Chain Address History:**
    - Ethereum Mainnet and Sepolia activity history (not a blank wallet generated just for the drop).
@@ -104,7 +104,7 @@ When `APPLICATION_DEADLINE` passes, the server rejects new application submissio
 1. Export approved player applications using the secure admin token:
    ```bash
    curl -H "Authorization: Bearer <ADMIN_TOKEN>" \
-     "https://<WORKER_URL>/v1/admin/export?format=csv&status=approved" \
+     "https://<WORKER_URL>/v1/admin/export?format=csv" \
      -o approved-players.csv
    ```
 2. Validate the export file:
