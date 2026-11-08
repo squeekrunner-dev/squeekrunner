@@ -12,6 +12,7 @@ import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, compactHeight, createMuteButton, label, pill } from './ui';
 import { ServerSource } from '../net/source';
+import { centerCamera, MAX_PAD, sideFades } from './viewport';
 import { startRanked, submitRanked, type RankedRun } from '../net/ranked';
 
 type RunState = 'ready' | 'playing' | 'paused' | 'ended';
@@ -97,13 +98,13 @@ export class RunScene extends Phaser.Scene {
     backdrop(this);
 
     // Parallax background layers
-    this.bgFar = this.add.tileSprite(0, 80, CONFIG.width, 280, TEXTURES.bgFar).setOrigin(0).setDepth(0);
-    this.bgMid = this.add.tileSprite(0, 236, CONFIG.width, 180, TEXTURES.bgMid).setOrigin(0).setDepth(1);
+    this.bgFar = this.add.tileSprite(-MAX_PAD, 80, (CONFIG.width + 2 * MAX_PAD), 280, TEXTURES.bgFar).setOrigin(0).setDepth(0);
+    this.bgMid = this.add.tileSprite(-MAX_PAD, 236, (CONFIG.width + 2 * MAX_PAD), 180, TEXTURES.bgMid).setOrigin(0).setDepth(1);
 
     this.createWheel();
 
     // Ground running track
-    this.ground = this.add.tileSprite(0, CONFIG.groundY, CONFIG.width, 36, TEXTURES.ground).setOrigin(0).setDepth(2);
+    this.ground = this.add.tileSprite(-MAX_PAD, CONFIG.groundY, (CONFIG.width + 2 * MAX_PAD), 36, TEXTURES.ground).setOrigin(0).setDepth(2);
 
     // Hamster shadow
     this.shadow = this.add.ellipse(CONFIG.playerX, CONFIG.groundY - 1, 58, 9, 0x07140e, 0.45).setDepth(3);
@@ -138,9 +139,11 @@ export class RunScene extends Phaser.Scene {
     this.createHud();
     this.createNoticeCard();
     this.createIntro();
+    centerCamera(this);
+    sideFades(this, 108, CONFIG.groundY + 36 - 108, 8);
 
     this.pauseOverlay = this.add.container(0, 0, [
-      this.add.rectangle(480, 270, 960, 540, COLORS.background, 0.88),
+      this.add.rectangle(480, 270, (CONFIG.width + 2 * MAX_PAD), 540, COLORS.background, 0.88),
       label(this, 480, 220, 'TAKE A BREATHER', 36, '#ffcf75').setOrigin(0.5).setFontStyle('bold'),
       label(this, 480, 275, 'SPACE / TAP TO RESUME', 20, '#c4ef6e', true).setOrigin(0.5),
     ]).setDepth(30).setVisible(false);
@@ -172,6 +175,7 @@ export class RunScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', visibility);
 
     onSceneExit(this.events, () => {
+      document.body.classList.remove('is-playing');
       this.abort.abort();
       unsubscribe();
       this.input.off('pointerdown', pointer);
@@ -216,8 +220,8 @@ export class RunScene extends Phaser.Scene {
   private createHud(): void {
     // Top banner frosted card background
     const hudBar = this.add.graphics().setDepth(14);
-    hudBar.fillStyle(0x0f1822, 0.92).fillRect(0, 0, CONFIG.width, 108);
-    hudBar.lineStyle(1, 0x223644, 0.9).lineBetween(0, 108, CONFIG.width, 108);
+    hudBar.fillStyle(0x0f1822, 0.92).fillRect(-MAX_PAD, 0, (CONFIG.width + 2 * MAX_PAD), 108);
+    hudBar.lineStyle(1, 0x223644, 0.9).lineBetween(-MAX_PAD, 108, CONFIG.width + MAX_PAD, 108);
 
     // Left brand & score
     label(this, 28, 14, 'SQUEEK / RUNNER', 16, '#c4ef6e', true).setFontStyle('bold').setDepth(15);
@@ -298,6 +302,7 @@ export class RunScene extends Phaser.Scene {
 
   private begin(): void {
     this.state = 'playing';
+    document.body.classList.add('is-playing');
     this.intro.setVisible(false);
     this.player.play('hamster-run');
     this.detector = new BlockDetector();
@@ -462,6 +467,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private endRun(): void {
+    document.body.classList.remove('is-playing');
     this.ranked?.timeline.stop();
     if (this.driver.replay) this.context.lastReplay = this.driver.replay;
     const { api, source } = this.context;

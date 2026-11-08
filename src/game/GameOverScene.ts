@@ -5,6 +5,7 @@ import { sound } from '../audio/sound';
 import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, createMuteButton, label, pill } from './ui';
+import { centerCamera, MAX_PAD, sideFades } from './viewport';
 
 export class GameOverScene extends Phaser.Scene {
   private orbitingStars: Phaser.GameObjects.Image[] = [];
@@ -21,9 +22,11 @@ export class GameOverScene extends Phaser.Scene {
     if (debug) label(this, 480, 515, 'D · DOWNLOAD REPLAY', 12, '#8b9ba6', true).setOrigin(0.5).setDepth(12);
 
     // Parallax background & ground preview (layers 1..3)
-    this.add.tileSprite(0, 80, CONFIG.width, 280, TEXTURES.bgFar).setOrigin(0).setDepth(1);
-    this.add.tileSprite(0, 236, CONFIG.width, 180, TEXTURES.bgMid).setOrigin(0).setDepth(2);
-    this.add.tileSprite(0, CONFIG.groundY, CONFIG.width, 36, TEXTURES.ground).setOrigin(0).setDepth(3);
+    this.add.tileSprite(-MAX_PAD, 80, (CONFIG.width + 2 * MAX_PAD), 280, TEXTURES.bgFar).setOrigin(0).setDepth(1);
+    this.add.tileSprite(-MAX_PAD, 236, (CONFIG.width + 2 * MAX_PAD), 180, TEXTURES.bgMid).setOrigin(0).setDepth(2);
+    this.add.tileSprite(-MAX_PAD, CONFIG.groundY, (CONFIG.width + 2 * MAX_PAD), 36, TEXTURES.ground).setOrigin(0).setDepth(3);
+    centerCamera(this);
+    sideFades(this, 80, CONFIG.groundY + 36 - 80, 4);
 
     // Brand and Demo pill (depth 10)
     label(this, 28, 16, 'SQUEEK / RUNNER', 16, '#c4ef6e', true).setFontStyle('bold').setDepth(10);
