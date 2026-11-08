@@ -1,0 +1,16 @@
+// Static site (landing, game, whitepaper, whitelist, collection) served as Workers static assets.
+// Build first from the repo root with production variables, then: npx wrangler deploy -c deploy/site/wrangler.jsonc
+{
+  "name": "squeekrunner-site",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "../../dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "squeekrunner.app", "custom_domain": true },
+    { "pattern": "www.squeekrunner.app", "custom_domain": true }
+  ],
+  "workers_dev": true
+}

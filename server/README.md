@@ -85,3 +85,15 @@ Everything below needs the owner's Cloudflare account; nothing here is done auto
   not impossible. Organizers may exclude obvious farms.
 - A player whose IP changes between nonce and entry must request a new nonce (nonces are bound to the IP hash).
 - Ranked runs cannot be paused: they follow server time.
+
+## Production (squeekrunner.app)
+
+- API Worker `squeekrunner-api` on `https://api.squeekrunner.app` (D1 `squeekrunner`, EEUR). Secrets are set; local copies of
+  generated values live outside the repository (owner's machine only).
+- Site Worker `squeekrunner-site` (static assets) on `https://squeekrunner.app` and `www`. Redeploy:
+  ```sh
+  VITE_API_BASE=https://api.squeekrunner.app VITE_TURNSTILE_SITEKEY=0x4AAAAAAF4fgEsOIrundoTt npm run build
+  printf '*.map\n' > dist/.assetsignore
+  npx --prefix server wrangler deploy -c deploy/site/wrangler.jsonc
+  ```
+  (The Turnstile site key is public.) The raffle stays closed (`THRESHOLD` empty, `ENTRIES_OPEN=false`) until the owner decides.

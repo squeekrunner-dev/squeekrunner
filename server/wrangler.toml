@@ -10,16 +10,16 @@ cpu_ms = 1000
 ENVIRONMENT = "production"
 THRESHOLD = ""
 ENTRIES_OPEN = "false"
-SIWE_DOMAIN = "replace-with-pages-domain.invalid"
-SIWE_URI = "https://replace-with-pages-domain.invalid/whitelist/"
-ALLOWED_ORIGINS = "https://replace-with-pages-domain.invalid"
+SIWE_DOMAIN = "squeekrunner.app"
+SIWE_URI = "https://squeekrunner.app/whitelist/"
+ALLOWED_ORIGINS = "https://squeekrunner.app,https://www.squeekrunner.app"
 ENTRY_DEADLINE = ""
 SNAPSHOT_AT = ""
 
 [[d1_databases]]
 binding = "DB"
 database_name = "squeekrunner"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "fbd3bd89-bca5-4f13-bef8-85b7af869883"
 migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
@@ -32,3 +32,7 @@ new_sqlite_classes = ["TelemetryCollector"]
 
 [triggers]
 crons = ["* * * * *"]
+
+[[routes]]
+pattern = "api.squeekrunner.app"
+custom_domain = true
