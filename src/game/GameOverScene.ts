@@ -39,12 +39,12 @@ export class GameOverScene extends Phaser.Scene {
 
     // Top Header: Kicker (y = 50) and Title (y = 80)
     const kickerText = result.newBest ? '★ NEW ALL-TIME RECORD! ★' : 'ONE MORE RUN?';
-    label(this, 480, 50, kickerText, 15, result.newBest ? '#ffcf75' : '#c4ef6e', true)
+    const kicker = label(this, 480, 50, kickerText, 15, result.newBest ? '#ffcf75' : '#c4ef6e', true)
       .setOrigin(0.5)
       .setFontStyle('bold')
       .setDepth(10);
 
-    label(this, 480, 80, 'SMALL PAWS. BIG TRY.', 32)
+    const title = label(this, 480, 80, 'SMALL PAWS. BIG TRY.', 32)
       .setOrigin(0.5)
       .setFontStyle('bold')
       .setDepth(10);
@@ -147,13 +147,13 @@ export class GameOverScene extends Phaser.Scene {
     const button = this.add.rectangle(480, 348, 280, 48, COLORS.lime)
       .setInteractive({ useHandCursor: true })
       .setDepth(15);
-    label(this, 480, 348, 'RUN AGAIN  →', 22, '#131b27')
+    const buttonText = label(this, 480, 348, 'RUN AGAIN  →', 22, '#131b27')
       .setOrigin(0.5)
       .setFontStyle('bold')
       .setDepth(16);
 
     // Bottom hints
-    label(this, 480, 442, 'SPACE / ↑ / TAP TO RESTART', 18, '#c4ef6e', true)
+    const hint = label(this, 480, 442, 'SPACE / ↑ / TAP TO RESTART', 18, '#c4ef6e', true)
       .setOrigin(0.5)
       .setDepth(12);
     label(
@@ -167,27 +167,6 @@ export class GameOverScene extends Phaser.Scene {
       '#8b9ba6',
     ).setOrigin(0.5).setDepth(12);
 
-    // Ranked run: show the server's verdict (its score is the only one that counts for the whitelist).
-    if (result.ranked && this.context.submission) {
-      const verdict = label(this, 480, 398, 'VERIFYING RUN WITH THE SERVER…', 15, '#81cce4', true)
-        .setOrigin(0.5).setDepth(16);
-      void this.context.submission.then(outcome => {
-        if (!verdict.active) return;
-        if (outcome.status === 'verified' && outcome.eligible) {
-          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · ${outcome.coins}/${CONFIG.coins.count} · YOU QUALIFY · APPLY FOR THE WHITELIST →`).setColor('#ffcf75')
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', (_p: unknown, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-              event.stopPropagation();
-              window.location.assign(new URL('../whitelist/', window.location.href).href);
-            });
-        } else if (outcome.status === 'verified') {
-          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · ${outcome.coins}/${CONFIG.coins.count} COINS · NOT QUALIFIED YET`).setColor('#c4ef6e');
-        } else {
-          verdict.setText(`RUN NOT VERIFIED · ${outcome.message.toUpperCase()}`.slice(0, 80)).setColor('#ec8a79');
-        }
-      });
-    }
-
     let restarting = false;
     const restart = (): void => {
       if (restarting) return;
@@ -195,6 +174,50 @@ export class GameOverScene extends Phaser.Scene {
       sound.playUiClick();
       this.scene.start('Run', { immediate: true });
     };
+    const apply = (): void => {
+      if (restarting) return;
+      restarting = true;
+      sound.playUiClick();
+      window.location.assign(new URL('../whitelist/#apply', window.location.href).href);
+    };
+    /**
+     * 'restart': the usual screen. 'hold': a ranked run with every coin is being checked, so a stray tap
+     * cannot skip a possible qualification. 'apply': the run qualified; the main button applies.
+     */
+    let mode: 'restart' | 'hold' | 'apply' = result.ranked && this.context.submission && result.coins === CONFIG.coins.count ? 'hold' : 'restart';
+    if (mode === 'hold') hint.setText('CHECKING YOUR RUN…');
+
+    // Ranked run: show the server's verdict (its score is the only one that counts for the whitelist).
+    if (result.ranked && this.context.submission) {
+      const verdict = label(this, 480, 398, 'VERIFYING RUN WITH THE SERVER…', 15, '#81cce4', true)
+        .setOrigin(0.5).setDepth(16);
+      void this.context.submission.then(outcome => {
+        if (!verdict.active) return;
+        if (outcome.status === 'verified' && outcome.eligible) {
+          mode = 'apply';
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · ${outcome.coins}/${CONFIG.coins.count} COINS · YOU QUALIFY!`).setColor('#ffcf75');
+          this.showApplyButton(button, buttonText, apply);
+          kicker.setText('★ WHITELIST QUALIFIED ★').setColor('#ffcf75');
+          title.setText('SMALL PAWS. BIG WIN.');
+          hint.setText('↻ RUN AGAIN  ·  R').setFontSize(16).setColor('#c4ef6e').setDepth(13)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', () => hint.setColor('#f4f1df'))
+            .on('pointerout', () => hint.setColor('#c4ef6e'))
+            .on('pointerdown', (_p: unknown, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); restart(); });
+          this.add.rectangle(hint.x, hint.y, hint.width + 36, hint.height + 12, COLORS.background, 0.85).setStrokeStyle(1, 0x3d5446).setDepth(12);
+          const status = document.getElementById('status');
+          if (status) status.textContent = `You qualify for the whitelist with ${outcome.score} points and all coins. Press Enter to apply, or R to run again.`;
+          return;
+        }
+        mode = 'restart';
+        hint.setText('SPACE / ↑ / TAP TO RESTART');
+        if (outcome.status === 'verified') {
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · ${outcome.coins}/${CONFIG.coins.count} COINS · NOT QUALIFIED YET`).setColor('#c4ef6e');
+        } else {
+          verdict.setText(`RUN NOT VERIFIED · ${outcome.message.toUpperCase()}`.slice(0, 80)).setColor('#ec8a79');
+        }
+      });
+    }
 
     const key = (event: KeyboardEvent): void => {
       sound.unlock();
@@ -207,7 +230,9 @@ export class GameOverScene extends Phaser.Scene {
         link.click();
         this.time.delayedCall(1000, () => { URL.revokeObjectURL(url); downloads.delete(url); });
       }
-      if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp')) restart();
+      if (!event.repeat && mode === 'apply' && ['Space', 'ArrowUp', 'Enter', 'NumpadEnter'].includes(event.code)) apply();
+      else if (!event.repeat && mode === 'apply' && event.code === 'KeyR') restart();
+      else if (!event.repeat && mode === 'restart' && (event.code === 'Space' || event.code === 'ArrowUp')) restart();
       if (!event.repeat && event.code === 'KeyM') {
         const isMuted = sound.toggleMute();
         this.muteBtn.setMuted(isMuted);
@@ -216,13 +241,13 @@ export class GameOverScene extends Phaser.Scene {
 
     const pointer = (): void => {
       sound.unlock();
-      restart();
+      if (mode === 'restart') restart(); // in 'apply' mode only the buttons act
     };
     this.input.on('pointerdown', pointer);
     this.input.keyboard?.on('keydown', key);
 
-    button.on('pointerover', () => button.setFillStyle(0xd8ffa0));
-    button.on('pointerout', () => button.setFillStyle(COLORS.lime));
+    button.on('pointerover', () => { if (mode !== 'apply') button.setFillStyle(0xd8ffa0); });
+    button.on('pointerout', () => { if (mode !== 'apply') button.setFillStyle(COLORS.lime); });
     onSceneExit(this.events, () => {
       this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', key);
@@ -234,6 +259,39 @@ export class GameOverScene extends Phaser.Scene {
     if (status) {
       status.textContent = `Game over. Score ${result.score}. Best ${this.context.records.best}. Press Space to restart.`;
     }
+  }
+
+  /** The run qualified: the main button turns into a glowing golden "apply" call to action. */
+  private showApplyButton(button: Phaser.GameObjects.Rectangle, text: Phaser.GameObjects.Text, apply: () => void): void {
+    const x = button.x, y = button.y, w = 420, h = 58;
+    button.setVisible(false).disableInteractive();
+    text.setVisible(false);
+    const glow = this.add.rectangle(x, y, w + 26, h + 22, COLORS.gold, 0.35).setDepth(14);
+    const halo = this.add.rectangle(x, y, w + 60, h + 30, COLORS.gold, 0.12).setDepth(13);
+    const cta = this.add.rectangle(x, y, w, h, COLORS.gold).setStrokeStyle(3, 0xfff1c4).setDepth(15)
+      .setInteractive({ useHandCursor: true });
+    const ctaText = label(this, x, y, 'APPLY FOR THE WHITELIST  →', 23, '#131b27').setOrigin(0.5).setFontStyle('bold').setDepth(16);
+    const shine = this.add.rectangle(x - w / 2, y, 26, h - 6, 0xffffff, 0.35).setAngle(18).setDepth(16);
+    const mask = this.make.graphics({}, false).fillRect(x - w / 2, y - h / 2, w, h);
+    shine.setMask(mask.createGeometryMask());
+    this.tweens.add({ targets: [cta, ctaText], scale: 1.045, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: glow, alpha: 0.08, scaleX: 1.06, scaleY: 1.25, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: halo, alpha: 0.02, scaleX: 1.1, scaleY: 1.4, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: shine, x: x + w / 2, duration: 1100, repeat: -1, repeatDelay: 900, ease: 'Cubic.easeInOut' });
+    cta.on('pointerover', () => cta.setFillStyle(0xffe2a3));
+    cta.on('pointerout', () => cta.setFillStyle(COLORS.gold));
+    cta.on('pointerdown', (_p: unknown, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); apply(); });
+    // Celebration: a burst of golden sparks around the button.
+    for (let i = 0; i < 36; i++) {
+      const spark = this.add.image(x + (Math.random() - 0.5) * w, y, i % 3 ? TEXTURES.dust : TEXTURES.star)
+        .setScale(i % 3 ? 1.3 : 0.7).setDepth(17).setTint(COLORS.gold);
+      const angle = Math.random() * Math.PI * 2, distance = 50 + Math.random() * 120;
+      this.tweens.add({
+        targets: spark, x: spark.x + Math.cos(angle) * distance, y: y + Math.sin(angle) * distance * 0.6,
+        alpha: 0, scale: 0.2, angle: 180, duration: 700 + Math.random() * 600, ease: 'Cubic.easeOut', onComplete: () => spark.destroy(),
+      });
+    }
+    sound.playCollectNut();
   }
 
   update(): void {

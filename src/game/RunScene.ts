@@ -415,8 +415,22 @@ export class RunScene extends Phaser.Scene {
       .setColor(s.coins.missed ? '#ec8a79' : '#ffcf75');
   }
 
+  /**
+   * Everything that scrolls is drawn from the same simulated travel plus the same sub-tick offset, so
+   * obstacles, collectibles and the ground move in lockstep. The simulation itself runs at 60 Hz; on
+   * displays faster than that (or with uneven frames) drawing raw tick positions made obstacles judder
+   * against a ground that scrolled per frame.
+   */
   private renderObjects(): void {
     const s = this.driver.sim;
+    const fraction = s.gameOver ? 0 : this.ranked
+      ? Math.min(1, Math.max(0, this.ranked.timeline.exactTick() - s.tick))
+      : this.driver.fraction();
+    const shift = Math.trunc(s.speed / TICK_HZ) * fraction; // milli-px still to travel before the next tick
+    const scroll = (s.travel + shift) / UNIT;
+    this.bgFar.tilePositionX = scroll * 0.12;
+    this.bgMid.tilePositionX = scroll * 0.38;
+    this.ground.tilePositionX = scroll;
     const variants = [TEXTURES.obstacleCrate, TEXTURES.obstacleSprocket, TEXTURES.obstacleBattery];
     const present = new Set(s.obstacles.map(o => o.id));
     for (const [id, sprite] of this.obstacleSprites) {
@@ -429,15 +443,15 @@ export class RunScene extends Phaser.Scene {
           .setDisplaySize(obstacle.width, obstacle.height).setDepth(3);
         this.obstacleSprites.set(obstacle.id, sprite);
       }
-      sprite.x = obstacle.x / UNIT;
+      sprite.x = (obstacle.x - shift) / UNIT;
     }
     if (s.nut) {
       this.nutSprite ??= this.add.sprite(0, CONFIG.groundY - CONFIG.bonus.floatHeight, TEXTURES.nut).setDepth(4);
-      this.nutSprite.x = s.nut.x / UNIT;
+      this.nutSprite.x = (s.nut.x - shift) / UNIT;
     } else { this.nutSprite?.destroy(); this.nutSprite = null; }
     if (s.coins.active) {
       this.coinSprite ??= this.add.image(0, COIN_Y / UNIT, TEXTURES.coin).setDepth(4);
-      this.coinSprite.x = coinX(s, s.coins.active) / UNIT;
+      this.coinSprite.x = (coinX(s, s.coins.active) - shift) / UNIT;
     } else { this.coinSprite?.destroy(); this.coinSprite = null; }
   }
 
@@ -565,10 +579,7 @@ export class RunScene extends Phaser.Scene {
     this.renderObjects();
     if (this.driver.sim.gameOver) return;
 
-    // Parallax scrolling
-    this.bgFar.tilePositionX += this.speed * 0.12 * dt;
-    this.bgMid.tilePositionX += this.speed * 0.38 * dt;
-    this.ground.tilePositionX += this.speed * dt;
+    // Parallax scrolling is drawn in renderObjects() from the simulated travel.
 
     // Spinning hamster wheel
     this.wheel.rotation += ((view.rpm / 60) * Math.PI * 2 * dt);
