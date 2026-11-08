@@ -12,18 +12,34 @@ export { MAX_PAD, MAX_WIDTH, viewWidth } from './viewSize';
 /** Resizes the game to the parent's aspect (FIT then fills it without bars up to MAX_WIDTH). */
 export function bindViewport(game: Phaser.Game, parent: HTMLElement): () => void {
   let frame = 0;
-  const apply = (): void => {
+  const timers: ReturnType<typeof setTimeout>[] = [];
+  const fit = (): void => {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
       const width = viewWidth(parent.clientWidth, parent.clientHeight);
       if (game.scale.gameSize.width !== width) game.scale.setGameSize(width, CONFIG.height);
+      game.scale.refresh(); // re-measure the parent: phones report the rotated size late
     });
   };
+  // Mobile browsers (especially in-app ones) settle the new size after a rotation in stages.
+  const apply = (): void => {
+    fit();
+    while (timers.length) clearTimeout(timers.pop());
+    for (const ms of [120, 350, 800]) timers.push(setTimeout(fit, ms));
+  };
+  const viewport = window.visualViewport;
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', apply);
+  viewport?.addEventListener('resize', apply);
+  const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(apply) : null;
+  observer?.observe(parent);
   game.events.once(Phaser.Core.Events.READY, apply);
   apply();
-  return () => { window.removeEventListener('resize', apply); window.removeEventListener('orientationchange', apply); };
+  return () => {
+    window.removeEventListener('resize', apply); window.removeEventListener('orientationchange', apply);
+    viewport?.removeEventListener('resize', apply); observer?.disconnect();
+    while (timers.length) clearTimeout(timers.pop());
+  };
 }
 
 /** Keeps the 960-wide design centred in the camera, now and on every resize. */
