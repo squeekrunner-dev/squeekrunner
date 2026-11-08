@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Whitepaper SqueekRunner — как настоящее колесо меняет игру</title>
+  <meta name="description" content="Whitepaper игры SqueekRunner: модель скорости, телеметрия Squeekchain, подтверждённые блок-бонусы, архитектура, ограничения и планы развития." />
+  <meta property="og:title" content="SqueekRunner — whitepaper игры" />
+  <meta property="og:description" content="От настоящего колеса до двойного прыжка: механика, архитектура и честные ограничения SqueekRunner." />
+  <meta property="og:type" content="article" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:site_name" content="SqueekRunner" />
+  <link rel="icon" type="image/svg+xml" href="../site/favicon.svg" />
+  <link rel="stylesheet" href="../src/site/site.css" />
+</head>
+<body>
+  <a class="skip-link" href="#document">К тексту whitepaper</a>
+  <header class="site-header wrap">
+    <a class="brand" href="../" aria-label="SqueekRunner — главная"><img src="../site/favicon.svg" width="38" height="38" alt="" /><span>Squeek<span class="brand-light">Runner</span></span></a>
+    <nav aria-label="Основная навигация"><a href="../#how">Как играть</a><a href="./" aria-current="page">Whitepaper</a><a class="nav-play" href="../play/">Играть <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main class="wrap" id="document">
+    <div class="paper-header">
+      <p class="eyebrow">SqueekRunner / Whitepaper игры</p>
+      <h1>От колеса<br /><em>до большого забега.</em></h1>
+      <p class="lead">Как превратить живой ритм в маленькую игру, которую хочется запустить ещё раз.</p>
+      <p class="paper-meta">Версия 0.1 · MVP · 8 ноября 2026</p>
+    </div>
+    <div class="paper-layout">
+      <nav class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">В этом документе</h2>
+        <ol><li><a href="#abstract">Аннотация</a></li><li><a href="#idea">Идея</a></li><li><a href="#squeekchain">Что такое Squeekchain</a></li><li><a href="#mechanics">Механика забега</a></li><li><a href="#data-modes">Режимы данных</a></li><li><a href="#blocks">Блоки и орехи</a></li><li><a href="#architecture">Архитектура</a></li><li><a href="#limits">Честность и ограничения</a></li><li><a href="#roadmap">Дорожная карта</a></li><li><a href="#sources">Источники</a></li></ol>
+      </nav>
+      <article class="paper" aria-label="Whitepaper SqueekRunner">
+        <section id="abstract">
+          <p class="eyebrow">01 / Аннотация</p>
+          <h2>Живой ритм. Личный рекорд.</h2>
+          <p>SqueekRunner — бесплатный браузерный endless runner. Игрок управляет хомяком: перепрыгивает ящики, собирает золотые орехи и старается пробежать дальше. Скорость мира зависит от RPM настоящего колеса Squeekchain, а рост подтверждённой высоты Squeek-блоков создаёт бонусы.</p>
+          <p>Игра работает и при неподвижном колесе, и при недоступной телеметрии. Для старта не нужны аккаунт, кошелёк или установка. Этот документ описывает <strong>нашу игру</strong>; устройство сети описано в <a href="https://docs.squeekchain.com/whitepaper/">официальном whitepaper Squeekchain v1.1</a>.</p>
+        </section>
+        <section id="idea">
+          <p class="eyebrow">02 / Идея</p>
+          <h2>Почувствовать данные в прыжке.</h2>
+          <p>Число оборотов само по себе мало что говорит игроку. Но когда колесо набирает темп, а ящики приближаются быстрее, связь с физическим миром становится ощутимой. SqueekRunner переводит телеметрию в решение: когда прыгнуть, где использовать второй прыжок, стоит ли рисковать ради ореха.</p>
+          <p>Основной цикл остаётся аркадным: забег → столкновение → результат → новая попытка. Телеметрия меняет темп внутри этого цикла. Базовая скорость сохраняет полноценную игру, когда колесо стоит; отдельный DEMO-режим позволяет познакомиться с механикой без ожидания движения или нового блока.</p>
+        </section>
+        <section id="squeekchain">
+          <p class="eyebrow">03 / Контекст</p>
+          <h2>Что стоит за колесом.</h2>
+          <p>По whitepaper Squeekchain v1.1, физическое колесо <strong>WHEELY9000</strong> считает проходы магнита мимо датчика. Один проход — одна единица работы. Это физическая работа колеса, а не вычисление CPU-хешей. Работа собирается в 10-минутные раунды, проходит подписанный путь Oracle/Reporter и учитывается контрактом Core.</p>
+          <p>RPM — текущий темп колеса. Squeek-блок — результат накопленной работы с учётом сложности. Поэтому высокий RPM не означает мгновенного подтверждения блока. Для игры эти сигналы независимы: RPM управляет скоростью, подтверждённая высота — орехами.</p>
+          <p>В экосистеме Squeekchain существуют SQK и коллекция из 9&nbsp;999 Squeeks с уровнями 1–10. Награды сети относятся к staking-аккаунтам. SqueekRunner читает публичную телеметрию; участие в стейкинге, владение NFT и операции с токеном для игры не требуются. Очки и орехи в игре не являются SQK.</p>
+          <p class="small-note">Факты сверены по whitepaper v1.1 и технической проверке от 7 ноября 2026. Проверенный deployment — Sepolia, chain ID 11155111, installation <code>sepolia-core-sepolia-20261103</code>. Это описание проверенной версии, а не обещание неизменности внешней сети. <a href="#sources">Источники →</a></p>
+        </section>
+        <section id="mechanics">
+          <p class="eyebrow">04 / Игровая механика</p>
+          <h2>Быстрее колесо — быстрее мир.</h2>
+          <p>Хомяк остаётся у левого края, мир движется навстречу. Space, ↑, клик или тап запускает прыжок; повторное действие в воздухе даёт второй прыжок. Столкновение с ящиком без щита завершает забег. Space или тап на экране результата сразу начинает следующий.</p>
+          <div class="formula" aria-label="Формулы целевой скорости и сглаживания">
+            <code>target = base(distance) × multiplier(RPM)</code>
+            <code>base(d) = 290 + 110 × clamp(d / 1800, 0, 1)</code>
+            <code>multiplier(r) = 1 + 1.7 × clamp(r / 98.316, 0, 1)</code>
+            <code>α = 1 − exp(−Δt / 1.4)</code>
+            <code>speed ← speed + (target − speed) × α</code>
+          </div>
+          <p>При 0 RPM множитель равен 1. При исторически наблюдавшемся пике около 98.3 RPM он достигает 2.7 и больше не растёт. Это калибровка игрового баланса, а не физиологический предел хомяка. Экспоненциальное сглаживание с постоянной времени 1.4 с убирает резкие скачки скорости; после потери данных скорость плавно возвращается к базовой.</p>
+          <p>Сложность растёт с дистанцией: базовая скорость увеличивается, интервалы между препятствиями сокращаются. Счёт — целая часть игровой дистанции, умноженной на 10, плюс собранные бонусы. Игровые метры не являются измеренной дистанцией настоящего хомяка.</p>
+          <div class="table-wrap"><table>
+            <caption>Константы MVP из src/config.ts; соответствие проверяется тестом при сборочных проверках.</caption>
+            <thead><tr><th scope="col">Параметр</th><th scope="col">Значение</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Базовая скорость → максимум</th><td><span data-config="speed.base">290</span> → <span data-config="speed.maximumBase">400</span> px/s</td></tr>
+              <tr><th scope="row">Дистанция разгона базы</th><td><span data-config="speed.rampDistance">1800</span> игровых м</td></tr>
+              <tr><th scope="row">Калибровочный пик</th><td><span data-config="speed.peakRpm">98.316</span> RPM</td></tr>
+              <tr><th scope="row">Максимальный множитель</th><td><span data-config="speed.maximumMultiplier">2.7</span>×</td></tr>
+              <tr><th scope="row">Постоянная EMA</th><td><span data-config="speed.smoothingSeconds">1.4</span> с</td></tr>
+              <tr><th scope="row">Гравитация</th><td><span data-config="gravity">1800</span> px/s²</td></tr>
+              <tr><th scope="row">Первый / второй прыжок</th><td><span data-config="jumpVelocity">-630</span> / <span data-config="airJumpVelocity">-550</span> px/s</td></tr>
+              <tr><th scope="row">Буфер ввода / coyote time</th><td><span data-config="jumpBufferMs">120</span> / <span data-config="coyoteMs">90</span> ms</td></tr>
+              <tr><th scope="row">Первое препятствие</th><td>Через <span data-config="obstacles.firstDelaySeconds">2.4</span> с</td></tr>
+              <tr><th scope="row">Интервал препятствий</th><td><span data-config="obstacles.initialGapSeconds">1.9</span> → <span data-config="obstacles.minimumGapSeconds">1.15</span> с, плюс 0–<span data-config="obstacles.randomGapSeconds">0.5</span> с</td></tr>
+              <tr><th scope="row">Дистанция уплотнения препятствий</th><td><span data-config="obstacles.rampDistance">1400</span> игровых м</td></tr>
+              <tr><th scope="row">Масштаб / очки за метр</th><td><span data-config="pixelsPerMetre">24</span> px/м; <span data-config="pointsPerMetre">10</span> очков/м</td></tr>
+              <tr><th scope="row">Золотой орех</th><td>+<span data-config="bonus.points">150</span> очков; щит <span data-config="bonus.shieldSeconds">12</span> с</td></tr>
+              <tr><th scope="row">Защита после срабатывания щита</th><td><span data-config="bonus.shieldInvulnerabilityMs">550</span> ms</td></tr>
+            </tbody>
+          </table></div>
+          <p>Щит поглощает одно столкновение. Пауза включается через P или Escape; при скрытии вкладки забег также приостанавливается. Для продолжения нужен Space или тап.</p>
+        </section>
+        <section id="data-modes">
+          <p class="eyebrow">05 / Состояние данных</p>
+          <h2>Тишина тоже часть игры.</h2>
+          <ul>
+            <li><strong>LIVE.</strong> Свежая здоровая телеметрия, RPM &gt; 0. Колесо ускоряет мир.</li>
+            <li><strong>WHEEL IDLE.</strong> Свежая здоровая телеметрия, RPM = 0. Нормальная базовая скорость.</li>
+            <li><strong>NO DATA.</strong> Stale, null measurement, COUNTER_FAULT, unavailable, некорректный ответ, сетевая ошибка или истёкший срок чтения. Целевая скорость возвращается к базе. Числовой RPM скрыт; сохранённый блок явно помечен как последний известный.</li>
+          </ul>
+          <p><code>measurement.rpmMilli / 1000</code> переводит milli-RPM в RPM. <code>coreStatus: ACTIVE</code> возможен и при нулевом RPM. Эти статусы описывают устройство и данные, а не сон или самочувствие животного.</p>
+          <p><a href="../play/?demo=1">DEMO-режим</a> использует отдельный симулятор: 26-секундный цикл, первые 6 секунд без движения, затем плавный подъём и спад RPM. Блок растёт каждые 16 секунд. В игре видна метка DEMO, записи рекордов отделены от LIVE, сетевые запросы к Squeekchain не выполняются.</p>
+        </section>
+        <section id="blocks">
+          <p class="eyebrow">06 / Подтверждённые блоки</p>
+          <h2>Новый блок. Один золотой орех.</h2>
+          <p>Бонус зависит только от <code>builder.anchor.blockHeight</code>. Высоты передаются строками и читаются как BigInt, чтобы не потерять точность выше безопасного диапазона Number.</p>
+          <ol>
+            <li>Первый полученный confirmed anchor устанавливает baseline, без награды.</li>
+            <li>Рост на один или несколько блоков создаёт <strong>один</strong> орех и уведомление «Squeek block #N!». Пропущенные блоки не создают лавину наград.</li>
+            <li>Смена <code>installationId</code> или падение высоты сбрасывает baseline без бонуса; несобранный старый орех удаляется.</li>
+            <li><code>builder.projected.blockHeight</code> — optimistic/provisional. Его можно видеть как подсказку, но он не приносит орехов.</li>
+          </ol>
+          <p>На экране не больше одного несобранного ореха. Меню и пауза не накапливают награды; первый ответ после продолжения задаёт новую точку отсчёта. Устаревший cached snapshot не становится baseline нового забега. Уже собранные очки и щит при сбросе цепочки не откатываются.</p>
+          <p>Свежесть измерения колеса и подтверждённый anchor независимы: новый валидный HTTP-ответ может обновить высоту, даже когда RPM уже stale. Устаревший RPM при этом не ускоряет игру. Неподтверждённая проекция в наградах не участвует никогда.</p>
+        </section>
+        <section id="architecture">
+          <p class="eyebrow">07 / Архитектура</p>
+          <h2>От датчика к игровому кадру.</h2>
+          <figure class="flow">
+            <svg viewBox="0 0 520 430" role="img" aria-labelledby="flow-title flow-desc">
+              <title id="flow-title">Поток данных SqueekRunner</title>
+              <desc id="flow-desc">Колесо передаёт текущие измерения в API. Накопленная работа проходит раунды и Oracle/Reporter в Core, подтверждённый anchor также попадает в API. Клиент проверяет ответ; RPM меняет скорость, confirmed anchor создаёт орехи, результат сохраняется локально.</desc>
+              <rect class="flow-box" x="10" y="10" width="500" height="58" rx="8" /><text class="flow-text" x="260" y="35" text-anchor="middle">WHEELY9000 · физическое колесо</text><text class="flow-note" x="260" y="54" text-anchor="middle">измерения и накопленная работа</text>
+              <path class="flow-arrow" d="M380 68v20m-5-5 5 5 5-5M140 68v109m-5-5 5 5 5-5" />
+              <rect class="flow-box" x="254" y="90" width="256" height="64" rx="8" /><text class="flow-text" x="382" y="117" text-anchor="middle">Раунды → Core</text><text class="flow-note" x="382" y="138" text-anchor="middle">Oracle / Reporter · confirmed anchor</text>
+              <text class="flow-note" x="122" y="122" text-anchor="end">текущий RPM</text><path class="flow-arrow" d="M382 154v23m-5-5 5 5 5-5" />
+              <rect class="flow-box" x="10" y="180" width="500" height="58" rx="8" /><text class="flow-text" x="260" y="205" text-anchor="middle">Публичный API · /v1/status</text><text class="flow-note" x="260" y="224" text-anchor="middle">браузерный GET · CORS · без кошелька</text>
+              <path class="flow-arrow" d="M260 238v22m-5-5 5 5 5-5" />
+              <rect class="flow-box" x="10" y="262" width="500" height="58" rx="8" /><text class="flow-text" x="260" y="287" text-anchor="middle">Клиент: парсер и проверка свежести</text><text class="flow-note" x="260" y="306" text-anchor="middle">LIVE / WHEEL IDLE / NO DATA</text>
+              <path class="flow-arrow" d="M260 320v22m-5-5 5 5 5-5" />
+              <rect class="flow-box" x="10" y="344" width="500" height="72" rx="8" /><text class="flow-text" x="260" y="370" text-anchor="middle">SqueekRunner · твой забег</text><text class="flow-note" x="260" y="389" text-anchor="middle">RPM → скорость · anchor → орех</text><text class="flow-note" x="260" y="405" text-anchor="middle">результат → localStorage</text>
+            </svg>
+            <figcaption>Упрощённая схема. Игровой клиент получает API-ответ; сам он не подтверждает работу и не отправляет транзакции.</figcaption>
+          </figure>
+          <p>Приложение — статический клиент на TypeScript, Vite и Phaser. Главная, игра и этот документ собираются как три HTML-страницы. Лендинг загружает небольшой виджет; игровой движок нужен только на <a href="../play/">странице игры</a>. Whitepaper читается без JavaScript.</p>
+          <p>Используется <code>GET https://api.squeekchain.com/v1/status</code> без query-параметров, с <code>credentials: 'omit'</code>. Проверенный read API отдаёт CORS <code>Access-Control-Allow-Origin: *</code>, поэтому собственный прокси или бэкенд не нужен. Парсер проверяет схему, перечисления, timestamps, milli-RPM и uint64-высоты; некорректный ответ становится NO DATA.</p>
+          <p>Следующее чтение начинается через <span data-config="telemetry.pollMs">1500</span> ms после завершения предыдущего. Timeout — <span data-config="telemetry.timeoutMs">8000</span> ms. Ошибки вызывают экспоненциальный backoff до <span data-config="telemetry.maxBackoffMs">60000</span> ms; более длинный Retry-After соблюдается. По технической проверке API лимит status — 30 запросов/с на IP, burst 60; превышение отвечает 429. Это внешний лимит, а не гарантированная доступность.</p>
+          <p>Успешное чтение устаревает через <span data-config="telemetry.maxReadAgeMs">12000</span> ms. Отдельно проверяются freshness и timestamps измерения: максимум <span data-config="telemetry.maxMeasurementAgeMs">120000</span> ms или меньше, если API задаёт меньший staleAfterSeconds. При скрытии страницы polling приостанавливается; отменённые запросы не публикуют опоздавшие ответы.</p>
+          <p>Интерфейс источника общий для LIVE и DEMO. Парсер, детектор блоков, скорость, рекорды и логика виджета тестируются отдельно от Phaser. Подписки сцены снимаются при shutdown и destroy. Нет внешних CDN-шрифтов, трекеров и аналитики; единственный внешний запрос приложения — чтение Squeekchain в LIVE.</p>
+        </section>
+        <section id="limits">
+          <p class="eyebrow">08 / Честность и ограничения</p>
+          <h2>Только игра. Без обещаний дохода.</h2>
+          <ul>
+            <li><strong>Локальные рекорды.</strong> Общий лучший результат и результат по стартовому блоку хранятся в localStorage, отдельно для LIVE и DEMO. Сохраняются последние 100 блоковых записей. Если стартовый блок неизвестен — берётся первый доступный во время игры; если его нет совсем — только общий рекорд.</li>
+            <li><strong>Нет античита.</strong> Клиент и его хранилище можно изменить. Результаты не являются доказательством честного забега, не синхронизируются между устройствами и не участвуют в общем рейтинге.</li>
+            <li><strong>Нет токена SqueekRunner и выплат.</strong> Орехи и очки не обмениваются на SQK, NFT или деньги. Игра не отправляет транзакции, не требует кошелёк и не участвует в распределении наград сети.</li>
+            <li><strong>API может молчать.</strong> Новое измерение не гарантируется каждый опрос. Подтверждение работы происходит отдельно от мгновенного RPM; возможны задержки и смена installation. При сбое остаётся базовая скорость.</li>
+            <li><strong>Разный темп — разные условия.</strong> LIVE-забеги могут проходить при разном RPM. Личный рекорд — аркадная цель, не стандартизированное соревнование.</li>
+            <li><strong>Хранилище может быть запрещено.</strong> При отказе localStorage рекорды живут только в памяти текущей страницы. Мобильным игрокам рекомендована горизонтальная ориентация.</li>
+          </ul>
+        </section>
+        <section id="roadmap">
+          <p class="eyebrow">09 / Дальше</p>
+          <h2>Куда можно добежать. <span class="planned">Планы</span></h2>
+          <p>Ниже — направления развития, а не доступные функции или обещания сроков.</p>
+          <ul><li><strong>Онлайн-лидерборд.</strong> Потребует отдельного сервера, верификации забегов и продуманного античита.</li><li><strong>Новые режимы.</strong> Испытания с фиксированными условиями и маркированные повторы телеметрии для сравнимых забегов.</li><li><strong>Моды и оформление.</strong> Дополнительные препятствия, персонажи и варианты визуальной темы без потери связи с колесом.</li></ul>
+          <p class="callout">Уже сейчас доступны обычный забег, двойной прыжок, LIVE и DEMO, блок-бонусы и локальные рекорды. <a href="../play/">Проверить на своих лапках →</a></p>
+        </section>
+        <section id="sources">
+          <p class="eyebrow">10 / Источники</p>
+          <h2>Откуда взяты факты.</h2>
+          <p>Факты о сети ограничены проверенной технической сводкой проекта от 7 ноября 2026, основанной на публичных документах и read API. Числа игрового баланса берутся из <code>src/config.ts</code> и сверяются автоматическим тестом с таблицей выше.</p>
+          <ol><li><a href="https://docs.squeekchain.com/whitepaper/">Официальный whitepaper Squeekchain</a> — версия v1.1, WHEELY9000, работа, раунды и модель сети.</li><li><a href="https://docs.squeekchain.com/developers/api/">Документация публичного API</a> — контракт ответа и ограничения чтений.</li><li><a href="https://docs.squeekchain.com/assets/deployments/sepolia.json">Deployment Sepolia</a> — опубликованные параметры развёртывания.</li><li><a href="https://squeekchain.com/">Сайт Squeekchain</a> — контекст экосистемы.</li></ol>
+          <p><a href="../#github">GitHub проекта — ссылка появится после публикации репозитория.</a> SqueekRunner не заявляет официального партнёрства или одобрения со стороны Squeekchain.</p>
+        </section>
+      </article>
+    </div>
+  </main>
+  <footer class="site-footer wrap"><a class="brand footer-brand" href="../">SqueekRunner</a><p>Маленькая игра с живым ритмом.</p><nav aria-label="Ссылки проекта"><a href="../play/">Играть</a><a href="#document">Наверх ↑</a><a href="https://docs.squeekchain.com/">Документация Squeekchain ↗</a><a href="../#github">GitHub · скоро</a></nav></footer>
+</body>
+</html>

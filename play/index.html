@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Играть — SqueekRunner</title>
+    <link rel="icon" type="image/svg+xml" href="../site/favicon.svg" />
+    <meta property="og:title" content="SqueekRunner — маленькие лапки, большой забег" />
+    <meta property="og:description" content="Двойной прыжок, золотые орехи и темп настоящего колеса. Играй бесплатно в браузере." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta name="description" content="A free arcade runner paced by Squeekchain's real hamster wheel. Double jump, dodge crates and catch confirmed-block bonuses." />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; height: 100%; background: #131b27; overflow: hidden; }
+      #game { width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
+      canvas { display: block; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .rotate { display: none; }
+      .home-link { position: fixed; z-index: 50; left: 8px; bottom: 5px; padding: 4px 8px; color: #f4f1df; background: #131b27; font: 12px system-ui; border-radius: 4px; text-decoration: none; }
+      .home-link:focus-visible { outline: 3px solid #c4ef6e; outline-offset: 2px; }
+      @media (orientation: portrait) and (max-width: 700px) {
+        .rotate { display: block; position: fixed; bottom: 10%; left: 0; width: 100%; text-align: center; color: #8b9ba6; font: 15px system-ui; pointer-events: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game" role="application" aria-label="SqueekRunner. Space, up arrow or tap to jump. Press again in the air to double jump. P pauses."></div>
+    <p id="status" class="sr-only" aria-live="polite">Connecting to the wheel.</p>
+    <p class="rotate">Turn your phone sideways for a bigger run.</p>
+    <noscript>SqueekRunner needs JavaScript to play.</noscript>
+    <a class="home-link" href="../" lang="ru" aria-label="На сайт SqueekRunner">← На сайт</a>
+    <script type="module" src="../src/main.ts"></script>
+  </body>
+</html>
