@@ -268,3 +268,26 @@ was sent by the T009 author.
 - [OpenZeppelin Ownable2Step](https://docs.openzeppelin.com/contracts/5.x/api/access)
 - [StandardMerkleTree and double-hashed leaves](https://github.com/OpenZeppelin/merkle-tree)
 - [Hardhat: local Solidity compiler](https://v2.hardhat.org/hardhat-runner/docs/other-guides/using-custom-solc)
+
+## Provably fair raffle (`scripts/raffle.mjs`)
+
+The 700 raffle winners are drawn so that anyone can reproduce the result:
+
+1. **Close entries** on the server and export them: `GET /v1/admin/export?format=csv` → `entries.csv` (`address,allowance`, one ticket per address).
+2. **Commit** before the draw block exists — choose a Sepolia block well in the future (for example current height + 7,200 ≈ 1 day):
+   ```sh
+   npm run raffle -- commit entries.csv <targetBlock> commit.json
+   ```
+   Publish `entries.csv` and `commit.json` (entry count, Merkle root of the entries, target block, algorithm) in the repository and on social channels **before** that block is mined.
+3. **Draw** once the target block is final (wait for finality, about 15 minutes after it is mined). Pass the block hash from a block explorer, or `rpc` with `SEPOLIA_RPC_URL` set in `.env` (the script then refuses a block that is not finalized yet):
+   ```sh
+   npm run raffle -- draw entries.csv commit.json <blockHash|rpc> result.json
+   ```
+   This writes `result.json` and `result.winners.csv`.
+4. **Verify** (anyone):
+   ```sh
+   npm run raffle -- verify entries.csv commit.json <blockHash|rpc> result.json
+   ```
+5. **Allowlist:** combine `result.winners.csv` with the Twitter/X list (≤ 200 rows, `address,allowance`) into one CSV, then `npm run merkle -- allowlist.csv allowlist.json`, `setMerkleRoot`, `setPhase(1)`.
+
+Algorithm: canonical entry order is lowercase-address ascending; the entries' Merkle root (OpenZeppelin `StandardMerkleTree`, leaf `address`) is committed. Winners are chosen with a partial Fisher–Yates shuffle, `j = i + uniform(n − i)`, where `uniform` draws `keccak256(abi.encode(blockHash, entriesRoot, counter))` and uses rejection sampling, so every entry has exactly the same probability. If there are fewer than 700 entries, everyone wins. The organizers cannot predict the block hash when the commitment is published; a block proposer could in theory withhold a block to re-roll once, which is an accepted limitation for a free testnet raffle.
