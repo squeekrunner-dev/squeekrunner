@@ -173,25 +173,48 @@ export function createTextures(scene: Phaser.Scene): void {
     .fillRoundedRect(17, 44, 12, 8, 3);
   g.generateTexture(TEXTURES.hamsterFall, 64, 56);
 
-  // Hit Frame (collision / dizzy: cross eye, puffed cheeks, paws flailed)
+  // Hit Frame (collision / dizzy: slumped on ground, dizzy X eyes, drooping ears)
   g.clear();
-  // Body knocked slightly back
-  g.fillStyle(COLORS.furShadow).fillEllipse(30, 30, 42, 32);
-  g.fillStyle(COLORS.furMain).fillEllipse(30, 30, 40, 30);
-  g.fillStyle(COLORS.furBelly).fillEllipse(36, 34, 25, 20);
-  // Drooping ear
-  g.fillStyle(COLORS.furMain).fillCircle(22, 16, 8);
-  g.fillStyle(COLORS.pinkSoft).fillCircle(22, 16, 4.5);
-  // Dizzy eye (X mark)
+  // Tail
+  g.fillStyle(COLORS.furLight).fillCircle(9, 36, 5);
+  g.fillStyle(COLORS.pinkSoft).fillCircle(8, 36, 2.5);
+
+  // Body slumped slightly back
+  g.fillStyle(COLORS.furShadow).fillEllipse(32, 34, 44, 32);
+  g.fillStyle(COLORS.furMain).fillEllipse(32, 34, 42, 30);
+  g.fillStyle(COLORS.furLight).fillEllipse(28, 26, 28, 14);
+
+  // Big cream belly
+  g.fillStyle(COLORS.furBelly).fillEllipse(38, 37, 26, 20);
+
+  // Drooping ears
+  g.fillStyle(COLORS.furShadow).fillCircle(19, 20, 7);
+  g.fillStyle(COLORS.furMain).fillCircle(20, 19, 7.5);
+  g.fillStyle(COLORS.pinkSoft).fillCircle(20, 20, 4.5);
+
+  g.fillStyle(COLORS.furShadow).fillCircle(29, 17, 7);
+  g.fillStyle(COLORS.furMain).fillCircle(30, 16, 7.5);
+  g.fillStyle(COLORS.pinkSoft).fillCircle(31, 17, 4.5);
+
+  // Chubby dazed cheek & tiny nose
+  g.fillStyle(COLORS.furBelly).fillCircle(44, 36, 7);
+  g.fillStyle(COLORS.pinkSoft).fillCircle(47, 37, 2.5);
+
+  // Dizzy eye: prominent 'X' mark
   g.lineStyle(2.5, 0x131b24, 1);
-  g.lineBetween(36, 21, 43, 28);
-  g.lineBetween(43, 21, 36, 28);
-  // Puffed cheek
-  g.fillStyle(COLORS.pinkSoft).fillCircle(44, 34, 4);
-  // Flailing paws
+  g.lineBetween(38, 23, 44, 29);
+  g.lineBetween(44, 23, 38, 29);
+
+  // Drooping whiskers
+  g.lineStyle(1, 0x6e3b18, 0.7);
+  g.lineBetween(45, 38, 54, 43);
+  g.lineBetween(45, 40, 52, 47);
+
+  // Paws slumped on ground
   g.fillStyle(COLORS.pinkSoft)
-    .fillRoundedRect(44, 24, 12, 7, 3)
-    .fillRoundedRect(10, 43, 12, 7, 3);
+    .fillRoundedRect(42, 44, 13, 8, 3)
+    .fillRoundedRect(16, 45, 13, 7, 3);
+
   g.generateTexture(TEXTURES.hamsterHit, 64, 56);
 
   // -------------------------------------------------------------
