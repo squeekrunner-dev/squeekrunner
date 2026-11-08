@@ -175,10 +175,10 @@ page tag on the live site, and the issued repository line in the public GitHub R
 The landing head contains the exact placeholder:
 
 ```html
-<!-- GENESIS-OWNERSHIP-TAG: вставить выданный тег -->
+<!-- GENESIS-OWNERSHIP-TAG: insert issued tag -->
 ```
 
-<!-- GENESIS-OWNERSHIP-README: вставить выданную строку репозитория -->
+<!-- GENESIS-OWNERSHIP-README: insert issued repository line -->
 
 Replace that README comment with the issued repository line when available. Add the
 issued DNS record through the domain owner, publish the page tag, and then use Verify.

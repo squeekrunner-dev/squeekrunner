@@ -7,20 +7,20 @@ import { formatTelemetry } from './telemetry';
 describe('landing telemetry presentation', () => {
   it('formats real milli-RPM via the shared parser and shows only the confirmed height', () => {
     const view = telemetryView(parseStatus(sampleStatus(), SAMPLE_TIME), SAMPLE_TIME);
-    expect(formatTelemetry(view)).toMatchObject({ mode: 'LIVE', rpm: '98,3', height: '#1999', heightLabel: 'Подтверждённый блок' });
+    expect(formatTelemetry(view)).toMatchObject({ mode: 'LIVE', rpm: '98.3', height: '#1999', heightLabel: 'Confirmed block' });
   });
   it('keeps a fresh zero distinct from missing data, even with ACTIVE coreStatus', () => {
     const body = sampleStatus(); body.measurement.rpmMilli = 0;
-    expect(formatTelemetry(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME))).toMatchObject({ mode: 'WHEEL IDLE', rpm: '0,0' });
+    expect(formatTelemetry(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME))).toMatchObject({ mode: 'WHEEL IDLE', rpm: '0.0' });
     expect(formatTelemetry(telemetryView(null, SAMPLE_TIME))).toMatchObject({ mode: 'NO DATA', rpm: '—', height: '—' });
   });
   it('does not round a small positive LIVE measurement down to an apparent zero', () => {
     const body = sampleStatus(); body.measurement.rpmMilli = 1;
-    expect(formatTelemetry(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME))).toMatchObject({ mode: 'LIVE', rpm: '<0,1' });
+    expect(formatTelemetry(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME))).toMatchObject({ mode: 'LIVE', rpm: '<0.1' });
   });
   it('labels a retained height as last known after expiry instead of showing a stale RPM', () => {
     const view = telemetryView(parseStatus(sampleStatus(), SAMPLE_TIME), SAMPLE_TIME + CONFIG.telemetry.maxReadAgeMs + 1);
-    expect(formatTelemetry(view)).toMatchObject({ mode: 'NO DATA', rpm: '—', height: '#1999', heightLabel: 'Последний известный блок' });
+    expect(formatTelemetry(view)).toMatchObject({ mode: 'NO DATA', rpm: '—', height: '#1999', heightLabel: 'Last known block' });
   });
   it.each(['stale', 'COUNTER_FAULT', 'unavailable', 'null', 'network'])('preserves the shared NO DATA result for %s', reason => {
     const body = sampleStatus();

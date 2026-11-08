@@ -5,12 +5,12 @@ export function formatTelemetry(view: TelemetryView) {
   const height = view.snapshot?.confirmedHeight ?? null;
   return {
     mode: view.mode,
-    rpm: view.mode === 'NO DATA' ? '—' : view.rpm > 0 && view.rpm < 0.1 ? '<0,1' :
-      view.rpm.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    rpm: view.mode === 'NO DATA' ? '—' : view.rpm > 0 && view.rpm < 0.1 ? '<0.1' :
+      view.rpm.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     height: height === null ? '—' : `#${height.toString()}`,
-    heightLabel: height !== null && view.mode === 'NO DATA' ? 'Последний известный блок' : 'Подтверждённый блок',
-    explanation: view.mode === 'LIVE' ? 'Колесо крутится. Забег набирает темп.' :
-      view.mode === 'WHEEL IDLE' ? 'Колесо стоит. Можно бежать в своём темпе.' :
-        'Свежих данных нет. Игра доступна на базовой скорости.',
+    heightLabel: height !== null && view.mode === 'NO DATA' ? 'Last known block' : 'Confirmed block',
+    explanation: view.mode === 'LIVE' ? 'The wheel is spinning. The run picks up speed.' :
+      view.mode === 'WHEEL IDLE' ? 'The wheel is idle. Run at your own pace.' :
+        'No fresh data. Game available at base speed.',
   };
 }

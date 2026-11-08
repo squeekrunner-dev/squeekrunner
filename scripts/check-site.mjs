@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const dist = resolve(root, 'dist');
 const preview = process.argv.slice(2).find(argument => !argument.startsWith('--')) ?? 'http://127.0.0.1:4173/';
 const pages = ['', 'play/', 'play/?demo=1', 'whitepaper/'];
-const titles = ['SqueekRunner', 'Играть', 'Играть', 'Whitepaper'];
+const titles = ['SqueekRunner', 'Play', 'Play', 'Whitepaper'];
 
 async function checkPages(base) {
   const seen = new Map();
