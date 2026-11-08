@@ -1,15 +1,15 @@
-# SqueekRunner Hamsters — контракт коллекции
+# SqueekRunner Hamsters — Collection Contract
 
-Изолированный ERC-721-проект для **Sepolia (chain ID 11155111)**. Коллекция: максимум
-**1000 NFT**, бесплатный mint, оплачивается только газ сети. Здесь нет раффла,
-проверки игровых очков, SIWE, бэкенда или минта из интерфейса игры: контракт
-принимает итоговый allowlist, подготовленный по решению D-0001.
+An isolated ERC-721 project for **Sepolia (chain ID 11155111)**. Collection: maximum
+**1000 NFTs**, free mint, only network gas is paid. There is no raffle,
+game score validation, SIWE, backend, or minting from the game UI: the contract
+accepts the final allowlist prepared according to decision D-0001.
 
-Контракт не развёрнут в публичной сети. Скрипт деплоя запускает только владелец.
+The contract is not deployed to any public network. The deployment script is run only by the owner.
 
-## Установка и проверки
+## Installation and verification
 
-Node 22.13+ в ветке 22 или Node 24; проверено с 24.11.1. Все команды — из `contracts/`:
+Node 22.13+ in the 22 line or Node 24; tested with 24.11.1. All commands run from `contracts/`:
 
 ```sh
 npm ci
@@ -17,96 +17,96 @@ npm run compile
 npm test
 ```
 
-У этой папки собственные package.json, package-lock.json и node_modules. Установка
-контрактов не нужна для игры и не меняет корневые зависимости. Контрактные тесты
-названы `test/*.js`, чтобы корневой Vitest не подхватывал их как `*.test.*`.
+This folder has its own package.json, package-lock.json, and node_modules. Installing
+contracts is not needed for the game and does not change root dependencies. Contract tests
+are named `test/*.js` so that root Vitest does not pick them up as `*.test.*`.
 
-Используется разрешённый брифом Hardhat 2 + ethers: Hardhat 2.29.1, ethers 6.17.0,
+Uses Hardhat 2 + ethers permitted by the brief: Hardhat 2.29.1, ethers 6.17.0,
 OpenZeppelin Contracts 5.6.1, StandardMerkleTree 1.0.8, solc-js **0.8.28**.
-Solidity pragma `^0.8.24`; компиляция закреплена на 0.8.28, optimizer 200 runs,
-EVM target Cancun. Конфигурация подменяет стандартную загрузку компилятора на
-локальный `solc/soljson.js` из npm и компилирует в текущем процессе: отдельный
-Solidity-бинарник не скачивается, Foundry и глобальные установки не нужны.
+Solidity pragma `^0.8.24`; compilation is pinned to 0.8.28, optimizer 200 runs,
+EVM target Cancun. The configuration replaces standard compiler downloading with
+local `solc/soljson.js` from npm and compiles in the current process: no separate
+Solidity binary is downloaded, Foundry and global installs are not needed.
 
-В ограниченной Windows-среде npm dependency scripts используют inherited stdio
-через локальный `.npmrc`. Опциональная native-сборка `keccak` может напечатать
-`spawn EPERM`; пакет допускает JS fallback, поэтому успешность определяется exit
-code npm ci и тестами, а не отсутствием этой диагностики. Тесты проверены с этим
-fallback. Нативный локальный EVM Hardhat поставляется как зависимость npm.
+In a restricted Windows environment, npm dependency scripts use inherited stdio
+via local `.npmrc`. Optional native compilation of `keccak` may print
+`spawn EPERM`; the package allows a JS fallback, so success is determined by the exit
+code of npm ci and tests, not by the absence of this diagnostic. Tests have been verified
+with this fallback. Hardhat's native local EVM is shipped as an npm dependency.
 
-`scripts/hardhat.cjs` хранит служебные данные Hardhat в игнорируемой
-`.hardhat-local/` и отключает его telemetry. Настройки каталогов меняются только
-внутри этого Node-процесса; профиль пользователя и родительская оболочка не меняются.
-Прокси и RPC для тестов не нужны: Hardhat использует локальную сеть chain ID 31337.
+`scripts/hardhat.cjs` stores Hardhat internal data in an ignored
+`.hardhat-local/` directory and disables its telemetry. Directory settings change only
+within this Node process; user profile and parent shell remain unchanged.
+Proxies and RPCs are not needed for tests: Hardhat uses a local network with chain ID 31337.
 
-## Контракт и параметры
+## Contract and parameters
 
-Файл: `src/SqueekRunnerHamsters.sol`. Конструктор:
+File: `src/SqueekRunnerHamsters.sol`. Constructor:
 
 ```solidity
 constructor(string name_, string symbol_, address initialOwner, string initialBaseURI)
 ```
 
-Рабочие name/symbol: `SqueekRunner Hamsters` / `SQRH`. Начальный владелец задаётся
-явно; это может быть EOA или совместимый multisig. Нулевой адрес запрещён.
-Начальная фаза — `Closed`, Merkle root не установлен, ни одного токена не выпущено.
-ID идут последовательно от **1 до 1000**. Burn и изменение лимитов не предусмотрены.
+Working name/symbol: `SqueekRunner Hamsters` / `SQRH`. Initial owner is specified
+explicitly; this can be an EOA or a compatible multisig. Zero address is rejected.
+Initial phase is `Closed`, Merkle root is unset, and zero tokens are minted.
+IDs are sequential from **1 to 1000**. Burning and modifying limits are not supported.
 
-| Параметр / счётчик | Значение или смысл |
+| Parameter / counter | Value or meaning |
 | --- | --- |
-| MAX_SUPPLY | 1000, неизменяемая константа |
-| RESERVE | 100, неизменяемая константа |
+| MAX_SUPPLY | 1000, immutable constant |
+| RESERVE | 100, immutable constant |
 | ALLOWLIST_SUPPLY | 900 = MAX_SUPPLY − RESERVE |
-| totalSupply | Суммарное число выпущенных NFT, burn отсутствует |
-| allowlistMinted | Выпущено через claim за всё время, максимум 900 |
-| reserveMinted | Выпущено через ownerMint за всё время, максимум 100 |
-| claimed(address) | Суммарное число claims адреса за всё время, не его текущий баланс |
+| totalSupply | Total number of minted NFTs, no burn exists |
+| allowlistMinted | Minted via claim all-time, maximum 900 |
+| reserveMinted | Minted via ownerMint all-time, maximum 100 |
+| claimed(address) | Total claims by address all-time, not its current balance |
 
-Распределение **700 раффл / 200 Twitter / 100 команда и трежери** — правило проекта.
-Контракт строго разделяет **900 allowlist / 100 reserve**. Он не определяет, пришёл
-ли адрес из раффла или Twitter: это проверяется организатором при подготовке списка.
-Неиспользованный резерв не переходит в allowlist, и наоборот. Один адрес может
-получить резерв и иметь отдельный allowlist allowance.
+The distribution of **700 raffle / 200 Twitter / 100 team and treasury** is a project rule.
+The contract strictly partitions **900 allowlist / 100 reserve**. It does not determine
+whether an address came from raffle or Twitter: this is verified by the organizer
+when preparing the list. Unused reserve does not roll over into allowlist, and vice versa.
+A single address can receive reserve and have a separate allowlist allowance.
 
-### Allowlist и фазы
+### Allowlist and phases
 
 ```solidity
-setMerkleRoot(bytes32 newRoot)               // onlyOwner, ненулевой root
+setMerkleRoot(bytes32 newRoot)               // onlyOwner, nonzero root
 setPhase(Phase newPhase)                    // onlyOwner: 0 Closed, 1 Allowlist
 claim(uint256 allowance, uint256 qty, bytes32[] proof)
-ownerMint(address to, uint256 qty)          // onlyOwner, в любой фазе
+ownerMint(address to, uint256 qty)          // onlyOwner, in any phase
 ```
 
-Открытие Allowlist возможно только после установки root. Владелец может закрыть
-и вновь открыть mint. Нулевое qty отклоняется. Claim минтит только `msg.sender`:
-чужой proof нельзя использовать для получения NFT на свой адрес.
+Opening Allowlist is possible only after setting a root. The owner can close
+and reopen minting. Zero qty is rejected. Claim mints only to `msg.sender`:
+someone else's proof cannot be used to receive NFTs to your own address.
 
-Лист дерева точно соответствует OpenZeppelin StandardMerkleTree:
+The tree leaf strictly matches OpenZeppelin StandardMerkleTree:
 
 ```solidity
 keccak256(bytes.concat(keccak256(abi.encode(account, allowance))))
 ```
 
-ABI-типы — `address,uint256`, листья двойного хеширования, пары сортируются
-стандартной библиотекой. Это не `abi.encodePacked`, не простой одинарный хеш
-и не личная подпись кошелька. Proof публичен; авторизация обеспечивается root и
-привязкой листа к `msg.sender`.
+ABI types are `address,uint256`, double-hashed leaves, pairs sorted by
+standard library. This is not `abi.encodePacked`, not a single hash,
+and not a personal wallet signature. Proof is public; authorization is provided by the root
+and binding the leaf to `msg.sender`.
 
-**Allowance — накопленное право адреса за всю жизнь контракта.** Корень можно менять,
-но `claimed` никогда не обнуляется. Если адрес имел allowance 1 и уже получил 1 NFT,
-то новый лист с allowance 2 разрешает ещё **1**, а не 2. Если новое allowance ниже
-уже использованного, новые claims отклоняются. Передача NFT другому владельцу
-не возвращает право на claim.
+**Allowance is an address's cumulative claim right over the lifetime of the contract.** The root can change,
+but `claimed` is never reset. If an address had allowance 1 and already received 1 NFT,
+a new leaf with allowance 2 permits **1** more, not 2. If the new allowance is below
+what was already used, new claims are rejected. Transferring NFTs to another owner
+does not restore claim rights.
 
-Root меняется немедленно, в том числе при открытой фазе; старые proofs перестают
-работать. Изменения публикуются событием `MerkleRootUpdated(previousRoot,newRoot)`.
-Чтобы меньше мешать ожидающим транзакциям, владелец может закрыть фазу, опубликовать
-новый список/root/proofs и открыть фазу снова. Это операционная рекомендация,
-а не дополнительное ограничение контракта.
+Root changes immediately, including during an open phase; old proofs stop working.
+Changes are published via the `MerkleRootUpdated(previousRoot,newRoot)` event.
+To minimize interference with pending transactions, the owner can close the phase,
+publish the new list/root/proofs, and reopen the phase. This is an operational recommendation,
+not an additional contract constraint.
 
-## Сборка Merkle root и proofs
+## Building Merkle root and proofs
 
-Вход — UTF-8 CSV с заголовком `address,allowance` либо JSON-массив объектов:
+Input is a UTF-8 CSV with header `address,allowance` or a JSON array of objects:
 
 ```json
 [
@@ -115,157 +115,156 @@ Root меняется немедленно, в том числе при откр
 ]
 ```
 
-Эти адреса — **учебные примеры, не список победителей**. Не публикуйте их root для
-реальной коллекции. Примеры обеих форм лежат в `examples/`.
+These addresses are **educational examples, not the winners list**. Do not publish their root
+for the live collection. Examples of both formats are located in `examples/`.
 
 ```sh
 npm run merkle -- examples/allowlist.csv generated/example-v1.json
-# Эквивалентный JSON-вход:
+# Equivalent JSON input:
 npm run merkle -- examples/allowlist.json generated/example-json-v1.json
 ```
 
-Скрипт проверяет адреса/checksum, запрещает zero address и дубликаты (включая
-разный регистр), разрешает целые allowance 1–900, не больше 900 адресов и сумму
-allowance ≤900. JSON принимает число или десятичную строку; CSV — простые или
-заключённые в кавычки address/allowance без дополнительных столбцов. Не является
-универсальным CSV-парсером: поля адресов и чисел не содержат запятых/переносов.
-Адреса нормализуются и сортируются, поэтому перестановка строк не меняет результат.
+The script validates addresses/checksums, rejects zero address and duplicates (including
+case variations), permits integer allowances 1–900, at most 900 addresses, and total
+allowance sum ≤900. JSON accepts numbers or decimal strings; CSV accepts plain or
+quoted address/allowance without additional columns. It is not a universal CSV parser:
+address and number fields do not contain commas or line breaks. Addresses are normalized
+and sorted, so reordering lines does not change the result.
 
-Выход содержит `root`, `totalAllowance`, `leafEncoding`, `entries` с address,
-allowance и proof для каждого адреса, а также `tree` — dump для
-`StandardMerkleTree.load`. Никаких приватных ключей в этом файле нет. Существующий
-output-файл не перезаписывается: используйте новое имя версии. Каталог generated
-игнорируется git; владелец отдельно публикует утверждённые данные и proofs.
+Output contains `root`, `totalAllowance`, `leafEncoding`, `entries` with address,
+allowance, and proof for each address, as well as `tree` — a dump for
+`StandardMerkleTree.load`. There are no private keys in this file. An existing
+output file is not overwritten: use a new version name. The `generated` directory
+is ignored by git; the owner publishes approved data and proofs separately.
 
-Для последовательного прихода двух списков готовьте **накопленный объединённый
-список раффла и Twitter**, учитывая пересечения адресов. Скрипт не складывает
-дубликаты автоматически: организатор должен явно назначить суммарный allowance.
-Он не читает on-chain claimed и не сверяет историю старых root. Удаление уже
-минтивших адресов из нового списка не освобождает глобальный лимит: иначе даже
-новый список с суммой ≤900 может обещать больше оставшегося mint. Контракт всё равно
-не выпустит больше 900 allowlist NFT. Бюджеты 700/200 проверяйте отдельно до публикации.
+When receiving two sequential lists, prepare a **cumulative combined raffle and Twitter list**,
+accounting for address intersections. The script does not automatically sum duplicates:
+the organizer must explicitly assign the total allowance. It does not read on-chain
+claimed amounts or verify old root history. Removing previously minted addresses from a
+new list does not release global capacity: otherwise, even a new list with sum ≤900 might
+promise more than the remaining mint capacity. The contract will still never mint more than
+900 allowlist NFTs. Verify 700/200 budgets separately before publication.
 
-Пример вызова уже развёрнутого контракта через ethers (ABI — из artifact):
+Example of calling an already deployed contract via ethers (ABI from artifact):
 
 ```js
 const entry = proofs.entries.find(x => x.address.toLowerCase() === signer.address.toLowerCase());
 await (await collection.connect(signer).claim(entry.allowance, 1, entry.proof)).wait();
 ```
 
-Параметр `value` не передаётся. Allowance берётся из опубликованного листа; qty —
-желаемая часть остатка. Для больших разрешений отправляйте небольшие партии
-(например, 20–50 NFT), предварительно оценив газ: safeMint вызывает получателя
-для каждого токена, поэтому большой batch может не поместиться в лимит газа.
+No `value` parameter is passed. Allowance is taken from the published leaf; qty is the
+desired portion of the remainder. For large allowances, send smaller batches
+(e.g. 20–50 NFTs) after estimating gas: safeMint invokes the receiver for each token,
+so a large batch might exceed the block gas limit.
 
-## Метаданные и владение
+## Metadata and ownership
 
-`tokenURI(id)` возвращает `baseURI + decimal(id) + ".json"`. Например,
-`ipfs://CID/` → `ipfs://CID/1.json`. Slash контракт автоматически не добавляет.
-Для несуществующего id — стандартная ошибка ERC721NonexistentToken. Если базовый
-URI при деплое пуст, существующие токены временно возвращают пустую строку.
+`tokenURI(id)` returns `baseURI + decimal(id) + ".json"`. For example,
+`ipfs://CID/` → `ipfs://CID/1.json`. The contract does not automatically add a slash.
+For nonexistent IDs, it reverts with standard ERC721NonexistentToken. If base
+URI is empty at deployment, existing tokens temporarily return an empty string.
 
-- `setBaseURI(string)` — только owner; новое значение должно быть непустым.
-- `freezeMetadata()` — только owner, необратимо запрещает смену baseURI; пустой
-  URI замораживать нельзя. Повторная заморозка отклоняется.
-- Заморозка относится к **строке URI**, а не к содержимому HTTP-сервера. Для
-  неизменяемого содержания нужны content-addressed метаданные и корректный pinning.
-- До freeze owner может менять метаданные всей коллекции. Это заготовка для
-  будущих изменений; динамический генератор метаданных в эту задачу не входит.
-- `transferOwnership(newOwner)` задаёт pendingOwner; только он может вызвать
-  `acceptOwnership()`. Старый owner сохраняет права до принятия, затем теряет их.
-- Унаследованный `renounceOwnership()` необратимо отказывается от управления.
-  Не вызывайте его до завершения mint/настройки metadata: можно навсегда оставить
-  закрытый mint или потерять неиспользованный reserve. Это не часть штатного runbook.
+- `setBaseURI(string)` — owner only; new value must be nonempty.
+- `freezeMetadata()` — owner only, irreversibly prevents baseURI changes; empty
+  URI cannot be frozen. Repeated freeze is rejected.
+- Freezing applies to the **URI string**, not to HTTP server content. For
+  immutable content, content-addressed metadata and proper pinning are required.
+- Prior to freeze, the owner can change metadata for the entire collection. This is a scaffold
+  for future changes; a dynamic metadata generator is not part of this task.
+- `transferOwnership(newOwner)` designates pendingOwner; only pendingOwner can call
+  `acceptOwnership()`. The previous owner retains rights until acceptance, then loses them.
+- Inherited `renounceOwnership()` irreversibly relinquishes control. Do not call it
+  before completing minting/metadata configuration: it can permanently leave mint closed
+  or forfeit unused reserve. It is not part of the standard runbook.
 
-События: стандартные Transfer/Approval/Ownership*, а также MerkleRootUpdated,
-PhaseUpdated, Claimed, ReserveMinted, BaseURIUpdated и MetadataFrozen.
-Нарушения бизнес-правил дают custom errors (MintClosed, InvalidQuantity,
+Events: standard Transfer/Approval/Ownership*, as well as MerkleRootUpdated,
+PhaseUpdated, Claimed, ReserveMinted, BaseURIUpdated, and MetadataFrozen.
+Business rule violations revert with custom errors (MintClosed, InvalidQuantity,
 InvalidProof, AllowanceExceeded, AllowlistSupplyExceeded, ReserveSupplyExceeded,
-MaxSupplyExceeded, InvalidMerkleRoot, MetadataIsFrozen, EmptyBaseURI) либо ошибки OZ.
+MaxSupplyExceeded, InvalidMerkleRoot, MetadataIsFrozen, EmptyBaseURI) or OpenZeppelin errors.
 
-## Безопасность и выбранные ограничения
+## Security and design choices
 
-Оба пути mint используют **ReentrancyGuard + checks/effects/interactions**:
-все лимиты и счётчики, включая полный диапазон id, резервируются перед первым
-`_safeMint`. При отказе ERC721Receiver весь batch и учёт откатываются.
-`_safeMint` выбран вместо `_mint`, чтобы не запирать NFT в контракте, который
-не умеет их принимать. Тесты включают злонамеренный повторный вход в claim и
-ownerMint, отказ получателя и отсутствие интерфейса ERC721Receiver.
+Both mint paths use **ReentrancyGuard + checks/effects/interactions**:
+all limits and counters, including the full ID range, are reserved before the first
+`_safeMint`. Upon ERC721Receiver failure, the entire batch and accounting revert.
+`_safeMint` is chosen over `_mint` to avoid trapping NFTs in contracts that
+cannot receive them. Tests cover malicious reentrancy into claim and
+ownerMint, receiver failure, and missing ERC721Receiver interface.
 
-Claim и ownerMint не payable. receive/fallback/withdraw отсутствуют. Прямой перевод
-ETH отклоняется; принудительно присланный EVM-механизмами ETH вернуть через этот
-контракт нельзя. Роялти отсутствуют: ERC-2981 не реализован, контракт не задаёт
-получателя/ставку и не собирает комиссии. Это минимальная бесплатная коллекция;
-правила комиссий внешних маркетплейсов контракт не контролирует.
+Claim and ownerMint are not payable. receive/fallback/withdraw do not exist. Direct ETH
+transfers revert; ETH forcibly sent via EVM mechanisms cannot be recovered through this
+contract. No royalties: ERC-2981 is not implemented, the contract does not set a
+recipient/rate or collect fees. This is a minimal free collection; the contract does not
+control third-party marketplace fee policies.
 
-Прокси, апгрейд, oracle calls, randomness, on-chain raffle и проверка игрового
-результата отсутствуют. Администратор доверенный: он может заменить root, закрыть
-mint, направить reserve и менять URI до freeze. Коммит root не подтверждает
-справедливость внешнего розыгрыша. Тесты не заменяют независимый аудит Solidity.
+No proxies, upgrades, oracle calls, randomness, on-chain raffle, or game score
+verification exist. The administrator is trusted: they can replace the root, close
+minting, direct the reserve, and change URI before freeze. Committing a root does not prove
+the fairness of an external draw. Tests do not replace an independent Solidity audit.
 
-Hardhat 2 выбран для воспроизводимого in-process solc-js workflow в этой среде и
-разрешён брифом, но ветка находится на пути к EOL. `npm audit` сообщает уязвимости
-в транзитивных инструментах (включая старые HTTP/архивные зависимости Hardhat и
-uuid в Merkle-инструментах); автоматический non-breaking audit fix их не устранил.
-Они не попадают в Solidity bytecode или корневую игру. Не используйте этот
-toolchain как публичный сервис и не обрабатывайте им недоверенные архивы/тесты.
-Перед эксплуатацией за пределами локального Sepolia-процесса обновите и повторно
-проверьте инструментальную цепочку. Точный audit snapshot приведён в отчёте T009.
+Hardhat 2 was chosen for a reproducible in-process solc-js workflow in this environment and
+permitted by the brief, but the branch is approaching EOL. `npm audit` reports vulnerabilities
+in transitive tooling (including old Hardhat HTTP/archive dependencies and uuid in Merkle tools);
+automated non-breaking audit fix did not resolve them. They do not enter Solidity bytecode or
+the core game. Do not expose this toolchain as a public service or process untrusted
+archives/tests with it. Update and re-verify the toolchain before operating outside a
+local Sepolia process. The exact audit snapshot is documented in report T009.
 
-## Деплой: только действие владельца
+## Deployment: owner action only
 
-1. Проверить окончательный commit, прочитать контракт, прогнать `npm ci`,
-   `npm run compile`, `npm test`. Сохранить версию compiler/settings и build-info.
-2. Подготовить Sepolia RPC, кошелёк с тестовым ETH для газа и адрес начального
-   владельца NFT_OWNER. Убедиться, что этот адрес управляем и может выполнять
-   owner-вызовы; для multisig проверить поддержку Sepolia.
-3. Скопировать `.env.example` в `.env` локально (PowerShell:
-   `Copy-Item .env.example .env`) и заполнить в редакторе. Не передавать ключ в
-   аргументах команд, не публиковать .env и не отправлять его в чат.
+1. Verify final commit, review the contract, run `npm ci`,
+   `npm run compile`, `npm test`. Save compiler/settings version and build-info.
+2. Prepare Sepolia RPC, a wallet with testnet ETH for gas, and initial owner
+   address NFT_OWNER. Ensure this address is controllable and can execute
+   owner calls; for multisig, verify Sepolia support.
+3. Copy `.env.example` to `.env` locally (PowerShell:
+   `Copy-Item .env.example .env`) and fill it in an editor. Do not pass the key in
+   command arguments, do not commit .env, and do not send it to chat.
 
-| Env | Назначение |
+| Env | Purpose |
 | --- | --- |
-| SEPOLIA_RPC_URL | Обязательный HTTP(S) RPC; не логируется |
-| DEPLOYER_PRIVATE_KEY | Обязательный 0x-prefixed private key; не логируется |
-| NFT_OWNER | Обязательный явный nonzero initialOwner |
-| NFT_NAME / NFT_SYMBOL | Опциональны; defaults SqueekRunner Hamsters / SQRH |
-| NFT_BASE_URI | Опционален; пустой или prefix с завершающим `/` |
+| SEPOLIA_RPC_URL | Required HTTP(S) RPC; not logged |
+| DEPLOYER_PRIVATE_KEY | Required 0x-prefixed private key; not logged |
+| NFT_OWNER | Required explicit nonzero initialOwner |
+| NFT_NAME / NFT_SYMBOL | Optional; defaults SqueekRunner Hamsters / SQRH |
+| NFT_BASE_URI | Optional; empty or prefix with trailing `/` |
 
-4. **Владелец**, после этих проверок, запускает:
+4. **The owner**, after these checks, runs:
 
 ```sh
 npm run deploy:sepolia
 ```
 
-Эта команда действительно отправляет deployment transaction. Она читает .env через
-Node; env родительского процесса имеет приоритет. Скрипт не имеет fallback RPC,
-ключа или default owner. До подписи проверяется `eth_chainId = 11155111`; mainnet
-и local chain отклоняются. Используется только artifact SqueekRunnerHamsters,
-тестовые ReceiverHarness/NonReceiver никогда не разворачиваются этим скриптом.
-Проект не конфигурирует удалённую сеть Hardhat, поэтому `npm test` и compile
-не могут сами отправить Sepolia-транзакции.
+This command actually sends a deployment transaction. It reads .env via
+Node; parent process environment takes precedence. The script has no fallback RPC,
+key, or default owner. Before signing, it verifies `eth_chainId = 11155111`; mainnet
+and local chains are rejected. Only the SqueekRunnerHamsters artifact is used;
+test ReceiverHarness/NonReceiver are never deployed by this script.
+The project does not configure a remote Hardhat network, so `npm test` and compile
+cannot send Sepolia transactions on their own.
 
-После отправки печатается tx hash, после подтверждения — адрес контракта и
-публичные параметры. Сохраните их. При ошибке после вывода tx hash проверьте
-статус в explorer прежде чем повторять команду, чтобы не развернуть дубль.
-Raw RPC errors намеренно не печатаются: они могут содержать API-токен из URL.
+After broadcast, tx hash is printed; after confirmation, the contract address and
+public parameters are printed. Save them. On error after tx hash output, check
+status in an explorer before retrying the command to avoid deploying duplicates.
+Raw RPC errors are intentionally not printed: they might contain an API token from the URL.
 
-5. Проверить receipt и on-chain owner/name/symbol/phase/supply. Верифицировать
-   исходники в Sepolia explorer с теми же compiler 0.8.28, optimizer 200 и Cancun;
-   сервис верификации и его API-ключ в пакет не добавлены.
-6. Подготовить и проверить реальный объединённый список 700+200, сгенерировать
-   новую версию root/proofs. Owner вызывает setMerkleRoot, публикует список/proofs,
-   затем setPhase(1). Контракт после deployment всегда Closed.
-7. Owner распределяет reserve через ownerMint, не больше 100 суммарно. Завершив
-   подготовку контента, задаёт окончательный URI и при необходимости freezeMetadata.
-   Закрытие mint — setPhase(0). Передача администрирования — два шага Ownable2Step.
+5. Verify receipt and on-chain owner/name/symbol/phase/supply. Verify source
+   code in Sepolia explorer with the same compiler 0.8.28, optimizer 200, and Cancun;
+   verification service and its API key are not added to the package.
+6. Prepare and verify the real combined 700+200 list, generate a
+   new version of root/proofs. Owner calls setMerkleRoot, publishes list/proofs,
+   then calls setPhase(1). The contract is always Closed after deployment.
+7. Owner distributes reserve via ownerMint, at most 100 in total. After finalizing
+   content, set final URI and freezeMetadata if desired.
+   Closing mint is setPhase(0). Transferring administration is two-step Ownable2Step.
 
-В этом репозитории нет публичного deployment-адреса: ни одна такая транзакция
-исполнителем T009 не отправлялась.
+There is no public deployment address in this repository: no such transaction
+was sent by the T009 author.
 
-## Первичные источники
+## Primary sources
 
 - [OpenZeppelin ERC-721](https://docs.openzeppelin.com/contracts/5.x/api/token/erc721)
 - [OpenZeppelin Ownable2Step](https://docs.openzeppelin.com/contracts/5.x/api/access)
-- [StandardMerkleTree и double-hashed leaves](https://github.com/OpenZeppelin/merkle-tree)
-- [Hardhat: локальный Solidity compiler](https://v2.hardhat.org/hardhat-runner/docs/other-guides/using-custom-solc)
+- [StandardMerkleTree and double-hashed leaves](https://github.com/OpenZeppelin/merkle-tree)
+- [Hardhat: local Solidity compiler](https://v2.hardhat.org/hardhat-runner/docs/other-guides/using-custom-solc)
