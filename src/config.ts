@@ -11,6 +11,11 @@ export const CONFIG = {
   jumpBufferMs: 120,
   coyoteMs: 90,
   maxFrameSeconds: 0.05,
+  hitboxes: {
+    player: { width: 42, height: 44, offsetX: 13, offsetY: 12, textureWidth: 64, textureHeight: 56 },
+    obstacle: { width: 48, height: 64, offsetX: 4, offsetY: 4, textureWidth: 56, textureHeight: 68 },
+    nut: { radius: 16, offsetX: 2, offsetY: 3, textureWidth: 36, textureHeight: 38 },
+  },
   pixelsPerMetre: 24,
   pointsPerMetre: 10,
   speed: {

@@ -61,10 +61,11 @@
             <code>target = base(distance) × multiplier(RPM)</code>
             <code>base(d) = 290 + 110 × clamp(d / 1800, 0, 1)</code>
             <code>multiplier(r) = 1 + 1.7 × clamp(r / 98.316, 0, 1)</code>
-            <code>α = 1 − exp(−Δt / 1.4)</code>
-            <code>speed ← speed + (target − speed) × α</code>
+            <code>Δt = 1/60 s; α = 11834 / 1000000 ≈ 1 − exp(−Δt / 1.4)</code>
+            <code>speed ← speed + trunc((target − speed) × α)</code>
           </div>
-          <p>At 0 RPM the multiplier is 1. At the historically observed peak near 98.3 RPM it reaches 2.7 and caps there. This is a game-balance calibration, not a physiological limit of the hamster. Exponential smoothing with a 1.4-second time constant removes jarring speed spikes; when data drops out, speed glides smoothly back to baseline.</p>
+          <p>At 0 RPM the multiplier is 1. At the historically observed peak near 98.3 RPM it reaches 2.7 and caps there. This is a game-balance calibration, not a physiological limit of the hamster. Fixed-step smoothing approximates a 1.4-second time constant; when data drops out, speed glides smoothly back to baseline. The speed update above uses integer milli-pixels per second.</p>
+          <p>Gameplay advances at 60 fixed ticks per second. Jump inputs take effect on the next tick (up to 16.67 ms later), obstacle intervals round up to ticks, and pauses freeze simulation time. Runs end on collision or after 30 minutes of simulation. Integer physics and seeded obstacle randomness let the same recorded inputs and wheel samples reproduce the same score. Downloadable debug replays are local only; replay consistency does not authenticate client-supplied wheel data or establish raffle eligibility. Server-issued sessions and independent telemetry verification remain future work.</p>
           <p>Difficulty increases with distance: baseline speed ramps up and obstacle gaps tighten. Score is the integer floor of game distance multiplied by 10, plus collected bonuses. Game metres are not the measured physical distance of the real hamster.</p>
           <div class="table-wrap"><table>
             <caption>MVP constants from src/config.ts; verified against configuration by a build test.</caption>

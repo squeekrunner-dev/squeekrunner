@@ -63,7 +63,7 @@ export function createTextures(scene: Phaser.Scene): void {
 
   // -------------------------------------------------------------
   // 1. HAMSTER ANIMATION FRAMES (64x56)
-  // Physics bounds in RunScene: setSize(42, 44), setOffset(13, 12)
+  // Physics bounds in sim/core.ts: 42x44 with offset (13, 12)
   // -------------------------------------------------------------
 
   const drawHamsterBase = (

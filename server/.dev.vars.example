@@ -1,0 +1,12 @@
+# Official Cloudflare testing secret; NEVER use testing keys in production.
+ENVIRONMENT=development
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+IP_HASH_SALT=replace-with-at-least-32-random-characters
+ADMIN_TOKEN=replace-with-a-different-32-character-secret
+SIWE_DOMAIN=127.0.0.1:5179
+SIWE_URI=http://127.0.0.1:5179/whitelist/
+ALLOWED_ORIGINS=http://127.0.0.1:5179
+THRESHOLD=
+ENTRIES_OPEN=false
+ENTRY_DEADLINE=
+SNAPSHOT_AT=

@@ -16,6 +16,9 @@ export class GameOverScene extends Phaser.Scene {
 
   create(result: RunResult): void {
     backdrop(this);
+    const debug = new URLSearchParams(window.location.search).get('debug') === '1';
+    const downloads = new Set<string>();
+    if (debug) label(this, 480, 515, 'D · DOWNLOAD REPLAY', 12, '#8b9ba6', true).setOrigin(0.5).setDepth(12);
 
     // Parallax background & ground preview (layers 1..3)
     this.add.tileSprite(0, 80, CONFIG.width, 280, TEXTURES.bgFar).setOrigin(0).setDepth(1);
@@ -163,6 +166,27 @@ export class GameOverScene extends Phaser.Scene {
       '#8b9ba6',
     ).setOrigin(0.5).setDepth(12);
 
+    // Ranked run: show the server's verdict (its score is the only one that counts for the raffle).
+    if (result.ranked && this.context.submission) {
+      const verdict = label(this, 480, 398, 'VERIFYING RUN WITH THE SERVER…', 15, '#81cce4', true)
+        .setOrigin(0.5).setDepth(16);
+      void this.context.submission.then(outcome => {
+        if (!verdict.active) return;
+        if (outcome.status === 'verified' && outcome.eligible) {
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · YOU QUALIFY · ENTER THE RAFFLE →`).setColor('#ffcf75')
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', (_p: unknown, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+              event.stopPropagation();
+              window.location.assign(new URL('../whitelist/', window.location.href).href);
+            });
+        } else if (outcome.status === 'verified') {
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · NOT RAFFLE-ELIGIBLE (THRESHOLD TBA OR NOT REACHED)`).setColor('#c4ef6e');
+        } else {
+          verdict.setText(`RUN NOT VERIFIED · ${outcome.message.toUpperCase()}`.slice(0, 80)).setColor('#ec8a79');
+        }
+      });
+    }
+
     let restarting = false;
     const restart = (): void => {
       if (restarting) return;
@@ -173,6 +197,15 @@ export class GameOverScene extends Phaser.Scene {
 
     const key = (event: KeyboardEvent): void => {
       sound.unlock();
+      if (!event.repeat && event.code === 'KeyD' && debug && this.context.lastReplay) {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(this.context.lastReplay)], { type: 'application/json' }));
+        downloads.add(url);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `squeek-${this.context.lastReplay.seed}-${this.context.lastReplay.endTick}.json`;
+        link.click();
+        this.time.delayedCall(1000, () => { URL.revokeObjectURL(url); downloads.delete(url); });
+      }
       if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp')) restart();
       if (!event.repeat && event.code === 'KeyM') {
         const isMuted = sound.toggleMute();
@@ -192,6 +225,8 @@ export class GameOverScene extends Phaser.Scene {
     onSceneExit(this.events, () => {
       this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', key);
+      for (const url of downloads) URL.revokeObjectURL(url);
+      downloads.clear();
     });
 
     const status = document.getElementById('status');

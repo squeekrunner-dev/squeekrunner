@@ -2,13 +2,17 @@ import Phaser from 'phaser';
 import { CONFIG } from '../config';
 import { BlockDetector } from '../chain/blocks';
 import type { ChainSnapshot } from '../chain/types';
-import { baseSpeed, obstacleGap, rpmMultiplier, smoothSpeed } from '../logic/speed';
+import { baseSpeed } from '../logic/speed';
+import { distance, TICK_HZ, UNIT, type SimEvent } from '../sim/core';
+import { RunDriver, rpmSample } from './runDriver';
 import type { RunBlock } from '../logic/records';
 import { onSceneExit } from '../logic/lifecycle';
 import { sound } from '../audio/sound';
 import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, compactHeight, createMuteButton, label, pill } from './ui';
+import { ServerSource } from '../net/source';
+import { startRanked, submitRanked, type RankedRun } from '../net/ranked';
 
 type RunState = 'ready' | 'playing' | 'paused' | 'ended';
 
@@ -18,9 +22,10 @@ interface SpeedLine {
 }
 
 export class RunScene extends Phaser.Scene {
-  private player!: Phaser.Physics.Arcade.Sprite;
-  private obstacles!: Phaser.Physics.Arcade.Group;
-  private nuts!: Phaser.Physics.Arcade.Group;
+  private player!: Phaser.GameObjects.Sprite;
+  private obstacleSprites = new Map<number, Phaser.GameObjects.Sprite>();
+  private nutSprite: Phaser.GameObjects.Sprite | null = null;
+  private driver!: RunDriver;
   private bgFar!: Phaser.GameObjects.TileSprite;
   private bgMid!: Phaser.GameObjects.TileSprite;
   private ground!: Phaser.GameObjects.TileSprite;
@@ -51,19 +56,18 @@ export class RunScene extends Phaser.Scene {
   private state: RunState = 'ready';
   private detector = new BlockDetector();
   private distance = 0;
-  private bonusPoints = 0;
   private speed: number = CONFIG.speed.base;
-  private spawnIn: number = CONFIG.obstacles.firstDelaySeconds;
   private elapsed = 0;
   private jumpsUsed = 0;
-  private lastGrounded = 0;
-  private jumpQueuedAt = -Infinity;
   private shieldUntil = 0;
-  private invulnerableUntil = 0;
   private noticeUntil = 0;
   private runBlock: RunBlock | null = null;
   private lastMode = '';
   private dustIn = 0;
+  /** Server session of a raffle-eligible run; null for offline/unranked runs. */
+  private ranked: RankedRun | null = null;
+  private starting = false;
+  private abort = new AbortController();
 
   constructor(private readonly context: GameContext) {
     super('Run');
@@ -71,11 +75,16 @@ export class RunScene extends Phaser.Scene {
 
   create(data: { immediate?: boolean } = {}): void {
     this.state = 'ready';
-    this.distance = this.bonusPoints = this.elapsed = this.jumpsUsed = this.lastGrounded = 0;
-    this.shieldUntil = this.invulnerableUntil = this.noticeUntil = this.dustIn = 0;
-    this.jumpQueuedAt = -Infinity;
+    this.distance = this.elapsed = this.jumpsUsed = 0;
+    this.shieldUntil = this.noticeUntil = this.dustIn = 0;
     this.speed = CONFIG.speed.base;
-    this.spawnIn = CONFIG.obstacles.firstDelaySeconds;
+    // Offline seed; a ranked run replaces the driver with the server-issued seed on start.
+    this.driver = new RunDriver(crypto.getRandomValues(new Uint32Array(1))[0], this.context.source.kind);
+    this.ranked = null;
+    this.starting = false;
+    this.abort = new AbortController();
+    this.obstacleSprites = new Map();
+    this.nutSprite = null;
     this.runBlock = null;
     this.detector = new BlockDetector();
     this.lastMode = '';
@@ -91,29 +100,11 @@ export class RunScene extends Phaser.Scene {
     // Ground running track
     this.ground = this.add.tileSprite(0, CONFIG.groundY, CONFIG.width, 36, TEXTURES.ground).setOrigin(0).setDepth(2);
 
-    // Static floor for Arcade physics
-    const floor = this.add.rectangle(CONFIG.width / 2, CONFIG.groundY + 14, CONFIG.width, 28, 0, 0);
-    this.physics.add.existing(floor, true);
-
     // Hamster shadow
     this.shadow = this.add.ellipse(CONFIG.playerX, CONFIG.groundY - 1, 58, 9, 0x07140e, 0.45).setDepth(3);
 
     // Player sprite
-    this.player = this.physics.add.sprite(CONFIG.playerX, CONFIG.groundY, TEXTURES.hamsterRun1).setOrigin(0.5, 1);
-    this.player.setSize(42, 44).setOffset(13, 12).setDepth(5);
-    this.player.setCollideWorldBounds(true);
-
-    // Obstacles and Collectibles groups
-    this.obstacles = this.physics.add.group({ allowGravity: false, immovable: true });
-    this.nuts = this.physics.add.group({ allowGravity: false, immovable: true });
-
-    this.physics.add.collider(this.player, floor);
-    this.physics.add.collider(this.player, this.obstacles, (_player, obstacle) =>
-      this.hit(obstacle as Phaser.Physics.Arcade.Sprite),
-    );
-    this.physics.add.overlap(this.player, this.nuts, (_player, nut) =>
-      this.collect(nut as Phaser.Physics.Arcade.Sprite),
-    );
+    this.player = this.add.sprite(CONFIG.playerX, CONFIG.groundY, TEXTURES.hamsterRun1).setOrigin(0.5, 1).setDepth(5);
 
     // Shield visuals: outer forcefield bubble and glowing core ring
     this.shieldSprite = this.add.image(CONFIG.playerX, CONFIG.groundY - 28, TEXTURES.shield)
@@ -176,13 +167,17 @@ export class RunScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', visibility);
 
     onSceneExit(this.events, () => {
+      this.abort.abort();
       unsubscribe();
       this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', keyboard);
       document.removeEventListener('visibilitychange', visibility);
+      this.time.removeAllEvents();
+      this.tweens.killAll();
+      this.obstacleSprites.clear();
+      this.nutSprite = null;
     });
 
-    this.physics.pause();
     if (data.immediate) this.begin();
   }
 
@@ -292,70 +287,73 @@ export class RunScene extends Phaser.Scene {
   private begin(): void {
     this.state = 'playing';
     this.intro.setVisible(false);
-    this.physics.resume();
     this.player.play('hamster-run');
     this.detector = new BlockDetector();
     const current = this.context.source.read();
     if (current.mode !== 'NO DATA' && current.snapshot) this.onSnapshot(current.snapshot);
   }
 
+  /** With a server configured, try a ranked session first; any failure falls back to an offline run. */
+  private start(): void {
+    const { api, source, turnstileSiteKey } = this.context;
+    if (!api || !(source instanceof ServerSource) || !turnstileSiteKey) { this.begin(); return; }
+    this.starting = true;
+    this.notice('VERIFYING · STARTING A RAFFLE-ELIGIBLE RUN…');
+    startRanked(api, source, turnstileSiteKey, this.abort.signal)
+      .then(ranked => {
+        this.ranked = ranked;
+        this.driver = new RunDriver(ranked.session.seed, 'live');
+        this.notice('RANKED RUN · VERIFIED BY THE SERVER');
+      })
+      .catch(() => { if (!this.abort.signal.aborted) this.notice('OFFLINE RUN · NOT RAFFLE-ELIGIBLE'); })
+      .finally(() => {
+        this.starting = false;
+        if (!this.abort.signal.aborted && this.state === 'ready') this.begin();
+      });
+  }
+
   private action(): void {
     if (this.state === 'ready') {
+      if (this.starting) return;
       sound.playUiClick();
-      this.begin();
+      this.start();
     } else if (this.state === 'paused') {
       sound.playUiClick();
       this.togglePause();
     } else if (this.state === 'playing') {
-      this.jumpQueuedAt = this.elapsed;
-      this.tryJump();
+      this.driver.jump();
     }
   }
 
   private togglePause(): void {
+    // A ranked run follows server time and cannot be paused (that would desync it from the verifier).
+    if (this.ranked && this.state === 'playing') return;
     if (this.state === 'playing') {
       this.state = 'paused';
-      this.physics.pause();
+      this.driver.pause();
       this.player.anims.pause();
       this.pauseOverlay.setVisible(true);
       sound.playUiClick();
     } else if (this.state === 'paused' && !document.hidden) {
       this.detector.rebaseNext();
       this.state = 'playing';
-      this.physics.resume();
       this.player.anims.resume();
       this.pauseOverlay.setVisible(false);
       sound.playUiClick();
     }
   }
 
-  private tryJump(): void {
-    if (this.elapsed - this.jumpQueuedAt > CONFIG.jumpBufferMs) return;
-    const body = this.player.body as Phaser.Physics.Arcade.Body;
-    const grounded = body.blocked.down && body.velocity.y >= 0;
-
-    if (grounded) this.jumpsUsed = 0;
-    if (!grounded && this.jumpsUsed === 0 && this.elapsed - this.lastGrounded > CONFIG.coyoteMs) {
-      this.jumpsUsed = 1;
-    }
-    if (this.jumpsUsed >= CONFIG.maxJumps) return;
-
-    if (this.jumpsUsed === 0) {
-      sound.playJump();
-    } else {
-      sound.playDoubleJump();
-    }
-
-    this.player.setVelocityY(this.jumpsUsed === 0 ? CONFIG.jumpVelocity : CONFIG.airJumpVelocity);
-    this.jumpsUsed++;
-    this.jumpQueuedAt = -Infinity;
-    this.emitDust(this.player.x - 10, this.player.y - 4, 8);
-  }
-
   private onSnapshot(snapshot: ChainSnapshot): void {
     const { bonus, reset } = this.detector.observe(snapshot.installationId, snapshot.confirmedHeight);
+    if (this.ranked) {
+      // Ranked nuts come only from the server timeline inside the simulation ('nut' events).
+      if (this.state === 'playing' && !this.runBlock && snapshot.confirmedHeight !== null) {
+        this.runBlock = { installationId: snapshot.installationId, height: snapshot.confirmedHeight };
+      }
+      return;
+    }
     if (reset) {
-      this.nuts.clear(true, true);
+      this.driver.resetNut();
       this.noticeUntil = 0;
       this.tweens.killTweensOf(this.noticeContainer);
       this.noticeContainer.setAlpha(0);
@@ -365,63 +363,71 @@ export class RunScene extends Phaser.Scene {
       this.runBlock = { installationId: snapshot.installationId, height: snapshot.confirmedHeight };
     }
     if (bonus) {
-      this.nuts.clear(true, true);
-      const nut = this.nuts.create(
-        CONFIG.width + 24,
-        CONFIG.groundY - CONFIG.bonus.floatHeight,
-        TEXTURES.nut,
-      ) as Phaser.Physics.Arcade.Sprite;
-      nut.setCircle(16, 2, 3).setDepth(4).setVelocityX(-this.speed);
+      this.driver.nut();
       sound.playNewBlock();
       this.notice(`⚡ SQUEEK BLOCK #${compactHeight(bonus.height)}! GOLDEN NUT INCOMING!`);
     }
   }
 
-  private spawnObstacle(): void {
-    const variants = [TEXTURES.obstacleCrate, TEXTURES.obstacleSprocket, TEXTURES.obstacleBattery];
-    const textureKey = variants[Math.floor(Math.random() * variants.length)];
-
-    const obstacle = this.obstacles.create(
-      CONFIG.width + CONFIG.obstacles.spawnMargin,
-      CONFIG.groundY,
-      textureKey,
-    ) as Phaser.Physics.Arcade.Sprite;
-
-    obstacle.setOrigin(0.5, 1).setDisplaySize(
-      Phaser.Math.Between(CONFIG.obstacles.minWidth, CONFIG.obstacles.maxWidth),
-      Phaser.Math.Between(CONFIG.obstacles.minHeight, CONFIG.obstacles.maxHeight),
-    );
-    obstacle.setSize(48, 64).setOffset(4, 4).setVelocityX(-this.speed).setDepth(3);
-    this.spawnIn = obstacleGap(this.distance, Math.random());
-  }
-
-  private collect(nut: Phaser.Physics.Arcade.Sprite): void {
-    if (this.state !== 'playing' || !nut.active) return;
-    nut.destroy();
-    this.bonusPoints += CONFIG.bonus.points;
-    this.shieldUntil = this.elapsed + CONFIG.bonus.shieldSeconds * 1000;
-    sound.playCollectNut();
-    this.emitDust(this.player.x, this.player.y - 28, 18);
-    this.notice(`GOLDEN NUT  +${CONFIG.bonus.points}  ·  SHIELD ${CONFIG.bonus.shieldSeconds}s`);
-  }
-
-  private hit(obstacle: Phaser.Physics.Arcade.Sprite): void {
-    if (this.state !== 'playing' || !obstacle.active) return;
-
-    if (this.shieldUntil > this.elapsed || this.invulnerableUntil > this.elapsed) {
-      obstacle.destroy();
-      this.shieldUntil = 0;
-      this.invulnerableUntil = this.elapsed + CONFIG.bonus.shieldInvulnerabilityMs;
-      this.player.setVelocityX(0).setX(CONFIG.playerX);
-      sound.playShieldHit();
-      this.cameras.main.shake(120, 0.005);
-      this.emitDust(this.player.x + 28, this.player.y - 20, 14);
-      this.notice('SHIELD DEFLECTED IMPACT!');
-      return;
+  /** Effects consume simulation events; they never write gameplay state. */
+  private onTick(events: SimEvent[]): void {
+    const s = this.driver.sim;
+    this.distance = distance(s);
+    this.speed = s.speed / UNIT;
+    this.elapsed = s.tick * 1000 / TICK_HZ;
+    this.jumpsUsed = s.player.jumps;
+    this.shieldUntil = s.shieldUntil * 1000 / TICK_HZ;
+    this.player.setPosition(CONFIG.playerX, s.player.y / UNIT);
+    for (const event of events) {
+      if (event === 'jump' || event === 'airJump') {
+        if (event === 'jump') sound.playJump(); else sound.playDoubleJump();
+        this.emitDust(this.player.x - 10, this.player.y - 4, 8);
+      } else if (event === 'collect') {
+        sound.playCollectNut();
+        this.emitDust(this.player.x, this.player.y - 28, 18);
+        this.notice(`GOLDEN NUT  +${CONFIG.bonus.points}  ·  SHIELD ${CONFIG.bonus.shieldSeconds}s`);
+      } else if (event === 'shieldHit') {
+        sound.playShieldHit();
+        this.cameras.main.shake(120, 0.005);
+        this.emitDust(this.player.x + 28, this.player.y - 20, 14);
+        this.notice('SHIELD DEFLECTED IMPACT!');
+      } else if (event === 'nut' && this.ranked) {
+        sound.playNewBlock();
+        this.notice('⚡ NEW SQUEEK BLOCK! GOLDEN NUT INCOMING!');
+      } else if (event === 'gameOver') this.endRun();
     }
+  }
 
+  private renderObjects(): void {
+    const s = this.driver.sim;
+    const variants = [TEXTURES.obstacleCrate, TEXTURES.obstacleSprocket, TEXTURES.obstacleBattery];
+    const present = new Set(s.obstacles.map(o => o.id));
+    for (const [id, sprite] of this.obstacleSprites) {
+      if (!present.has(id)) { sprite.destroy(); this.obstacleSprites.delete(id); }
+    }
+    for (const obstacle of s.obstacles) {
+      let sprite = this.obstacleSprites.get(obstacle.id);
+      if (!sprite) {
+        sprite = this.add.sprite(0, CONFIG.groundY, variants[obstacle.kind]).setOrigin(0.5, 1)
+          .setDisplaySize(obstacle.width, obstacle.height).setDepth(3);
+        this.obstacleSprites.set(obstacle.id, sprite);
+      }
+      sprite.x = obstacle.x / UNIT;
+    }
+    if (s.nut) {
+      this.nutSprite ??= this.add.sprite(0, CONFIG.groundY - CONFIG.bonus.floatHeight, TEXTURES.nut).setDepth(4);
+      this.nutSprite.x = s.nut.x / UNIT;
+    } else { this.nutSprite?.destroy(); this.nutSprite = null; }
+  }
+
+  private endRun(): void {
+    if (this.driver.replay) this.context.lastReplay = this.driver.replay;
+    const { api, source } = this.context;
+    const ranked = !!(this.ranked && this.driver.replay && api && source instanceof ServerSource);
+    this.context.submission = ranked
+      ? submitRanked(api!, this.ranked!, this.driver.replay!, () => (source as ServerSource).serverNow())
+      : undefined;
     this.state = 'ended';
-    this.physics.pause();
     this.player.anims.stop();
     this.player.setTexture(TEXTURES.hamsterHit);
     this.player.setAngle(22);
@@ -440,12 +446,13 @@ export class RunScene extends Phaser.Scene {
       runBlock: this.runBlock,
       newBest,
       demo: this.context.source.kind === 'demo',
+      ranked,
     };
     this.time.delayedCall(350, () => this.scene.start('GameOver', result));
   }
 
   private score(): number {
-    return Math.floor(this.distance * CONFIG.pointsPerMetre) + this.bonusPoints;
+    return this.driver.sim.score;
   }
 
   private notice(message: string): void {
@@ -493,7 +500,6 @@ export class RunScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     const dt = Math.min(CONFIG.maxFrameSeconds, delta / 1000);
     const view = this.context.source.read();
-    const target = baseSpeed(this.distance) * rpmMultiplier(view.rpm);
 
     // Update HUD telemetry
     this.modeText
@@ -531,9 +537,10 @@ export class RunScene extends Phaser.Scene {
 
     if (this.state !== 'playing') return;
 
-    this.elapsed += dt * 1000;
-    this.speed = smoothSpeed(this.speed, target, dt);
-    this.distance += (this.speed * dt) / CONFIG.pixelsPerMetre;
+    if (this.ranked) this.driver.advanceRanked(this.ranked.timeline.targetTick(), this.ranked.timeline, events => this.onTick(events));
+    else this.driver.advance(delta, rpmSample(view), events => this.onTick(events));
+    this.renderObjects();
+    if (this.driver.sim.gameOver) return;
 
     // Parallax scrolling
     this.bgFar.tilePositionX += this.speed * 0.12 * dt;
@@ -566,29 +573,11 @@ export class RunScene extends Phaser.Scene {
       }
     });
 
-    // Spawn obstacles
-    this.spawnIn -= dt;
-    if (this.spawnIn <= 0) this.spawnObstacle();
-
-    // Move obstacles & nuts
-    for (const group of [this.obstacles, this.nuts]) {
-      for (const child of [...group.getChildren()]) {
-        const sprite = child as Phaser.Physics.Arcade.Sprite;
-        sprite.setVelocityX(-this.speed);
-        if (sprite.x < -80) sprite.destroy();
-      }
-    }
-
     // Player grounded / jump animation logic
-    const body = this.player.body as Phaser.Physics.Arcade.Body;
-    this.player.setX(CONFIG.playerX).setVelocityX(0);
-
-    const grounded = body.blocked.down && body.velocity.y >= 0;
+    const player = this.driver.sim.player;
+    const grounded = player.y === CONFIG.groundY * UNIT && player.vy >= 0;
 
     if (grounded) {
-      this.jumpsUsed = 0;
-      this.lastGrounded = this.elapsed;
-
       if (!this.player.anims.isPlaying || this.player.anims.currentAnim?.key !== 'hamster-run') {
         this.player.play('hamster-run');
       }
@@ -607,7 +596,7 @@ export class RunScene extends Phaser.Scene {
     } else {
       // In air: show jump or fall sprite
       this.player.anims.stop();
-      if (body.velocity.y < 0) {
+      if (player.vy < 0) {
         this.player.setTexture(TEXTURES.hamsterJump);
         this.player.setAngle(-12);
       } else {
@@ -615,8 +604,6 @@ export class RunScene extends Phaser.Scene {
         this.player.setAngle(5);
       }
     }
-
-    this.tryJump();
 
     this.shadow.setScale(Math.max(0.3, 1 - (CONFIG.groundY - this.player.y) / 300));
 
