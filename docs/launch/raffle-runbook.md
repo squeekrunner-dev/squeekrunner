@@ -131,10 +131,15 @@ To achieve cryptographic provable fairness, designate an Ethereum Sepolia block 
 ### Procedure:
 1. Check current Sepolia block height on a block explorer (e.g. Etherscan Sepolia).
 2. Choose a target block number `<TARGET_BLOCK>` approximately **150 to 300 blocks into the future** (about 30 to 60 minutes later at ~12s per block).
-3. Publish an announcement post immediately on X/Twitter (using the template in `docs/launch/x-threads.md`):
-   - Include `<SNAPSHOT_HASH>`.
+3. Create the commitment (in `contracts/`):
+   ```bash
+   npm run raffle -- commit allowlist-raffle-raw.csv <TARGET_BLOCK> raffle-commit.json
+   ```
+   `raffle-commit.json` contains the entry count, the entries' Merkle root (`<SNAPSHOT_HASH>`), the target block and the algorithm.
+4. Commit `allowlist-raffle-raw.csv` and `raffle-commit.json` to the public repository, then publish an announcement post immediately on X/Twitter (using the template in `docs/launch/x-threads.md`):
+   - Include `<SNAPSHOT_HASH>` (the `entriesRoot` from `raffle-commit.json`).
    - Include designated target Sepolia block number: `#<TARGET_BLOCK>`.
-   - Attach or link the public `allowlist-raffle-raw.csv` file.
+   - Link the public `allowlist-raffle-raw.csv` and `raffle-commit.json` files.
 
 Nobody (including the team) can predict the block hash of an unmined block.
 
@@ -149,15 +154,15 @@ Once Sepolia block `#<TARGET_BLOCK>` is confirmed:
 - [ ] Retrieve the exact block hash from a verified Sepolia RPC or explorer (e.g. `0x3a1b...`).
 
 ### Procedure:
-1. Execute the deterministic raffle selection script `<RAFFLE_SCRIPT>`:
+1. Execute the deterministic raffle selection script (in `contracts/`). Pass the block hash from an explorer, or `rpc` with `SEPOLIA_RPC_URL` in `contracts/.env` (the script then refuses a block that is not finalized yet):
    ```bash
-   node <RAFFLE_SCRIPT> \
-     --entries allowlist-raffle-raw.csv \
-     --block-hash <SEPOLIA_BLOCK_HASH> \
-     --winners 700 \
-     --out raffle-winners.csv
+   npm run raffle -- draw allowlist-raffle-raw.csv raffle-commit.json <SEPOLIA_BLOCK_HASH|rpc> raffle-result.json
    ```
-2. The script runs a Fisher-Yates shuffle seeded with `<SEPOLIA_BLOCK_HASH>` and selects 700 winning addresses.
+   This writes `raffle-result.json` and `raffle-result.winners.csv`. Publish both, together with the block hash.
+2. The script runs an unbiased partial Fisher-Yates shuffle seeded with `keccak256(blockHash, entriesRoot, counter)` and selects 700 winning addresses. Anyone can check it:
+   ```bash
+   npm run raffle -- verify allowlist-raffle-raw.csv raffle-commit.json <SEPOLIA_BLOCK_HASH> raffle-result.json
+   ```
 3. If total qualified entries are ≤ 700, all qualified entrants win automatically.
 4. Prepare the 200 community winners list (`community-winners.csv`).
 5. Merge the 700 raffle winners and 200 community winners into `allowlist-final.csv`:
