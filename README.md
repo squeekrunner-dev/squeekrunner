@@ -6,6 +6,10 @@ Double jump over crates, travel farther, and catch golden nuts dropped by new
 
 ## Play
 
+The site has three static pages: `/` is the landing page with live wheel telemetry,
+`/play/` is the game, and `/whitepaper/` is SqueekRunner's own whitepaper (in Russian).
+The landing loads no Phaser bundle; the whitepaper is readable without JavaScript.
+
 - **Space / Up arrow / click / tap:** start, then jump. Press again in the air for a double jump.
 - **P / Escape:** pause or resume. Hiding the tab pauses the run; tap or press Space to resume.
 - **After a collision:** Space / Up / one tap restarts immediately.
@@ -19,7 +23,7 @@ Double jump over crates, travel farther, and catch golden nuts dropped by new
 Use Node **22.12+ in the 22.x line, 24.x, or 26+** (tested with 24.11.1).
 
 ```sh
-npm install
+npm ci
 npm run dev          # http://127.0.0.1:5173/
 npm run typecheck
 npm test             # Vitest; deterministic tests, no live HTTP dependency
@@ -27,7 +31,8 @@ npm run build        # strict typecheck + production output in dist/
 npm run preview
 ```
 
-For a simulated demonstration, open **http://127.0.0.1:5173/?demo=1**.
+Open **http://127.0.0.1:5173/play/** to play with live data.
+For a simulated demonstration, open **http://127.0.0.1:5173/play/?demo=1**.
 The large **DEMO** badge stays visible. Simulated RPM cycles from 0 to 98.316 and
 blocks increment every 16 seconds. No Squeekchain request is made in demo mode.
 Remove the query parameter to return to live data. Demo and live records are separate.
@@ -105,6 +110,13 @@ scoreboard, **not** an authenticated online or onchain leaderboard.
 
 - `src/chain/`: typed source interface, live polling, demo generator, parser, freshness
   mapping, BigInt block detector; none imports Phaser.
+- `index.html`, `src/site/`: landing, shared responsive light/dark styles, and a small
+  live widget reusing LiveSource. A separate UI timer updates NO DATA on failures/expiry;
+  both polling and that timer pause when hidden and are restored after page-cache return.
+- `play/index.html`: existing game entry via `src/main.ts`, with a link back to the site.
+- `whitepaper/index.html`: static game whitepaper, anchor navigation, inline SVG data
+  flow, and balance table verified against CONFIG by a unit test.
+- `public/site/favicon.svg`: original site mark, separate from game asset paths.
 - `src/logic/`: speed/spacing and resilient records, independent of Phaser.
 - `src/game/`: Boot → Run → GameOver, input, collisions, collectibles and HUD.
 - `src/game/textures.ts`: all texture keys and generated Graphics textures. Replace the
@@ -134,3 +146,34 @@ claim about the animal's physical maximum.
 
 Validated against installation `sepolia-core-sepolia-20261103`, Sepolia chain ID 11155111,
 Core `0xFD6C166D4B8E2962E65746a13e5a0797CD4dE0c4`. Installation changes are re-baselined.
+
+## Static hosting and Genesis ownership
+
+`npm run build` emits `dist/index.html`, `dist/play/index.html` and
+`dist/whitepaper/index.html`. Deploy the entire `dist/` directory together. Vite uses
+three HTML inputs and `base: './'`; assets and navigation are relative, so mounting at
+`/squeekrunner/` also works. The host must serve directory index files and redirect
+directory URLs without a trailing slash (e.g. `/play` → `/play/`). No SPA fallback is
+required. Local production check: `npm run preview` (default port 4173).
+
+The site follows the system light/dark preference, includes keyboard focus and skip
+links, and respects reduced motion. It uses local SVG art and system fonts; no CDN,
+analytics or tracker is loaded. Open Graph titles/descriptions/types are included;
+canonical/og:url and a social preview image can be finalized once the public origin
+is assigned. No production domain or repository URL is invented.
+
+Genesis Direct verification is **pending**, not claimed as complete. The verified
+project instructions require the issued DNS record on the chosen domain, the issued
+page tag on the live site, and the issued repository line in the public GitHub README.
+The landing head contains the exact placeholder:
+
+```html
+<!-- GENESIS-OWNERSHIP-TAG: вставить выданный тег -->
+```
+
+<!-- GENESIS-OWNERSHIP-README: вставить выданную строку репозитория -->
+
+Replace that README comment with the issued repository line when available. Add the
+issued DNS record through the domain owner, publish the page tag, and then use Verify.
+Keep the DNS record: Genesis checks it again. Until the repository URL is known, site
+GitHub links intentionally lead to `#github`, a visible explanation of the placeholder.
