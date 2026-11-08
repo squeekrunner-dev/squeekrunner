@@ -7,11 +7,7 @@ export const UNIT = 1000; // milli-pixels; velocities are milli-pixels / second
 export const MAX_TICKS = 30 * 60 * TICK_HZ;
 // round((1 - exp(-1 / (60 * 1.4))) * 1e6), evaluated offline, never at runtime.
 export const SPEED_ALPHA = 11834;
-export const HITBOX = {
-  player: { width: 42, height: 44, offsetX: 13, offsetY: 12, textureWidth: 64, textureHeight: 56 },
-  obstacle: { width: 48, height: 64, offsetX: 4, offsetY: 4, textureWidth: 56, textureHeight: 68 },
-  nut: { radius: 16, offsetX: 2, offsetY: 3, textureWidth: 36, textureHeight: 38 },
-} as const;
+export const HITBOX = CONFIG.hitboxes;
 
 export interface Obstacle { id: number; kind: number; x: number; width: number; height: number }
 export interface Nut { id: number; x: number }

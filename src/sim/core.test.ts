@@ -10,6 +10,7 @@ describe('fixed-step rules', () => {
   it('retains the texture hitboxes and configured balance', () => {
     const s = createSim(0);
     expect(TICK_HZ).toBe(60);
+    expect(HITBOX).toBe(CONFIG.hitboxes);
     expect(SPEED_ALPHA).toBe(Math.round((1 - Math.exp(-1 / (TICK_HZ * CONFIG.speed.smoothingSeconds))) * 1000000));
     expect(playerRect(s)).toEqual({ left: 137000, top: 372000, right: 179000, bottom: 416000 });
     obstacle(s);
