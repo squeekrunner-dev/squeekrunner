@@ -5,7 +5,8 @@ export function formatTelemetry(view: TelemetryView) {
   const height = view.snapshot?.confirmedHeight ?? null;
   return {
     mode: view.mode,
-    rpm: view.mode === 'NO DATA' ? '—' : view.rpm.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    rpm: view.mode === 'NO DATA' ? '—' : view.rpm > 0 && view.rpm < 0.1 ? '<0,1' :
+      view.rpm.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     height: height === null ? '—' : `#${height.toString()}`,
     heightLabel: height !== null && view.mode === 'NO DATA' ? 'Последний известный блок' : 'Подтверждённый блок',
     explanation: view.mode === 'LIVE' ? 'Колесо крутится. Забег набирает темп.' :

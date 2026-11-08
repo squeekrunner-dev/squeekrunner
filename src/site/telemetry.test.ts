@@ -14,6 +14,10 @@ describe('landing telemetry presentation', () => {
     expect(formatTelemetry(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME))).toMatchObject({ mode: 'WHEEL IDLE', rpm: '0,0' });
     expect(formatTelemetry(telemetryView(null, SAMPLE_TIME))).toMatchObject({ mode: 'NO DATA', rpm: '—', height: '—' });
   });
+  it('does not round a small positive LIVE measurement down to an apparent zero', () => {
+    const body = sampleStatus(); body.measurement.rpmMilli = 1;
+    expect(formatTelemetry(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME))).toMatchObject({ mode: 'LIVE', rpm: '<0,1' });
+  });
   it('labels a retained height as last known after expiry instead of showing a stale RPM', () => {
     const view = telemetryView(parseStatus(sampleStatus(), SAMPLE_TIME), SAMPLE_TIME + CONFIG.telemetry.maxReadAgeMs + 1);
     expect(formatTelemetry(view)).toMatchObject({ mode: 'NO DATA', rpm: '—', height: '#1999', heightLabel: 'Последний известный блок' });

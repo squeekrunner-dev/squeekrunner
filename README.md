@@ -156,6 +156,13 @@ three HTML inputs and `base: './'`; assets and navigation are relative, so mount
 directory URLs without a trailing slash (e.g. `/play` → `/play/`). No SPA fallback is
 required. Local production check: `npm run preview` (default port 4173).
 
+With preview running, `node scripts/check-site.mjs` checks the three pages, their links,
+anchors and assets, both at the root and under `/nested/squeekrunner/`. It also checks
+text contrast in both palettes. Add `--live` to execute the production landing bundle
+against the real API with a minimal Node DOM port and verify its rendered values and
+CORS response header. This optional live check requires network access and is **not**
+a browser/CORS-enforcement or visual layout test; `npm test` remains fully offline.
+
 The site follows the system light/dark preference, includes keyboard focus and skip
 links, and respects reduced motion. It uses local SVG art and system fonts; no CDN,
 analytics or tracker is loaded. Open Graph titles/descriptions/types are included;
