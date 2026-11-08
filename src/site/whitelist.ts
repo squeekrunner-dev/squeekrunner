@@ -1,3 +1,8 @@
+import { ApiClient, loadRun, NetworkError, type StoredRun } from '../net/api';
+import { challenge } from '../net/turnstile';
+import { formatSiweMessage } from './siwe';
+import { InjectedWallet, type WalletPort } from './wallet';
+
 export interface WhitelistStatus {
   threshold: number | null;
   thresholdLabel: string;
@@ -13,6 +18,9 @@ export interface WhitelistSubmission {
   signature?: string;
   runScore?: number;
   replayData?: unknown;
+  /** Live mode: the verified run token stored by the game, and the wallet signer. */
+  run?: StoredRun;
+  sign?: (message: string) => Promise<string>;
 }
 
 export interface WhitelistResult {
@@ -87,26 +95,71 @@ export class MockWhitelistApi implements WhitelistApi {
   }
 }
 
-export class DefaultWhitelistApi implements WhitelistApi {
+/** Used when the site is built without VITE_API_BASE: honest "not live yet" state. */
+export class OfflineWhitelistApi implements WhitelistApi {
   async getStatus(): Promise<WhitelistStatus> {
-    return { ...DEFAULT_STATUS };
+    return { ...DEFAULT_STATUS, isOpen: false };
   }
 
   async submitEntry(): Promise<WhitelistResult> {
-    return {
-      success: false,
-      error: 'Live backend verification is scheduled for T008. Add ?mock=1 to the URL to test the interactive UI flow.',
-    };
+    return { success: false, error: 'The raffle server is not live yet. Follow the announcements; add ?mock=1 to the URL to preview the flow.' };
+  }
+}
+
+export function statusFromServer(reply: { threshold: number | null; entriesOpen: boolean; entriesCount: number; snapshotAt: string | null; deadline: string | null }): WhitelistStatus {
+  const date = (iso: string | null): string => {
+    const t = iso ? Date.parse(iso) : NaN;
+    return Number.isFinite(t) ? new Date(t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'TBA';
+  };
+  return {
+    threshold: reply.threshold,
+    thresholdLabel: reply.threshold === null ? 'TBA' : reply.threshold.toLocaleString('en-US'),
+    entriesCount: reply.entriesCount,
+    entriesLabel: reply.entriesCount.toLocaleString('en-US'),
+    snapshotBlock: null,
+    snapshotLabel: date(reply.snapshotAt ?? reply.deadline),
+    isOpen: reply.entriesOpen,
+  };
+}
+
+/** Real server: SIWE challenge, wallet signature, Turnstile, entry. */
+export class LiveWhitelistApi implements WhitelistApi {
+  constructor(private readonly api: ApiClient, private readonly sitekey: string,
+    private readonly verify: (sitekey: string, action: 'entry', signal: AbortSignal) => Promise<string> = challenge) {}
+
+  async getStatus(): Promise<WhitelistStatus> {
+    return statusFromServer(await this.api.raffleStatus());
+  }
+
+  async submitEntry(payload: WhitelistSubmission): Promise<WhitelistResult> {
+    if (!payload.run || !payload.sign) return { success: false, error: 'A verified qualifying run is required.' };
+    try {
+      const n = await this.api.nonce();
+      const message = formatSiweMessage({
+        domain: n.domain, address: payload.address, statement: n.statement, uri: n.uri, chainId: n.chainId,
+        nonce: n.nonce, issuedAt: n.issuedAt, expirationTime: n.expirationTime,
+        resources: [`urn:squeekrunner:run:${payload.run.runId}`],
+      });
+      const signature = await payload.sign(message);
+      const token = await this.verify(this.sitekey, 'entry', new AbortController().signal);
+      const entered = await this.api.entry(payload.run.runToken, message, signature, token);
+      return { success: true, ticketId: formatAddress(entered.address), message: '1 raffle ticket recorded for this wallet.' };
+    } catch (error) {
+      return { success: false, error: error instanceof NetworkError || error instanceof Error ? error.message : 'Entry failed.' };
+    }
   }
 }
 
 export class WhitelistController {
   private state: WhitelistState;
+  private run: StoredRun | null = null;
   private readonly listeners = new Set<(state: WhitelistState) => void>();
 
   constructor(
     private readonly api: WhitelistApi,
     isMock = false,
+    private readonly wallet: WalletPort | null = null,
+    private readonly runLoader: () => StoredRun | null = () => null,
   ) {
     this.state = {
       state: 'idle',
@@ -165,17 +218,27 @@ export class WhitelistController {
       return;
     }
 
-    if (addressOverride && /^0x[a-fA-F0-9]{40}$/.test(addressOverride)) {
-      this.state.address = addressOverride;
-      this.state.score = 1420;
-      this.state.state = 'connected';
-      this.notify();
-      return;
+    if (this.state.status && !this.state.status.isOpen) {
+      return this.fail('Raffle entries are not open yet. The threshold and dates will be announced.');
     }
+    this.run = this.runLoader();
+    if (!this.run) {
+      return this.fail('No verified qualifying run found in this browser. Play a ranked run on /play/ and reach the threshold, then come back.');
+    }
+    if (!this.wallet) return this.fail('No browser wallet available.');
+    try {
+      this.state.address = await this.wallet.requestAddress();
+    } catch (error) {
+      return this.fail(error instanceof Error ? error.message : 'Wallet connection failed.');
+    }
+    this.state.score = this.run.score;
+    this.state.state = 'connected';
+    this.notify();
+  }
 
-    // In non-mock mode before T008 wallet connector is integrated
+  private fail(message: string): void {
     this.state.state = 'error';
-    this.state.error = 'Web3 wallet integration will be connected in T008. Use ?mock=1 to test the full submission flow.';
+    this.state.error = message;
     this.notify();
   }
 
@@ -186,11 +249,11 @@ export class WhitelistController {
     this.state.error = null;
     this.notify();
 
-    const submission: WhitelistSubmission = {
-      address: this.state.address,
-      signature: '0xmock_signature_for_testing_purposes',
-      runScore: this.state.score ?? 1420,
-    };
+    const address = this.state.address;
+    const submission: WhitelistSubmission = this.state.isMock
+      ? { address, signature: '0xmock_signature_for_testing_purposes', runScore: this.state.score ?? 1420 }
+      : { address, runScore: this.state.score ?? undefined, run: this.run ?? undefined,
+          sign: message => this.wallet!.signMessage(address, message) };
 
     try {
       const result = await this.api.submitEntry(submission);
@@ -278,10 +341,10 @@ export function renderWhitelistApp(
       wrapper.appendChild(button);
 
       if (!state.isMock) {
-        const mockHint = document.createElement('p');
-        mockHint.className = 'app-hint';
-        mockHint.innerHTML = 'Testing the UI flow? <a href="?mock=1#status">Enable mock mode (?mock=1)</a> to test without a wallet.';
-        wrapper.appendChild(mockHint);
+        const hint = document.createElement('p');
+        hint.className = 'app-hint';
+        hint.innerHTML = 'You need a verified run above the threshold from this browser. <a href="../play/">Play a ranked run →</a>';
+        wrapper.appendChild(hint);
       }
     } else if (state.state === 'connecting') {
       srStatus.textContent = 'Connecting to wallet...';
@@ -343,7 +406,7 @@ export function renderWhitelistApp(
 
       const loading = document.createElement('div');
       loading.className = 'app-loading';
-      loading.innerHTML = '<p><strong>Verifying replay & signature...</strong></p><p class="app-hint">Anti-cheat engine is re-simulating inputs. No blockchain transaction required.</p>';
+      loading.innerHTML = '<p><strong>Waiting for your wallet signature…</strong></p><p class="app-hint">Sign the message in your wallet. It is an off-chain signature: no transaction, no gas.</p>';
       wrapper.appendChild(loading);
     } else if (state.state === 'submitted') {
       srStatus.textContent = `Success! Ticket ${state.ticketId ?? ''} confirmed for the raffle.`;
@@ -370,7 +433,7 @@ export function renderWhitelistApp(
       const notice = document.createElement('p');
       notice.className = 'ticket-note';
       notice.textContent =
-        'Your run replay was verified. When the snapshot block is reached, winners will be drawn deterministically using the block hash. Keep an eye on announcements!';
+        'Your verified run is linked to this wallet. After entries close, winners are drawn from the published entry list using the hash of an announced future Sepolia block. Keep an eye on announcements!';
       successCard.appendChild(notice);
 
       const resetBtn = document.createElement('button');
@@ -419,14 +482,28 @@ export function renderWhitelistApp(
   return unsubscribe;
 }
 
+function paintStatus(status: WhitelistStatus | null): void {
+  if (!status) return;
+  const set = (selector: string, text: string): void => {
+    const el = document.querySelector(selector);
+    if (el) el.textContent = text;
+  };
+  set('[data-status-threshold]', status.thresholdLabel);
+  set('[data-status-entries]', status.entriesLabel);
+  set('[data-status-snapshot]', status.snapshotLabel);
+}
+
 // Browser bootstrap when loaded via <script type="module">
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const container = document.querySelector<HTMLElement>('[data-whitelist-app]');
   if (container) {
     const isMock = new URLSearchParams(window.location.search).get('mock') === '1';
-    const api = isMock ? new MockWhitelistApi() : new DefaultWhitelistApi();
-    const controller = new WhitelistController(api, isMock);
+    const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim() ?? '';
+    const sitekey = (import.meta.env.VITE_TURNSTILE_SITEKEY as string | undefined)?.trim() ?? '';
+    const api: WhitelistApi = isMock ? new MockWhitelistApi() : base ? new LiveWhitelistApi(new ApiClient(base), sitekey) : new OfflineWhitelistApi();
+    const controller = new WhitelistController(api, isMock, isMock ? null : new InjectedWallet(), () => loadRun());
     renderWhitelistApp(container, controller);
+    controller.subscribe(state => paintStatus(state.status));
     void controller.init();
   }
 }
