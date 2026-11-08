@@ -409,3 +409,90 @@ th:first-child { width: 48%; }
 .admin-actions .button, .admin-actions .app-secondary-btn { width: auto; margin: 0; padding: 8px 14px; min-height: 0; font-size: .85rem; gap: 8px; }
 .admin-reject { background: var(--no-data); box-shadow: none; }
 @media (prefers-color-scheme: dark) { .admin-flags .flag-warn { color: #ffcf75; } }
+
+/* What's next teaser section */
+#whats-next { scroll-margin-top: 24px; }
+.whats-next-steps { margin-bottom: 48px; }
+.next-step-card { border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: var(--surface); display: flex; flex-direction: column; }
+.next-step-card h3 { margin-bottom: 10px; font-size: 1.25rem; }
+.next-step-card p { font-size: .92rem; color: var(--muted); margin-bottom: 0; }
+
+.wheel-block { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 36px 32px; margin-bottom: 32px; }
+.wheel-header { margin-bottom: 28px; }
+.wheel-header h3 { font-size: clamp(1.4rem, 2.4vw, 2rem); margin-bottom: 10px; }
+.wheel-desc { color: var(--muted); max-width: 60ch; font-size: .95rem; margin-bottom: 0; }
+
+.shift-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.shift-card { display: flex; flex-direction: column; padding: 22px 20px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); position: relative; transition: transform .18s; }
+.shift-card:hover { transform: translateY(-2px); }
+.shift-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 8px; }
+.shift-tier-label { font: 700 .75rem Consolas, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.shift-badge { font: 700 .72rem Consolas, monospace; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--line); color: var(--muted); background: var(--surface); }
+.shift-duration { font-size: 1.85rem; font-weight: 700; letter-spacing: -.03em; margin-bottom: 10px; line-height: 1.1; color: var(--ink); }
+.shift-text { font-size: .88rem; color: var(--muted); margin-bottom: 0; line-height: 1.5; }
+
+/* Visual progression across shift tiers */
+.shift-tier-1 { border-color: var(--line); }
+.shift-tier-2 { border-color: var(--line); border-top: 3px solid var(--idle); }
+.shift-tier-2 .shift-badge { color: var(--idle); border-color: var(--idle); }
+.shift-tier-3 { border-color: var(--line); border-top: 4px solid var(--live); box-shadow: 0 4px 12px rgba(0, 0, 0, .04); }
+.shift-tier-3 .shift-badge { color: var(--live); border-color: var(--live); }
+.shift-tier-4 { border: 2px solid var(--accent-ink); border-top: 5px solid var(--accent-ink); box-shadow: 0 6px 18px rgba(0, 0, 0, .08); background: linear-gradient(180deg, var(--surface) 0%, var(--paper) 100%); }
+.shift-tier-4 .shift-badge-elite { background: var(--accent); color: var(--button-ink); border-color: var(--accent-ink); font-weight: 700; }
+.shift-tier-4 .shift-duration { color: var(--accent-ink); }
+
+.community-first-box { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-left: 5px solid var(--accent-ink); border-radius: 12px; background: var(--surface); padding: 22px 26px; margin-bottom: 28px; }
+.community-first-pill { font: 700 .72rem Consolas, monospace; text-transform: uppercase; letter-spacing: .1em; color: var(--accent-ink); }
+.community-first-text { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin-bottom: 0; color: var(--ink); }
+
+.whats-next-disclaimer { border-top: 1px solid var(--line); padding-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.disclaimer-lead { font-size: .85rem; color: var(--muted); line-height: 1.6; margin-bottom: 0; }
+.disclaimer-action { margin-bottom: 0; }
+
+@media (max-width: 960px) {
+  .shift-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .shift-grid { grid-template-columns: 1fr; }
+  .wheel-block { padding: 24px 18px; }
+  .community-first-box { padding: 18px 18px; }
+}
+
+/* Built on Squeekchain section */
+#squeekchain { scroll-margin-top: 24px; }
+.squeektoshi-card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 36px 32px; margin-bottom: 32px; }
+.squeektoshi-info h3 { font-size: clamp(1.4rem, 2.5vw, 2.2rem); margin-bottom: 12px; }
+.squeektoshi-info p { max-width: 65ch; color: var(--muted); font-size: .95rem; }
+.squeektoshi-action { margin-top: 24px; }
+
+.integration-block { margin-bottom: 36px; }
+.integration-item { border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: var(--surface); display: flex; flex-direction: column; }
+.integration-item h4 { font-size: 1.15rem; margin: 0 0 8px; line-height: 1.25; }
+.integration-item p { font-size: .9rem; color: var(--muted); margin-bottom: 0; }
+
+.squeekchain-live-card { border: 1px solid var(--line); border-top: 4px solid var(--live); border-radius: 16px; background: var(--surface); padding: 32px; margin-bottom: 32px; }
+.live-card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.live-indicator { display: flex; align-items: center; gap: 8px; }
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); flex-shrink: 0; }
+.live-card-sub { font-size: .82rem; color: var(--muted); }
+.live-card-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.live-metric-box { display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line); }
+.live-metric-label { font: 700 .72rem Consolas, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.live-metric-value { font-size: 1.55rem; font-weight: 700; letter-spacing: -.03em; color: var(--ink); line-height: 1.15; }
+.live-metric-note { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+.squeekchain-links-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 28px; }
+.squeekchain-link-btn { font-size: 1rem; padding: 14px 20px; min-height: 52px; gap: 16px; box-shadow: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.squeekchain-link-btn:hover { background: var(--accent); color: var(--button-ink); border-color: var(--accent-ink); }
+
+.squeekchain-disclaimer { font-size: .85rem; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--line); padding-top: 20px; margin-bottom: 0; }
+
+@media (max-width: 960px) {
+  .live-card-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .squeektoshi-card { padding: 24px 18px; }
+  .squeekchain-live-card { padding: 24px 18px; }
+  .live-card-metrics { grid-template-columns: 1fr; }
+  .squeekchain-link-btn { width: 100%; justify-content: space-between; }
+}

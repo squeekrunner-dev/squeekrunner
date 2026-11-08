@@ -105,6 +105,9 @@ if (process.argv.includes('--live')) {
   const originalFetch = globalThis.fetch;
   let proof;
   globalThis.fetch = async (url, options) => {
+    if (url === 'https://api.squeekchain.com/v1/economy/state') {
+      return originalFetch(url, { ...options, headers: { Origin: new URL(preview).origin } });
+    }
     assert.equal(url, 'https://api.squeekchain.com/v1/status');
     assert.equal(options.credentials, 'omit');
     const started = Date.now();

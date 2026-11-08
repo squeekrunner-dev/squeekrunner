@@ -1,6 +1,10 @@
 import { LiveSource } from '../chain/live';
 import { formatTelemetry } from './telemetry';
 import { watchTelemetry } from './widget';
+import { initSqueekchainLiveCard } from './squeekchain';
+
+const squeekchainCard = document.querySelector<HTMLElement>('[data-squeekchain-live]');
+const squeekchainLive = squeekchainCard ? initSqueekchainLiveCard(squeekchainCard) : null;
 
 const root = document.querySelector<HTMLElement>('[data-telemetry]');
 if (root) {
@@ -20,11 +24,19 @@ if (root) {
     mode.dataset.mode = display.mode;
     modeText.textContent = display.mode;
     explanation.textContent = display.explanation;
+    if (squeekchainLive) {
+      squeekchainLive.updateTelemetry(display);
+    }
     // Screen readers hear state transitions, not every RPM tick.
     if (lastMode !== display.mode) {
       announcement.textContent = `${display.mode}. ${display.explanation}`;
       lastMode = display.mode;
     }
   }, window, document);
-  if (import.meta.hot) import.meta.hot.dispose(dispose);
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      dispose();
+      squeekchainLive?.dispose();
+    });
+  }
 }

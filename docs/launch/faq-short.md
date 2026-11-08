@@ -1,6 +1,6 @@
 # SqueekRunner — Quick FAQ for Social Media & Community Replies
 
-A collection of 15 concise, factual answers designed for quick copy-pasting when responding to player inquiries on X (Twitter), Discord, and Telegram. All details are strictly aligned with `/whitelist/index.html` and project documentation.
+A collection of 18 concise, factual answers designed for quick copy-pasting when responding to player inquiries on X (Twitter), Discord, and Telegram. All details are strictly aligned with `/whitelist/index.html` and project documentation.
 
 This is an application process with manual review, not a raffle.
 
@@ -25,7 +25,7 @@ This is an application process with manual review, not a raffle.
 **A:** The game remains 100% playable! When telemetry reports 0 RPM or data is temporarily unavailable, SqueekRunner runs at its balanced baseline speed. You can always start a run and qualify for the whitelist at any time.
 
 ### Q7: What are golden nuts? Are they crypto tokens?
-**A:** No, golden nuts are in-game bonus items, not tokens or SQK. They spawn whenever Squeekchain confirms a new block on Sepolia. Collecting a golden nut grants +150 score points and a 12-second one-hit shield that absorbs a crate collision.
+**A:** No, golden nuts are in-game bonus items, not tokens or SQK. They spawn whenever Squeekchain confirms a new block on Sepolia. Collecting a golden nut grants +150 score points, +5 double jumps and a one-hit shield that stays until it absorbs a crate collision.
 
 ### Q8: What is the SqueekRunner Hamsters NFT collection?
 **A:** It is an upcoming collection of 1,000 unique vector SVG NFTs on Ethereum Sepolia testnet. It includes 990 generative character combinations across 8 layers and 10 handcrafted 1/1 legendary editions celebrating milestone runners.
@@ -37,7 +37,7 @@ This is an application process with manual review, not a raffle.
 - **100 NFTs (10%):** Core team and community treasury reserve.
 
 ### Q10: How do I qualify for the whitelist?
-**A:** Play in ranked mode on `<SITE_URL>/play/`, achieve a server-verified score of **100,000+ points**, and collect all **10 / 10 coins** in the first 10,000 metres. Once qualified, click "Apply for the whitelist" to submit your application on `<SITE_URL>/whitelist/` within 24 hours.
+**A:** Play in ranked mode on `<SITE_URL>/play/`, achieve a server-verified score of **100,000+ points**, and collect all **10 / 10 coins** (all of them appear before 100,000 points). Once qualified, click "Apply for the whitelist" to submit your application on `<SITE_URL>/whitelist/` within 24 hours.
 
 ### Q11: Do I need to connect a wallet or sign a message?
 **A:** No. You do not connect your wallet and you never sign cryptographic messages. You simply paste your Sepolia address manually into the application form and link your verification post on X.
@@ -55,8 +55,17 @@ This is an application with manual review, not a raffle.
 ### Q13: Can bots or multi-accounters farm all the spots?
 **A:** We enforce strictly 1 application per address and X account. Level maps and coins are delivered in progressive chunks from the server during the run so layout cannot be precalculated offline. Additionally, our engine checks 60 Hz replay physics, real-time elapsed duration, input rhythm variance, IP hash clusters, and on-chain wallet history. Obvious bot farms will be rejected.
 
-### Q14: Do SqueekRunner Hamsters NFTs have financial value or yield?
-**A:** No. SqueekRunner Hamsters are free testnet collectibles created solely for gaming fun and experimentation. They carry zero cash value, offer no passive yield or investment returns, and are not financial instruments.
+### Q14: Do SqueekRunner Hamsters NFTs have monetary value?
+**A:** Today, SqueekRunner Hamsters are free testnet collectibles created solely for gaming fun and experimentation, carrying zero monetary value on Sepolia. In the future, a migration to Squeekchain mainnet (once it launches), the $HMSTR coin, and The Wheel utility are planned — see our What's Next roadmap.
 
 ### Q15: Is SqueekRunner an official Squeekchain project?
 **A:** No. SqueekRunner is an independent community project created by builders participating in the Squeekchain Genesis Code Lane. It is not created, owned, operated, or endorsed by the Squeekchain core team.
+
+### Q16: What happens after the mint?
+**A:** Following the free testnet mint on Sepolia, the collection is planned to move to mainnet together with the Squeekchain mainnet launch (mechanism and schedule to be announced later). We are also planning the launch of $HMSTR, The Wheel locking shifts, and expanding utility for hamster holders.
+
+### Q17: What is $HMSTR?
+**A:** $HMSTR is the planned coin of SqueekRunner. SqueekRunner Hamster NFT holders will receive an allocation from the total supply of $HMSTR. Tokenomics will be announced later. The team takes no trading fees and no royalties for itself — they flow back to the community treasury and the hamsters on the wheel.
+
+### Q18: What is the Wheel?
+**A:** The Wheel is an interactive NFT locking feature (staking). You can send your hamster to spin the wheel for a shift duration of your choice: 1 week, 1 month, 3 months, or 1 year. The rule is simple: the longer the shift, the bigger the perks. The team takes no trading fees and no royalties for itself — they flow back to the community treasury and hamsters on the wheel. Specific perks and details will be announced later.

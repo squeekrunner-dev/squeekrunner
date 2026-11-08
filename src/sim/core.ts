@@ -1,7 +1,7 @@
 import { CONFIG } from '../config';
 
 /** Changing rules, constants or operation order requires a new sim version. */
-export const SIM_VERSION = 'squeek-3';
+export const SIM_VERSION = 'squeek-4';
 export const TICK_HZ = 60;
 export const UNIT = 1000; // milli-pixels; velocities are milli-pixels / second
 export const MAX_TICKS = 30 * 60 * TICK_HZ;
@@ -26,7 +26,8 @@ export interface SimState {
   player: { y: number; vy: number; jumps: number; lastGrounded: number; queuedAt: number | null };
   obstacles: Obstacle[]; nut: Nut | null; coins: CoinState;
   rpmMilli: number | null; speed: number; travel: number; score: number;
-  bonus: number; spawnAt: number; shieldUntil: number; invulnerableUntil: number;
+  /** Double jumps left; a shield is held until it absorbs one hit. */
+  bonus: number; spawnAt: number; airJumps: number; shield: boolean; invulnerableUntil: number;
   gameOver: boolean; endReason: 'collision' | 'limit' | null;
 }
 export interface TickInput {
@@ -49,7 +50,7 @@ export function createSim(seed: number): SimState {
     obstacles: [], nut: null, coins: { next: 0, pending: null, active: null, collected: 0, missed: 0 },
     rpmMilli: null, speed: CONFIG.speed.base * UNIT,
     travel: 0, score: 0, bonus: 0, spawnAt: Math.ceil(CONFIG.obstacles.firstDelaySeconds * TICK_HZ),
-    shieldUntil: 0, invulnerableUntil: 0, gameOver: false, endReason: null,
+    airJumps: CONFIG.doubleJumps.start, shield: false, invulnerableUntil: 0, gameOver: false, endReason: null,
   };
 }
 
@@ -135,6 +136,8 @@ function jump(s: SimState, events: SimEvent[]): void {
   if ((s.tick - p.queuedAt) * 1000 > CONFIG.jumpBufferMs * TICK_HZ) { p.queuedAt = null; return; }
   if (p.jumps === 0 && (s.tick - p.lastGrounded) * 1000 > CONFIG.coyoteMs * TICK_HZ) p.jumps = 1;
   if (p.jumps >= CONFIG.maxJumps) return;
+  // An air jump spends one double jump; with none left the input stays buffered for the landing.
+  if (p.jumps > 0) { if (s.airJumps <= 0) return; s.airJumps--; }
   events.push(p.jumps === 0 ? 'jump' : 'airJump');
   p.vy = (p.jumps === 0 ? CONFIG.jumpVelocity : CONFIG.airJumpVelocity) * UNIT;
   p.jumps++;
@@ -195,8 +198,8 @@ export function step(s: SimState, input: TickInput = {}): SimEvent[] {
   s.obstacles = s.obstacles.filter(o => {
     if (o.x < -80 * UNIT) return false;
     if (!s.gameOver && overlaps(rect, obstacleRect(o))) {
-      if (s.shieldUntil > s.tick || s.invulnerableUntil > s.tick) {
-        s.shieldUntil = 0;
+      if (s.shield || s.invulnerableUntil > s.tick) {
+        s.shield = false;
         s.invulnerableUntil = s.tick + Math.ceil(CONFIG.bonus.shieldInvulnerabilityMs * TICK_HZ / 1000);
         events.push('shieldHit');
         return false;
@@ -207,7 +210,8 @@ export function step(s: SimState, input: TickInput = {}): SimEvent[] {
   });
   if (!s.gameOver && s.nut && catchesNut(rect, s.nut)) {
     s.nut = null; s.bonus += CONFIG.bonus.points;
-    s.shieldUntil = s.tick + CONFIG.bonus.shieldSeconds * TICK_HZ;
+    s.shield = true; // held until a hit; never stacks
+    s.airJumps += CONFIG.doubleJumps.perNut;
     events.push('collect');
   }
   if (s.nut && s.nut.x < -80 * UNIT) s.nut = null;

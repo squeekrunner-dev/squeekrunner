@@ -26,7 +26,7 @@ Before opening applications, ensure telemetry, dynamic map chunk streaming, and 
 - [ ] Cloudflare Worker deployed with `APPLICATIONS_OPEN=false`.
 - [ ] Durable Object `TelemetryCollector` actively recording Squeekchain RPM and blocks.
 - [ ] Game client delivers chunked map segments progressively in ranked mode.
-- [ ] Qualification rules active: score ≥ 100,000 AND 10/10 coins in the first 10,000 m.
+- [ ] Qualification rules active: score ≥ 100,000 AND 10/10 coins (all placed before 100,000 points).
 - [ ] Frontend live on Cloudflare Pages connected to the Worker (`VITE_API_BASE`).
 
 ---
@@ -68,7 +68,7 @@ As runners submit applications, the team reviews them in the admin panel at http
 ### Review Signals in Admin Panel:
 1. **Gameplay & Replay Integrity:**
    - Server-verified score ≥ 100,000.
-   - All 10 / 10 coins collected (within the first 10,000 m).
+   - All 10 / 10 coins collected (all placed before 100,000 points).
    - Replay physics re-simulated cleanly at 60 Hz integer physics.
    - Run duration matches real-world elapsed time (no speedhacks).
    - Input rhythm: jump lead to obstacles and double-jump delay (mean ± deviation); near-zero variance suggests a script.

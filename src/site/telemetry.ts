@@ -9,8 +9,8 @@ export function formatTelemetry(view: TelemetryView) {
       view.rpm.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     height: height === null ? '—' : `#${height.toString()}`,
     heightLabel: height !== null && view.mode === 'NO DATA' ? 'Last known block' : 'Confirmed block',
-    explanation: view.mode === 'LIVE' ? 'The wheel is spinning. The run picks up speed.' :
-      view.mode === 'WHEEL IDLE' ? 'The wheel is idle. Run at your own pace.' :
+    explanation: view.mode === 'LIVE' ? 'Squeektoshi is running. The game picks up speed with him.' :
+      view.mode === 'WHEEL IDLE' ? 'Squeektoshi is resting: he runs mostly at night (UTC). Meanwhile the game runs at its base speed.' :
         'No fresh data. Game available at base speed.',
   };
 }
