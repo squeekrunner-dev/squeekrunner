@@ -3,6 +3,11 @@ import { TICK_HZ, type TickInput } from '../sim/core';
 
 /** Published server points become effective five seconds after collection. */
 export const TELEMETRY_LEAD_MS = 5000;
+/** A map chunk seed is released this long before its chunk starts on the server clock. */
+export const MAP_LEAD_MS = 3000;
+export interface MapChunk { index: number; seed: number }
+/** Released chunk seeds from the requested index; `nextAt` is the server time of the next release. */
+export interface MapPage { chunks: MapChunk[]; nextAt: number; serverNow: number }
 export interface TimelinePoint {
   at: number; validUntil: number; rpmMilli: number | null;
   installationId: string | null; height: string | null;
@@ -11,6 +16,7 @@ export interface TimelinePage { points: TimelinePoint[]; completeThrough: number
 export interface SessionReply {
   sessionId: string; seed: number; startedAt: number; expiresAt: number; simVersion: string;
   timeline: TimelinePage;
+  map: MapPage;
 }
 export interface RunReply { score: number; distance: number; endTick: number; coins: number; eligible: boolean; runToken: string; runId: string }
 

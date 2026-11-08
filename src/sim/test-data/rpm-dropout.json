@@ -1,11 +1,10 @@
 {
   "v": 1,
-  "simVersion": "squeek-2",
+  "simVersion": "squeek-3",
   "seed": 4294967295,
   "tickHz": 60,
   "inputs": [
-    160,
-    185
+    228
   ],
   "telemetry": [
     {
@@ -22,7 +21,7 @@
     }
   ],
   "nuts": [],
-  "endTick": 237,
-  "clientScore": 839,
+  "endTick": 360,
+  "clientScore": 1372,
   "mode": "live"
 }

@@ -1,5 +1,5 @@
 import type { ReplayV1 } from '../sim/replay';
-import type { RunReply, SessionReply, TimelinePage } from './timeline';
+import type { MapPage, RunReply, SessionReply, TimelinePage } from './timeline';
 
 export interface NonceReply { nonce: string; issuedAt: string; expirationTime: string; domain: string; uri: string; chainId: number; statement: string }
 export class NetworkError extends Error {
@@ -27,6 +27,7 @@ export class ApiClient {
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
   }
   session(turnstileToken: string, signal?: AbortSignal): Promise<SessionReply> { return this.request('/v1/session', { turnstileToken }, signal); }
+  map(sessionId: string, from: number, signal?: AbortSignal): Promise<MapPage> { return this.request('/v1/map', { sessionId, from }, signal); }
   run(sessionId: string, replay: ReplayV1, signal?: AbortSignal): Promise<RunReply> { return this.request('/v1/run', { sessionId, replay }, signal); }
   telemetry(since?: number, signal?: AbortSignal): Promise<TimelinePage> { return this.request(`/v1/telemetry${since === undefined ? '' : `?since=${since}`}`, undefined, signal); }
   nonce(signal?: AbortSignal): Promise<NonceReply> { return this.request('/v1/nonce', undefined, signal); }

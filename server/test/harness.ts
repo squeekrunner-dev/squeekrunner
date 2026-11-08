@@ -18,7 +18,7 @@ class Statement {
 }
 export function fakeD1(): D1Database & { raw: DatabaseSync } {
   const db = new DatabaseSync(':memory:');
-  for (const m of ['0001_initial.sql', '0002_coins.sql']) db.exec(readFileSync(fileURLToPath(new URL(`../migrations/${m}`, import.meta.url).href), 'utf8'));
+  for (const m of ['0001_initial.sql', '0002_coins.sql', '0003_map.sql']) db.exec(readFileSync(fileURLToPath(new URL(`../migrations/${m}`, import.meta.url).href), 'utf8'));
   const facade = {
     raw: db,
     prepare: (sql: string) => new Statement(db, sql),

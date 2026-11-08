@@ -442,6 +442,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private endRun(): void {
+    this.ranked?.timeline.stop();
     if (this.driver.replay) this.context.lastReplay = this.driver.replay;
     const { api, source } = this.context;
     const ranked = !!(this.ranked && this.driver.replay && api && source instanceof ServerSource);

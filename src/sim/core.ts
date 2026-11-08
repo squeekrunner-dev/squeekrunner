@@ -1,21 +1,28 @@
 import { CONFIG } from '../config';
 
 /** Changing rules, constants or operation order requires a new sim version. */
-export const SIM_VERSION = 'squeek-2';
+export const SIM_VERSION = 'squeek-3';
 export const TICK_HZ = 60;
 export const UNIT = 1000; // milli-pixels; velocities are milli-pixels / second
 export const MAX_TICKS = 30 * 60 * TICK_HZ;
 // round((1 - exp(-1 / (60 * 1.4))) * 1e6), evaluated offline, never at runtime.
 export const SPEED_ALPHA = 11834;
 export const HITBOX = CONFIG.hitboxes;
+/**
+ * The map is generated in chunks: at the first tick of every chunk the obstacle and coin random
+ * streams restart from that chunk's seed. A ranked server reveals each chunk seed shortly before
+ * the chunk starts, so a run cannot be precomputed offline from the session seed.
+ */
+export const CHUNK_TICKS = 300;
 
 export interface Obstacle { id: number; kind: number; x: number; width: number; height: number }
 export interface Nut { id: number; x: number }
-/** A raffle coin: `at` is the travel (milli-px) at which the coin is level with the player. */
+/** A whitelist coin: `at` is the travel (milli-px) at which the coin is level with the player. */
 export interface Coin { id: number; at: number }
-export interface CoinState { schedule: number[]; next: number; active: Coin | null; collected: number; missed: number }
+/** `next`: index of the next coin to place; `pending`: travel of a placed coin not yet on screen. */
+export interface CoinState { next: number; pending: number | null; active: Coin | null; collected: number; missed: number }
 export interface SimState {
-  tick: number; rng: number; nextId: number;
+  seed: number; tick: number; rng: number; coinRng: number; nextId: number;
   player: { y: number; vy: number; jumps: number; lastGrounded: number; queuedAt: number | null };
   obstacles: Obstacle[]; nut: Nut | null; coins: CoinState;
   rpmMilli: number | null; speed: number; travel: number; score: number;
@@ -25,6 +32,8 @@ export interface SimState {
 export interface TickInput {
   jump?: boolean;
   rpmMilli?: number | null;
+  /** Seed of the chunk starting at this tick (tick % CHUNK_TICKS === 0). Omitted: derived locally from the run seed. */
+  chunkSeed?: number;
   nut?: boolean;
   /** Chain installation/height reset: clear an outstanding nut before any new spawn. */
   resetNut?: boolean;
@@ -35,29 +44,35 @@ export interface Rect { left: number; top: number; right: number; bottom: number
 export function createSim(seed: number): SimState {
   if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('Seed must be uint32');
   return {
-    tick: 0, rng: seed, nextId: 1,
+    seed, tick: 0, rng: 0, coinRng: 0, nextId: 1,
     player: { y: CONFIG.groundY * UNIT, vy: 0, jumps: 0, lastGrounded: 0, queuedAt: null },
-    obstacles: [], nut: null, coins: { schedule: coinSchedule(seed), next: 0, active: null, collected: 0, missed: 0 },
+    obstacles: [], nut: null, coins: { next: 0, pending: null, active: null, collected: 0, missed: 0 },
     rpmMilli: null, speed: CONFIG.speed.base * UNIT,
     travel: 0, score: 0, bonus: 0, spawnAt: Math.ceil(CONFIG.obstacles.firstDelaySeconds * TICK_HZ),
     shieldUntil: 0, invulnerableUntil: 0, gameOver: false, endReason: null,
   };
 }
 
+/** Offline/demo chunk seeds; ranked runs receive server seeds instead. */
+export function localChunkSeed(seed: number, chunk: number): number {
+  return random({ rng: (seed ^ Math.imul(chunk + 1, 0x85ebca6b)) >>> 0 });
+}
+
 /**
- * Raffle coins: one per equal segment of [firstMetres, lastMetres], at a random point inside it.
- * A separate PRNG stream (seed mixed with a constant) keeps the obstacle sequence unchanged.
+ * Whitelist coins: one per equal segment of [firstMetres, lastMetres], at a random point inside it.
+ * Coin i is placed lazily, when its segment comes within spawn reach, from the current chunk's
+ * coin stream (separate from obstacles), so its position is unknown until shortly before.
  */
-export function coinSchedule(seed: number): number[] {
-  const c = CONFIG.coins;
-  const holder = { rng: (seed ^ 0x9e3779b9) >>> 0 };
-  const segment = Math.floor((c.lastMetres - c.firstMetres) / c.count);
-  const schedule: number[] = [];
-  for (let i = 0; i < c.count; i++) {
-    const metres = c.firstMetres + i * segment + rangeOf(holder, c.segmentMarginMetres, segment - c.segmentMarginMetres);
-    schedule.push(metres * CONFIG.pixelsPerMetre * UNIT);
-  }
-  return schedule;
+const COIN_SEGMENT = Math.floor((CONFIG.coins.lastMetres - CONFIG.coins.firstMetres) / CONFIG.coins.count);
+export const COIN_REACH = (CONFIG.width + 40 - CONFIG.playerX) * UNIT;
+export function coinSegmentStart(i: number): number {
+  return (CONFIG.coins.firstMetres + i * COIN_SEGMENT) * CONFIG.pixelsPerMetre * UNIT;
+}
+function placeCoin(s: SimState, i: number): number {
+  const c = CONFIG.coins, holder = { rng: s.coinRng };
+  const metres = c.firstMetres + i * COIN_SEGMENT + rangeOf(holder, c.segmentMarginMetres, COIN_SEGMENT - c.segmentMarginMetres);
+  s.coinRng = holder.rng;
+  return metres * CONFIG.pixelsPerMetre * UNIT;
 }
 
 /** Mulberry32; uint32 wrap and imul have specified ECMAScript integer semantics. */
@@ -130,6 +145,11 @@ function jump(s: SimState, events: SimEvent[]): void {
 export function step(s: SimState, input: TickInput = {}): SimEvent[] {
   const events: SimEvent[] = [];
   if (s.gameOver) return events;
+  if (s.tick % CHUNK_TICKS === 0) {
+    const seed = input.chunkSeed ?? localChunkSeed(s.seed, s.tick / CHUNK_TICKS);
+    if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('Chunk seed must be uint32');
+    s.rng = seed; s.coinRng = (seed ^ 0x9e3779b9) >>> 0;
+  }
   if (input.rpmMilli !== undefined) s.rpmMilli = input.rpmMilli;
   if (input.resetNut) s.nut = null;
   if (input.nut) { s.nut = { id: s.nextId++, x: (CONFIG.width + 24) * UNIT }; events.push('nut'); }
@@ -192,11 +212,14 @@ export function step(s: SimState, input: TickInput = {}): SimEvent[] {
   }
   if (s.nut && s.nut.x < -80 * UNIT) s.nut = null;
 
-  // Raffle coins: high enough that only a well-timed double jump reaches them.
+  // Whitelist coins: high enough that only a well-timed double jump reaches them.
   const coins = s.coins;
-  if (!coins.active && coins.next < coins.schedule.length &&
-      coins.schedule[coins.next] - s.travel <= (CONFIG.width + 40 - CONFIG.playerX) * UNIT) {
-    coins.active = { id: s.nextId++, at: coins.schedule[coins.next++] };
+  if (coins.pending === null && coins.next < CONFIG.coins.count && coinSegmentStart(coins.next) - s.travel <= COIN_REACH) {
+    coins.pending = placeCoin(s, coins.next++);
+  }
+  if (!coins.active && coins.pending !== null && coins.pending - s.travel <= COIN_REACH) {
+    coins.active = { id: s.nextId++, at: coins.pending };
+    coins.pending = null;
     events.push('coinSpawn');
   }
   if (!s.gameOver && coins.active) {

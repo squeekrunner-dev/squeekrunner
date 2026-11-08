@@ -112,7 +112,7 @@ describe('fixed-step rules', () => {
     expect(s.tick).toBe(MAX_TICKS);
   });
   it('accepts all uint32 seeds, including zero, and rejects invalid ones', () => {
-    expect(createSim(0xffffffff).rng).toBe(0xffffffff);
+    expect(createSim(0xffffffff).seed).toBe(0xffffffff);
     for (const seed of [-1, 0.5, NaN, Infinity, 0x100000000]) expect(() => createSim(seed)).toThrow();
   });
 });

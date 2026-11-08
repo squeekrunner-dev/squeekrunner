@@ -11,7 +11,7 @@ export interface RankedRun { session: SessionReply; timeline: RankedTimeline }
 export async function startRanked(api: ApiClient, source: ServerSource, sitekey: string, signal: AbortSignal): Promise<RankedRun> {
   const token = await challenge(sitekey, 'session', signal);
   const session = await api.session(token, signal);
-  return { session, timeline: new RankedTimeline(session, source) };
+  return { session, timeline: new RankedTimeline(session, source, signal) };
 }
 
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));

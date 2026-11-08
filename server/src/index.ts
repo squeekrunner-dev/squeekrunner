@@ -4,6 +4,8 @@ import { MAX_REPLAY_BYTES } from '../../src/sim/replay';
 import { TelemetryCollector, timeline } from './telemetry';
 import { authoritativeRun, checkRun, type SessionRow } from './verification';
 import { enter, SIWE_STATEMENT } from './entry';
+import { chunkSeeds, MAX_CHUNKS, mapPage } from './map';
+import { CHUNK_TICKS } from '../../src/sim/core';
 import { ApiError, digest, entriesOpen, requiredCoins, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
   textField, threshold, turnstile, type Env, type Runtime } from './security';
 export { TelemetryCollector };
@@ -60,10 +62,19 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     const startedAt = rt.now();
     const page = await timeline(env, startedAt);
     if (!page.points.some(p => p.at <= startedAt)) fail(503, 'warming_up', 'Telemetry is warming up. Try again shortly.');
-    const sessionId = randomToken(), seed = crypto.getRandomValues(new Uint32Array(1))[0], expiresAt = startedAt + 30 * 60000 + 15000;
-    await env.DB.prepare('INSERT INTO sessions(id,seed,sim_version,started_at,expires_at,ip_hash) VALUES(?,?,?,?,?,?)')
-      .bind(sessionId, seed, SIM_VERSION, startedAt, expiresAt, hash).run();
-    return Response.json({ sessionId, seed, startedAt, expiresAt, simVersion: SIM_VERSION, timeline: page });
+    const sessionId = randomToken(), mapSecret = randomToken(), seed = crypto.getRandomValues(new Uint32Array(1))[0], expiresAt = startedAt + 30 * 60000 + 15000;
+    await env.DB.prepare('INSERT INTO sessions(id,seed,sim_version,started_at,expires_at,ip_hash,map_secret) VALUES(?,?,?,?,?,?,?)')
+      .bind(sessionId, seed, SIM_VERSION, startedAt, expiresAt, hash, mapSecret).run();
+    return Response.json({ sessionId, seed, startedAt, expiresAt, simVersion: SIM_VERSION, timeline: page, map: await mapPage(mapSecret, startedAt, 0, startedAt) });
+  }
+  if (request.method === 'POST' && path === '/v1/map') {
+    await rateLimit(env, hash, 'map', 40, now);
+    const body = await readJSON(request, 1024); fields(body, ['sessionId', 'from']);
+    const id = textField(body.sessionId, 64), from = body.from;
+    if (!Number.isSafeInteger(from) || (from as number) < 0 || (from as number) >= MAX_CHUNKS) fail(400, 'from', 'Invalid chunk index');
+    const session = await env.DB.prepare('SELECT * FROM sessions WHERE id=?').bind(id).first<SessionRow>();
+    if (!session || session.used || session.ip_hash !== hash || now > session.expires_at || !session.map_secret) fail(409, 'session', 'Session not found or already used');
+    return Response.json(await mapPage(session.map_secret, session.started_at, from as number, now));
   }
   if (request.method === 'POST' && path === '/v1/run') {
     await rateLimit(env, hash, 'run', 6, now);
@@ -76,13 +87,14 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     if (!claimed) fail(409, 'session', 'Session already used');
     // Claim before expensive verification: a bad final score consumes the session too.
     const page = await timeline(env, session.started_at, session.started_at + replay.endTick * 1000 / 60);
-    const result = authoritativeRun(replay, session, page.points);
+    const result = authoritativeRun(replay, session, page.points, await chunkSeeds(session.map_secret, Math.ceil(replay.endTick / CHUNK_TICKS)));
     // Raffle rule: reach the threshold AND collect every raffle coin.
     const minimum = threshold(env), eligible = minimum !== null && result.score >= minimum && result.coins >= requiredCoins(env, CONFIG.coins.count);
     const runToken = randomToken(), runId = randomToken();
     await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,coins,created_at,ip_hash,eligible,token_hash,token_expires)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, result.coins, now, hash, eligible ? 1 : 0, await digest(runToken), now + 24 * 3600000).run();
-    return Response.json({ ...result, eligible, runToken, runId });
+    const { signals: _signals, ...reply } = result;
+    return Response.json({ ...reply, eligible, runToken, runId });
   }
   if (request.method === 'POST' && path === '/v1/entry') {
     await rateLimit(env, hash, 'entry', 5, now);
