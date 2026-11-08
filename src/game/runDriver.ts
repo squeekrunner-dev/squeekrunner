@@ -27,6 +27,8 @@ export class RunDriver {
   nut(): void { this.pending.nut = true; }
   resetNut(): void { this.pending.resetNut = true; this.pending.nut = false; }
   pause(): void { this.accumulator = 0; this.pending.jump = false; }
+  /** Progress (0..1) from the last simulated tick towards the next one, for smooth rendering only. */
+  fraction(): number { return this.sim.gameOver ? 0 : Math.min(1, Math.max(0, this.accumulator / 1000)); }
 
   /**
    * Ranked runs are locked to server wall time and take RPM/nuts only from the server timeline,

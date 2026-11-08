@@ -109,7 +109,9 @@ export class RankedTimeline {
   }
   stop(): void { this.map.stop(); }
   /** Server-time tick the run should have reached by now. */
-  targetTick(): number { return Math.max(0, Math.floor((this.source.serverNow() - this.session.startedAt) * 60 / 1000)); }
+  targetTick(): number { return Math.floor(this.exactTick()); }
+  /** Fractional server-time tick, for smooth rendering between simulation ticks. */
+  exactTick(): number { return Math.max(0, (this.source.serverNow() - this.session.startedAt) * 60 / 1000); }
   input(tick: number): TickInput {
     const last = this.points[this.points.length - 1]?.at ?? -1;
     for (const point of this.source.points) if (point.at > last) this.points.push(point);

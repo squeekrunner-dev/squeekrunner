@@ -35,3 +35,5 @@ const game = new Phaser.Game({
 });
 
 game.events.once(Phaser.Core.Events.DESTROY, bindPageLifecycle(source));
+// Dev server only: lets local tooling inspect the running scenes (stripped from production builds).
+if (import.meta.env.DEV) (window as unknown as { __squeekGame?: Phaser.Game }).__squeekGame = game;
