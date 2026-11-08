@@ -1,0 +1,11 @@
+node_modules/
+artifacts/
+cache/
+coverage/
+.env
+.env.*
+!.env.example
+generated/
+deployments/
+.hardhat-local/
+*.local.json
