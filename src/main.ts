@@ -21,7 +21,6 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH,
     width: CONFIG.width, height: CONFIG.height,
   },
-  physics: { default: 'arcade', arcade: { gravity: { x: 0, y: CONFIG.gravity }, debug: false } },
   scene: [new BootScene(context), new RunScene(context), new GameOverScene(context)],
 });
 

@@ -16,6 +16,9 @@ export class GameOverScene extends Phaser.Scene {
 
   create(result: RunResult): void {
     backdrop(this);
+    const debug = new URLSearchParams(window.location.search).get('debug') === '1';
+    const downloads = new Set<string>();
+    if (debug) label(this, 480, 515, 'D · DOWNLOAD REPLAY', 12, '#8b9ba6', true).setOrigin(0.5).setDepth(12);
 
     // Parallax background & ground preview (layers 1..3)
     this.add.tileSprite(0, 80, CONFIG.width, 280, TEXTURES.bgFar).setOrigin(0).setDepth(1);
@@ -173,6 +176,15 @@ export class GameOverScene extends Phaser.Scene {
 
     const key = (event: KeyboardEvent): void => {
       sound.unlock();
+      if (!event.repeat && event.code === 'KeyD' && debug && this.context.lastReplay) {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(this.context.lastReplay)], { type: 'application/json' }));
+        downloads.add(url);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `squeek-${this.context.lastReplay.seed}-${this.context.lastReplay.endTick}.json`;
+        link.click();
+        this.time.delayedCall(1000, () => { URL.revokeObjectURL(url); downloads.delete(url); });
+      }
       if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp')) restart();
       if (!event.repeat && event.code === 'KeyM') {
         const isMuted = sound.toggleMute();
@@ -192,6 +204,8 @@ export class GameOverScene extends Phaser.Scene {
     onSceneExit(this.events, () => {
       this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', key);
+      for (const url of downloads) URL.revokeObjectURL(url);
+      downloads.clear();
     });
 
     const status = document.getElementById('status');

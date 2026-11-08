@@ -10,7 +10,8 @@
     "build": "tsc --noEmit && vite build --configLoader native",
     "preview": "vite preview --configLoader native",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --pool=threads --configLoader=native"
+    "test": "vitest run --pool=threads --configLoader=native",
+    "verify-replay": "node scripts/verify-replay.mjs"
   },
   "dependencies": {
     "phaser": "^3.88.2"

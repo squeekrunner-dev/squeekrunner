@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "simVersion": "squeek-1",
+  "seed": 123456789,
+  "tickHz": 60,
+  "inputs": [],
+  "telemetry": [
+    {
+      "tick": 0,
+      "rpmMilli": 0
+    }
+  ],
+  "nuts": [
+    0,
+    340,
+    420
+  ],
+  "endTick": 429,
+  "clientScore": 1019,
+  "mode": "live",
+  "nutResets": [
+    350
+  ]
+}

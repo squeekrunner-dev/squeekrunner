@@ -1,0 +1,17 @@
+{
+  "idle": {
+    "score": 628,
+    "endTick": 311,
+    "hash": "c495224c"
+  },
+  "rpm-dropout": {
+    "score": 839,
+    "endTick": 237,
+    "hash": "7eb8be5e"
+  },
+  "nuts-and-resets": {
+    "score": 1019,
+    "endTick": 429,
+    "hash": "08ad9667"
+  }
+}
