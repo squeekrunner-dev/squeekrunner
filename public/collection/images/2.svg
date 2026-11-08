@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <style>
+      text { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+  </defs>
+  <!-- Background -->
+  
+    <rect width="1000" height="1000" fill="#0d141e" />
+    <line x1="0" y1="620" x2="1000" y2="620" stroke="#00f2fe" stroke-width="3" opacity="0.7" />
+    <g stroke="#1c354d" stroke-width="2">
+      <line x1="500" y1="620" x2="500" y2="1000" />
+      <line x1="500" y1="620" x2="300" y2="1000" />
+      <line x1="500" y1="620" x2="700" y2="1000" />
+      <line x1="500" y1="620" x2="100" y2="1000" />
+      <line x1="500" y1="620" x2="900" y2="1000" />
+      <line x1="0" y1="660" x2="1000" y2="660" />
+      <line x1="0" y1="720" x2="1000" y2="720" />
+      <line x1="0" y1="810" x2="1000" y2="810" />
+      <line x1="0" y1="920" x2="1000" y2="920" />
+    </g>
+    <circle cx="500" cy="500" r="360" fill="none" stroke="#00f2fe" stroke-width="2" opacity="0.3" stroke-dasharray="12 12" />
+  
+  <!-- Special Aura -->
+  
+  <!-- Hamster Anatomy -->
+  
+    <g id="hamster-body-group">
+      <!-- Ground shadow -->
+      <ellipse cx="500" cy="860" rx="270" ry="32" fill="#000000" opacity="0.22" />
+
+      <!-- Fluffy Tail (on left hip) -->
+      <circle cx="280" cy="730" r="38" fill="#8c4e20" />
+      <circle cx="275" cy="725" r="32" fill="#c4793d" />
+      <circle cx="268" cy="718" r="18" fill="#e09d67" />
+
+      <!-- Back Feet (paws on ground) -->
+      <ellipse cx="360" cy="835" rx="55" ry="34" fill="#8c4e20" />
+      <ellipse cx="360" cy="830" rx="50" ry="30" fill="#c4793d" />
+      <circle cx="330" cy="835" r="10" fill="#f8b4bf" />
+      <circle cx="355" cy="840" r="10" fill="#f8b4bf" />
+      <circle cx="380" cy="835" r="10" fill="#f8b4bf" />
+
+      <ellipse cx="640" cy="835" rx="55" ry="34" fill="#8c4e20" />
+      <ellipse cx="640" cy="830" rx="50" ry="30" fill="#c4793d" />
+      <circle cx="620" cy="835" r="10" fill="#f8b4bf" />
+      <circle cx="645" cy="840" r="10" fill="#f8b4bf" />
+      <circle cx="670" cy="835" r="10" fill="#f8b4bf" />
+
+      <!-- Main Torso (plump round body) -->
+      <ellipse cx="500" cy="650" rx="255" ry="215" fill="#8c4e20" />
+      <ellipse cx="500" cy="645" rx="250" ry="210" fill="#c4793d" />
+
+      <!-- Belly / Chest Patch -->
+      <ellipse cx="500" cy="670" rx="165" ry="155" fill="#fff5ea" />
+
+      <!-- Ears (outer fur + soft pink inner) -->
+      <g id="ears">
+        <!-- Left Ear -->
+        <ellipse cx="310" cy="270" rx="68" ry="78" transform="rotate(-15 310 270)" fill="#8c4e20" />
+        <ellipse cx="310" cy="268" rx="64" ry="74" transform="rotate(-15 310 268)" fill="#c4793d" />
+        <ellipse cx="316" cy="272" rx="44" ry="52" transform="rotate(-15 316 272)" fill="#f8b4bf" />
+
+        <!-- Right Ear -->
+        <ellipse cx="690" cy="270" rx="68" ry="78" transform="rotate(15 690 270)" fill="#8c4e20" />
+        <ellipse cx="690" cy="268" rx="64" ry="74" transform="rotate(15 690 268)" fill="#c4793d" />
+        <ellipse cx="684" cy="272" rx="44" ry="52" transform="rotate(15 684 272)" fill="#f8b4bf" />
+      </g>
+
+      <!-- Head (chubby hamster face) -->
+      <ellipse cx="500" cy="460" rx="235" ry="195" fill="#8c4e20" />
+      <ellipse cx="500" cy="455" rx="230" ry="190" fill="#c4793d" />
+
+      <!-- Forehead highlight tuft -->
+      <ellipse cx="500" cy="340" rx="55" ry="35" fill="#e09d67" opacity="0.6" />
+
+      <!-- Chubby Cheeks (signature hamster feature!) -->
+      <ellipse cx="320" cy="505" rx="95" ry="80" transform="rotate(10 320 505)" fill="#8c4e20" opacity="0.3" />
+      <ellipse cx="320" cy="500" rx="95" ry="80" transform="rotate(10 320 500)" fill="#e09d67" />
+      <ellipse cx="680" cy="505" rx="95" ry="80" transform="rotate(-10 680 505)" fill="#8c4e20" opacity="0.3" />
+      <ellipse cx="680" cy="500" rx="95" ry="80" transform="rotate(-10 680 500)" fill="#e09d67" />
+
+      <!-- Rosy Cheek Blush -->
+      <ellipse cx="350" cy="515" rx="36" ry="22" fill="#f8b4bf" opacity="0.6" />
+      <ellipse cx="650" cy="515" rx="36" ry="22" fill="#f8b4bf" opacity="0.6" />
+
+      <!-- Cheerful Hamster Whiskers -->
+      <g stroke="#6f3915" stroke-width="3.5" stroke-linecap="round" opacity="0.85">
+        <path d="M280 490 Q210 470 140 460" />
+        <path d="M275 510 Q200 515 130 520" />
+        <path d="M285 530 Q215 550 150 575" />
+        <path d="M720 490 Q790 470 860 460" />
+        <path d="M725 510 Q800 515 870 520" />
+        <path d="M715 530 Q785 550 850 575" />
+      </g>
+
+      <!-- Tiny Hamster Nose -->
+      <ellipse cx="500" cy="480" rx="15" ry="11" fill="#4d2a13" />
+      <path d="M500 491 v12" stroke="#4d2a13" stroke-width="3" stroke-linecap="round" />
+    </g>
+  
+  <!-- Facial Features -->
+  
+    <g id="mouth-buck-teeth">
+      <!-- W-shaped hamster lips -->
+      <path d="M465 503 Q485 515 500 503 Q515 515 535 503" fill="none" stroke="#4a2a1b" stroke-width="4" stroke-linecap="round" />
+      <!-- Signature cute dual hamster teeth! -->
+      <rect x="488" y="506" width="11" height="15" rx="2" fill="#ffffff" stroke="#c9c7be" stroke-width="1.5" />
+      <rect x="501" y="506" width="11" height="15" rx="2" fill="#ffffff" stroke="#c9c7be" stroke-width="1.5" />
+    </g>
+  
+  
+    <g id="eyes-happy-wink">
+      <!-- Left Eye Winking Arc -->
+      <path d="M380 430 Q410 405 440 430" stroke="#131b27" stroke-width="8" stroke-linecap="round" fill="none" />
+      <path d="M390 436 L375 444" stroke="#131b27" stroke-width="5" stroke-linecap="round" />
+      <!-- Right Eye Wide & Happy -->
+      <ellipse cx="590" cy="425" rx="36" ry="40" fill="#131b27" />
+      <circle cx="578" cy="412" r="14" fill="#ffffff" />
+      <circle cx="604" cy="436" r="6" fill="#ffffff" />
+      <path d="M555 385 Q590 375 625 385" stroke="#4a3124" stroke-width="5" stroke-linecap="round" fill="none" />
+    </g>
+  
+  <!-- Accessory & Clothing -->
+  
+    <g id="acc-dapper-bowtie" transform="translate(500, 565)">
+      <polygon points="0,0 -45,-25 -40,25" fill="#27ae60" stroke="#1e8449" stroke-width="3" />
+      <polygon points="0,0 45,-25 40,25" fill="#27ae60" stroke="#1e8449" stroke-width="3" />
+      <circle cx="0" cy="0" r="14" fill="#2ecc71" stroke="#1e8449" stroke-width="2.5" />
+    </g>
+  
+  <!-- Headwear -->
+  
+    <g id="headwear-sweatband">
+      <!-- Striped runner sweatband across forehead -->
+      <path d="M330 335 Q500 315 670 335 L668 365 Q500 345 332 365 Z" fill="#ffffff" stroke="#131b27" stroke-width="3" />
+      <path d="M331 345 Q500 325 669 345 L668 355 Q500 335 332 355 Z" fill="#ee5253" />
+      <circle cx="500" cy="340" r="8" fill="#10ac84" />
+    </g>
+  
+  <!-- Held Item & Front Paws -->
+  
+    <g id="held-sunflower-seed">
+      <!-- Classic striped hamster treat -->
+      <g transform="translate(590, 600) rotate(18)">
+        <path d="M50 0 Q95 80 50 140 Q5 80 50 0 Z" fill="#2d3436" stroke="#131b27" stroke-width="4" />
+        <path d="M50 8 Q68 75 50 132" stroke="#dfe6e9" stroke-width="7" fill="none" stroke-linecap="round" />
+        <path d="M34 25 Q42 75 34 115" stroke="#b2bec3" stroke-width="4" fill="none" stroke-linecap="round" />
+      </g>
+      
+    <g id="front-paws">
+      <!-- Left Paw -->
+      <ellipse cx="580" cy="660" rx="32" ry="24" transform="rotate(-15 580 660)" fill="#8c4e20" />
+      <ellipse cx="580" cy="658" rx="30" ry="22" transform="rotate(-15 580 658)" fill="#c4793d" />
+      <circle cx="572" cy="660" r="7" fill="#f8b4bf" />
+      <circle cx="584" cy="663" r="7" fill="#f8b4bf" />
+      <circle cx="596" cy="662" r="6" fill="#f8b4bf" />
+
+      <!-- Right Paw -->
+      <ellipse cx="670" cy="670" rx="32" ry="24" transform="rotate(15 670 670)" fill="#8c4e20" />
+      <ellipse cx="670" cy="668" rx="30" ry="22" transform="rotate(15 670 668)" fill="#c4793d" />
+      <circle cx="654" cy="672" r="6" fill="#f8b4bf" />
+      <circle cx="666" cy="673" r="7" fill="#f8b4bf" />
+      <circle cx="678" cy="670" r="7" fill="#f8b4bf" />
+    </g>
+  
+    </g>
+  
+</svg>
