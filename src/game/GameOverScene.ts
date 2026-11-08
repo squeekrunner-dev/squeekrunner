@@ -28,7 +28,7 @@ export class GameOverScene extends Phaser.Scene {
     // Brand and Demo pill (depth 10)
     label(this, 28, 16, 'SQUEEK / RUNNER', 16, '#c4ef6e', true).setFontStyle('bold').setDepth(10);
     if (result.demo) {
-      pill(this, 830, 14, 'DEMO', COLORS.gold).setDepth(10);
+      pill(this, 830, 14, 'PRACTICE', COLORS.gold).setDepth(10);
     }
 
     // Mute button (depth 25)
@@ -161,7 +161,7 @@ export class GameOverScene extends Phaser.Scene {
       480,
       478,
       result.demo
-        ? 'DEMO · Simulated wheel. Separate local records.'
+        ? 'PRACTICE · Simulated wheel. Does not count for the whitelist.'
         : 'A fresh run. The same real wheel. No wallet needed.',
       14,
       '#8b9ba6',

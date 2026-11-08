@@ -55,7 +55,7 @@
           <p class="eyebrow">02 / Concept</p>
           <h2>Feeling data in a jump.</h2>
           <p>A bare RPM reading tells a player very little on its own. But when the wheel speeds up and crates rush toward you faster, the link to the physical world becomes palpable. SqueekRunner turns telemetry into decisions: when to jump, where to use a double jump, and whether to risk a jump for a nut.</p>
-          <p>The core loop remains classic arcade: run → crash → score → one more try. Telemetry modulates the tempo within that loop. Baseline speed keeps the full game intact when the wheel is stationary; a separate DEMO mode lets players explore the mechanics without waiting for real-world motion or a new block.</p>
+          <p>The core loop remains classic arcade: run → crash → score → one more try. Telemetry modulates the tempo within that loop. Baseline speed keeps the full game intact when the wheel is stationary; a separate Practice mode lets players explore the mechanics without waiting for real-world motion or a new block.</p>
         </section>
         <section id="squeekchain">
           <p class="eyebrow">03 / Context</p>
@@ -123,7 +123,7 @@
             <li><strong>NO DATA.</strong> Stale, null measurement, COUNTER_FAULT, unavailable, malformed response, network error, or expired read. Target speed glides back to baseline. Numeric RPM is hidden; retained block height is explicitly labeled as last known.</li>
           </ul>
           <p><code>measurement.rpmMilli / 1000</code> converts milli-RPM into RPM. <code>coreStatus: ACTIVE</code> can occur even at 0 RPM. These states describe the hardware and data pipeline, not the sleep or health of the animal.</p>
-          <p><a href="../play/?demo=1">DEMO mode</a> runs a standalone simulator: a 26-second cycle with the first 6 seconds idle, followed by a smooth rise and fall in RPM. Block height increments every 16 seconds. The game displays a prominent DEMO badge, records are isolated from LIVE, and no network requests are sent to Squeekchain.</p>
+          <p><a href="../play/?demo=1">Practice mode</a> (formerly DEMO) runs a standalone simulator: a 26-second cycle with the first 6 seconds idle, followed by a smooth rise and fall in RPM. Block height increments every 16 seconds. The game displays a prominent DEMO badge, records are isolated from LIVE, and no network requests are sent to Squeekchain.</p>
         </section>
         <section id="blocks">
           <p class="eyebrow">06 / Confirmed blocks</p>
@@ -279,7 +279,7 @@
             <p><strong>Mandatory disclaimer:</strong> This is a plan, not a promise. Everything after the free testnet mint is planned and may change. No numbers are final. Nothing here is financial advice or an offer of any asset. SqueekRunner is not affiliated with Squeekchain.</p>
           </div>
 
-          <p class="callout">Already live: full arcade runner, double jump, LIVE and DEMO modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and whitelist application tooling (applications open at launch — dates will be announced on X). <a href="../play/">Run on the wheel →</a></p>
+          <p class="callout">Already live: full arcade runner, double jump, LIVE and Practice modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and whitelist application tooling (applications open at launch — dates will be announced on X). <a href="../play/">Run on the wheel →</a></p>
         </section>
         <section id="sources">
           <p class="eyebrow">11 / Sources</p>

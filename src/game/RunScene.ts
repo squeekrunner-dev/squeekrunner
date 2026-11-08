@@ -252,7 +252,7 @@ export class RunScene extends Phaser.Scene {
     label(this, 932, 495, 'SPACE / ↑ / TAP    ·    P PAUSES    ·    M MUTE', 13, '#8b9ba6', true).setOrigin(1, 0).setDepth(15);
 
     if (this.context.source.kind === 'demo') {
-      pill(this, 305, 14, 'DEMO', COLORS.gold).setDepth(16);
+      pill(this, 305, 14, 'PRACTICE', COLORS.gold).setDepth(16);
     }
   }
 
@@ -559,7 +559,7 @@ export class RunScene extends Phaser.Scene {
           : projected !== null && projected !== undefined && projected !== view.snapshot.confirmedHeight
             ? `provisional #${compactHeight(projected)}`
             : this.context.source.kind === 'demo'
-              ? 'DEMO · SIMULATED'
+              ? 'PRACTICE · SIMULATED WHEEL'
               : 'SEPOLIA · SETTLED',
     );
     this.detailText.setText(view.reason);
@@ -567,7 +567,7 @@ export class RunScene extends Phaser.Scene {
     if (this.lastMode !== view.mode) {
       const accessibleStatus = document.getElementById('status');
       if (accessibleStatus) {
-        accessibleStatus.textContent = `${this.context.source.kind === 'demo' ? 'Demo. ' : ''}${view.mode}. ${view.reason}`;
+        accessibleStatus.textContent = `${this.context.source.kind === 'demo' ? 'Practice. ' : ''}${view.mode}. ${view.reason}`;
       }
       this.lastMode = view.mode;
     }
