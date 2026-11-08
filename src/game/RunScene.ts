@@ -60,8 +60,9 @@ export class RunScene extends Phaser.Scene {
   private distance = 0;
   private speed: number = CONFIG.speed.base;
   private elapsed = 0;
-  private jumpsUsed = 0;
-  private shieldUntil = 0;
+
+  private hasShield = false;
+  private airJumps = 0;
   private noticeUntil = 0;
   private runBlock: RunBlock | null = null;
   private lastMode = '';
@@ -77,8 +78,9 @@ export class RunScene extends Phaser.Scene {
 
   create(data: { immediate?: boolean } = {}): void {
     this.state = 'ready';
-    this.distance = this.elapsed = this.jumpsUsed = 0;
-    this.shieldUntil = this.noticeUntil = this.dustIn = 0;
+    this.distance = this.elapsed = 0;
+    this.noticeUntil = this.dustIn = 0;
+    this.hasShield = false; this.airJumps = CONFIG.doubleJumps.start;
     this.speed = CONFIG.speed.base;
     // Offline seed; a ranked run replaces the driver with the server-issued seed on start.
     this.driver = new RunDriver(crypto.getRandomValues(new Uint32Array(1))[0], this.context.source.kind);
@@ -246,7 +248,7 @@ export class RunScene extends Phaser.Scene {
     this.add.rectangle(205, 502, 166, 5, 0x2b3d3f).setOrigin(0, 0.5).setDepth(15);
     this.speedBar = this.add.rectangle(205, 502, 1, 5, COLORS.lime).setOrigin(0, 0.5).setDepth(15);
 
-    this.shieldText = label(this, 932, 466, 'DOUBLE JUMP', 16, '#ffcf75', true).setOrigin(1, 0).setDepth(15);
+    this.shieldText = label(this, 932, 466, 'DOUBLE JUMPS  20', 16, '#ffcf75', true).setOrigin(1, 0).setDepth(15);
     this.add.image(400, 501, TEXTURES.coin).setScale(0.5).setDepth(15);
     this.coinText = label(this, 414, 494, `0 / ${CONFIG.coins.count}`, 15, '#ffcf75', true).setDepth(15);
     label(this, 932, 495, 'SPACE / ↑ / TAP    ·    P PAUSES    ·    M MUTE', 13, '#8b9ba6', true).setOrigin(1, 0).setDepth(15);
@@ -277,7 +279,7 @@ export class RunScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setAlign('center')
       .setFontStyle('bold');
-    const hint = label(this, 480, 280, 'Jump over obstacles. Catch golden nuts for a 12s shield.', 17, '#b6c2bc').setOrigin(0.5);
+    const hint = label(this, 480, 280, '20 double jumps per run. Golden nuts: a shield and +5 double jumps.', 17, '#b6c2bc').setOrigin(0.5);
 
     const button = this.add.rectangle(480, 332, 294, 48, COLORS.lime).setInteractive({ useHandCursor: true });
     const call = label(this, 480, 332, 'START RUN  →', 22, '#131b27').setOrigin(0.5).setFontStyle('bold');
@@ -381,8 +383,8 @@ export class RunScene extends Phaser.Scene {
     this.distance = distance(s);
     this.speed = s.speed / UNIT;
     this.elapsed = s.tick * 1000 / TICK_HZ;
-    this.jumpsUsed = s.player.jumps;
-    this.shieldUntil = s.shieldUntil * 1000 / TICK_HZ;
+    this.hasShield = s.shield;
+    this.airJumps = s.airJumps;
     this.player.setPosition(CONFIG.playerX, s.player.y / UNIT);
     for (const event of events) {
       if (event === 'jump' || event === 'airJump') {
@@ -391,7 +393,7 @@ export class RunScene extends Phaser.Scene {
       } else if (event === 'collect') {
         sound.playCollectNut();
         this.emitDust(this.player.x, this.player.y - 28, 18);
-        this.notice(`GOLDEN NUT  +${CONFIG.bonus.points}  ·  SHIELD ${CONFIG.bonus.shieldSeconds}s`);
+        this.notice(`GOLDEN NUT  +${CONFIG.bonus.points}  ·  SHIELD  ·  +${CONFIG.doubleJumps.perNut} DOUBLE JUMPS`);
       } else if (event === 'shieldHit') {
         sound.playShieldHit();
         this.cameras.main.shake(120, 0.005);
@@ -642,7 +644,7 @@ export class RunScene extends Phaser.Scene {
     this.shadow.setScale(Math.max(0.3, 1 - (CONFIG.groundY - this.player.y) / 300));
 
     // Shield forcefield animation
-    const hasShield = this.shieldUntil > this.elapsed;
+    const hasShield = this.hasShield;
     this.shieldSprite.setVisible(hasShield);
     this.shieldRing.setVisible(hasShield);
     if (hasShield) {
@@ -650,23 +652,13 @@ export class RunScene extends Phaser.Scene {
       this.shieldRing.setPosition(this.player.x, this.player.y - 28);
       this.shieldSprite.rotation += 0.035;
 
-      // Pulsate when shield is running out (< 3 seconds)
-      const timeLeftMs = this.shieldUntil - this.elapsed;
-      if (timeLeftMs < 3000) {
-        const flashAlpha = Math.sin(this.elapsed / 60) > 0 ? 0.85 : 0.25;
-        this.shieldSprite.setAlpha(flashAlpha);
-        this.shieldRing.setAlpha(flashAlpha);
-      } else {
-        this.shieldSprite.setAlpha(0.85);
-        this.shieldRing.setAlpha(0.7);
-      }
+      // The shield has no timer: a calm glow until it absorbs a hit.
+      this.shieldSprite.setAlpha(0.85);
+      this.shieldRing.setAlpha(0.6 + Math.sin(this.elapsed / 300) * 0.15);
     }
 
-    this.shieldText.setText(
-      hasShield
-        ? `SHIELD  ${Math.ceil((this.shieldUntil - this.elapsed) / 1000)}s`
-        : `${CONFIG.maxJumps - this.jumpsUsed} JUMPS READY`,
-    );
+    this.shieldText.setText(`${hasShield ? 'SHIELD ON  ·  ' : ''}DOUBLE JUMPS  ${this.airJumps}`)
+      .setColor(this.airJumps === 0 ? '#ec8a79' : hasShield ? '#81cce4' : '#ffcf75');
 
     this.scoreText.setText(this.score().toString().padStart(5, '0'));
     this.speedText.setText(`WORLD  ${(this.speed / baseSpeed(this.distance)).toFixed(2)}×`);

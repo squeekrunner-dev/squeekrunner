@@ -38,9 +38,11 @@ export const CONFIG = {
     maxWidth: 56,
     spawnMargin: 48,
   },
+  /** Double jumps are a budget (sim squeek-4): a run starts with `start`; every golden nut adds `perNut`. */
+  doubleJumps: { start: 20, perNut: 5 },
   bonus: {
     points: 150,
-    shieldSeconds: 12,
+    /** The shield lasts until it absorbs one hit; a second nut does not stack shields. */
     shieldInvulnerabilityMs: 550,
     floatHeight: 54,
     noticeMs: 2600,

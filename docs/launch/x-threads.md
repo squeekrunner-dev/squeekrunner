@@ -34,7 +34,7 @@ Notice a golden nut drop on the track?
 
 Whenever Squeekchain confirms a new block on Ethereum Sepolia testnet, a golden nut spawns!
 
-Catching it awards +150 bonus points and equips a 12-second one-hit shield to survive an obstacle collision.
+Catching it awards +150 points, +5 double jumps and a shield that lasts until your next crash.
 
 #### Post 4/6 (257 chars)
 Under the hood, SqueekRunner runs a deterministic 60 tick/s physics engine with integer arithmetic and Mulberry32 seeds.

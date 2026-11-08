@@ -38,7 +38,7 @@ SqueekRunner streams live telemetry from `https://api.squeekchain.com/v1/status`
 ### 2. Confirmed On-Chain Blocks Drop Golden Nuts
 - SqueekRunner tracks confirmed block height increments (`builder.anchor.blockHeight`).
 - When Squeekchain anchors a new block to Sepolia, a **Golden Nut** spawns on the runner's track.
-- Collecting a golden nut awards **+150 bonus points** and equips a **12-second one-hit shield**, allowing the player to absorb a collision that would otherwise end the run.
+- Collecting a golden nut awards **+150 bonus points** and adds **+5 double jumps** and equips a **one-hit shield that lasts until the next collision**, allowing the player to absorb a collision that would otherwise end the run.
 
 ### 3. Server-Side Telemetry Timeline for Replay Verification
 - To protect competitive gameplay and whitelist qualification, SqueekRunner includes a Cloudflare Worker server backed by a D1 SQLite database and a Durable Object (`TelemetryCollector`).

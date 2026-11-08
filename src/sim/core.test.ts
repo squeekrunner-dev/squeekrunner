@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../config';
-import { createSim, distance, HITBOX, MAX_TICKS, obstacleRect, playerRect, SPEED_ALPHA, step, TICK_HZ, UNIT, type SimState } from './core';
+import { createSim, distance, HITBOX, MAX_TICKS, obstacleRect, playerRect, SPEED_ALPHA, step, TICK_HZ, UNIT, type SimEvent, type SimState } from './core';
 
 const obstacle = (s: SimState, x = CONFIG.playerX): void => {
   s.obstacles.push({ id: s.nextId++, kind: 0, x: x * UNIT, width: 56, height: 68 });
@@ -56,18 +56,19 @@ describe('fixed-step rules', () => {
     expect(step(s, { jump: true })).toEqual([]);
     expect(JSON.stringify(s)).toBe(final);
   });
-  it('collects a circular nut for points and a 12-second one-hit shield', () => {
+  it('collects a circular nut for points, +5 double jumps and a one-hit shield held until a hit', () => {
     const s = createSim(0);
     s.nut = { id: s.nextId++, x: CONFIG.playerX * UNIT };
     expect(step(s)).toContain('collect');
     expect(s.bonus).toBe(CONFIG.bonus.points);
-    expect(s.shieldUntil).toBe(CONFIG.bonus.shieldSeconds * TICK_HZ);
+    expect(s.shield).toBe(true);
+    expect(s.airJumps).toBe(CONFIG.doubleJumps.start + CONFIG.doubleJumps.perNut);
     expect(s.score).toBe(Math.floor(distance(s) * CONFIG.pointsPerMetre) + CONFIG.bonus.points);
     obstacle(s);
     expect(step(s)).toContain('shieldHit');
     expect(s.obstacles).toHaveLength(0);
     expect(s.gameOver).toBe(false);
-    expect(s.shieldUntil).toBe(0);
+    expect(s.shield).toBe(false);
     expect(s.invulnerableUntil).toBe(1 + CONFIG.bonus.shieldInvulnerabilityMs * TICK_HZ / 1000);
     obstacle(s); expect(step(s)).toContain('shieldHit');
     s.tick = s.invulnerableUntil; obstacle(s);
@@ -79,12 +80,37 @@ describe('fixed-step rules', () => {
     expect(step(s)).not.toContain('collect');
     expect(s.bonus).toBe(0);
   });
-  it('expires the shield at its exact tick boundary', () => {
-    for (const tick of [719, 720]) {
-      const s = createSim(0); s.tick = tick; s.spawnAt = 10000; s.shieldUntil = 720;
-      obstacle(s); step(s);
-      expect(s.gameOver).toBe(tick === 720);
-    }
+  it('keeps the shield with no time limit, and a second nut does not stack it', () => {
+    const s = createSim(0); s.spawnAt = Number.MAX_SAFE_INTEGER;
+    s.nut = { id: s.nextId++, x: CONFIG.playerX * UNIT }; step(s);
+    for (let i = 0; i < 60 * 120; i++) step(s);   // two minutes later
+    expect(s.shield).toBe(true);
+    s.nut = { id: s.nextId++, x: CONFIG.playerX * UNIT }; step(s);
+    expect(s.shield).toBe(true);
+    expect(s.airJumps).toBe(CONFIG.doubleJumps.start + 2 * CONFIG.doubleJumps.perNut);
+    obstacle(s); expect(step(s)).toContain('shieldHit');
+    expect(s.shield).toBe(false);                    // one hit removes the only shield
+    s.tick = s.invulnerableUntil; obstacle(s);
+    expect(step(s)).toContain('gameOver');
+  });
+  it('spends a double jump per air jump; with none left only single jumps work', () => {
+    const s = createSim(0); s.spawnAt = Number.MAX_SAFE_INTEGER; s.airJumps = 2;
+    const doubleJump = (): SimEvent[] => {
+      const events: SimEvent[] = [];
+      events.push(...step(s, { jump: true }));
+      for (let i = 0; i < 20; i++) events.push(...step(s));
+      events.push(...step(s, { jump: true }));
+      for (let i = 0; i < 120 && !(s.player.y === CONFIG.groundY * UNIT && s.player.vy === 0 && i > 5); i++) events.push(...step(s));
+      return events;
+    };
+    expect(doubleJump()).toEqual(expect.arrayContaining(['jump', 'airJump']));
+    expect(s.airJumps).toBe(1);
+    expect(doubleJump()).toContain('airJump');
+    expect(s.airJumps).toBe(0);
+    const third = doubleJump();
+    expect(third).toContain('jump');
+    expect(third).not.toContain('airJump');
+    expect(s.airJumps).toBe(0);
   });
   it('clears an old nut on reset and replaces it on another block', () => {
     const s = createSim(0);

@@ -25,7 +25,7 @@ This is an application process with manual review, not a raffle.
 **A:** The game remains 100% playable! When telemetry reports 0 RPM or data is temporarily unavailable, SqueekRunner runs at its balanced baseline speed. You can always start a run and qualify for the whitelist at any time.
 
 ### Q7: What are golden nuts? Are they crypto tokens?
-**A:** No, golden nuts are in-game bonus items, not tokens or SQK. They spawn whenever Squeekchain confirms a new block on Sepolia. Collecting a golden nut grants +150 score points and a 12-second one-hit shield that absorbs a crate collision.
+**A:** No, golden nuts are in-game bonus items, not tokens or SQK. They spawn whenever Squeekchain confirms a new block on Sepolia. Collecting a golden nut grants +150 score points, +5 double jumps and a one-hit shield that stays until it absorbs a crate collision.
 
 ### Q8: What is the SqueekRunner Hamsters NFT collection?
 **A:** It is an upcoming collection of 1,000 unique vector SVG NFTs on Ethereum Sepolia testnet. It includes 990 generative character combinations across 8 layers and 10 handcrafted 1/1 legendary editions celebrating milestone runners.

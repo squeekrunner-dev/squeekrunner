@@ -71,7 +71,7 @@
           <p>SqueekRunner is crafted by builders and passionate fans of the Squeekchain ecosystem, actively participating in the <strong>Squeekchain Genesis Code Lane</strong>. Our integration runs deep across four core dimensions:</p>
           <ol>
             <li><strong>RPM drives game velocity:</strong> Real-time wheel rotation from the public status API (<code>https://api.squeekchain.com/v1/status</code>) scales in-game run speed from 1.0× at 0 RPM up to 2.7× at peak speed (~98.3 RPM).</li>
-            <li><strong>Squeek blocks drop golden nuts:</strong> Each newly sealed block confirmed on Ethereum Sepolia triggers a lucky golden nut spawn in-game, granting +150 points and a 12-second collision shield.</li>
+            <li><strong>Squeek blocks drop golden nuts:</strong> Each newly sealed block confirmed on Ethereum Sepolia triggers a lucky golden nut spawn in-game, granting +150 points, +5 double jumps and a collision shield that lasts until it absorbs one hit.</li>
             <li><strong>Authoritative replay verification:</strong> Ranked competitive replays are verified by our companion server, which samples the same public Squeekchain timeline every ~10 seconds and re-simulates physics tick-by-tick against authoritative wheel history.</li>
             <li><strong>Whitelist values ecosystem participation:</strong> Manual evaluation of applications for the free testnet SqueekRunner Hamsters NFT whitelist recognizes player activity across Squeekchain, including holding Squeeks, staking, and $SQK on-chain history.</li>
           </ol>
@@ -108,7 +108,8 @@
               <tr><th scope="row">Obstacle interval</th><td><span data-config="obstacles.initialGapSeconds">1.9</span> → <span data-config="obstacles.minimumGapSeconds">1.15</span> s, plus 0–<span data-config="obstacles.randomGapSeconds">0.5</span> s</td></tr>
               <tr><th scope="row">Obstacle ramp distance</th><td><span data-config="obstacles.rampDistance">1400</span> game m</td></tr>
               <tr><th scope="row">Scale / points per metre</th><td><span data-config="pixelsPerMetre">24</span> px/m; <span data-config="pointsPerMetre">10</span> pts/m</td></tr>
-              <tr><th scope="row">Golden nut</th><td>+<span data-config="bonus.points">150</span> points; shield <span data-config="bonus.shieldSeconds">12</span> s</td></tr>
+              <tr><th scope="row">Double jumps per run</th><td><span data-config="doubleJumps.start">20</span> at the start; single jumps are unlimited</td></tr>
+              <tr><th scope="row">Golden nut</th><td>+<span data-config="bonus.points">150</span> points; +<span data-config="doubleJumps.perNut">5</span> double jumps; a shield held until it absorbs one hit (never stacks)</td></tr>
               <tr><th scope="row">Post-shield invulnerability</th><td><span data-config="bonus.shieldInvulnerabilityMs">550</span> ms</td></tr>
             </tbody>
           </table></div>
