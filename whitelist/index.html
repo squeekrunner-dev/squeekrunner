@@ -135,7 +135,7 @@
         <li>
           <span class="step-number">03</span>
           <h3>Sign for free</h3>
-          <p>Sign an off-chain verification message (EIP-712 standard) with zero gas and zero fees. Our anti-cheat engine re-simulates your replay deterministically to ensure fair play.</p>
+          <p>Sign an off-chain verification message (EIP-4361 (Sign-In with Ethereum)) with zero gas and zero fees. Our anti-cheat engine re-simulates your replay deterministically to ensure fair play.</p>
         </li>
         <li>
           <span class="step-number">04</span>
@@ -148,7 +148,7 @@
     <!-- Allocation 700 / 200 / 100 -->
     <section class="wrap section-space" id="allocation" aria-labelledby="allocation-title">
       <div class="section-heading">
-        <p class="eyebrow">Token Distribution</p>
+        <p class="eyebrow">Collection Distribution</p>
         <h2 id="allocation-title">1,000 Hamsters.<br />Honest breakdown.</h2>
         <p class="hero-detail">Every SqueekRunner Hamster is minted on Ethereum Sepolia testnet. Exactly 1,000 NFTs will ever exist, distributed across three clear categories.</p>
       </div>
@@ -231,7 +231,7 @@
           <strong>100% Free Entry:</strong> No payment, purchase, staking, or financial contribution is required or accepted to qualify, enter, or win the raffle.
         </li>
         <li class="rule-item">
-          <strong>Ethereum Sepolia Testnet Only:</strong> SqueekRunner Hamsters is a decentralized experimental collection deployed exclusively on the Sepolia testnet. Minting requires only free testnet gas obtained from public faucets.
+          <strong>Ethereum Sepolia Testnet Only:</strong> SqueekRunner Hamsters is an experimental collection deployed exclusively on the Sepolia testnet. Minting requires only free testnet gas obtained from public faucets.
         </li>
         <li class="rule-item">
           <strong>Zero Monetary Value:</strong> SqueekRunner Hamsters NFTs are digital testnet collectibles created solely for gaming fun and experimentation. They carry zero cash value, represent no equity or financial asset, offer no passive yield, and make no promises of economic return.
@@ -240,7 +240,7 @@
           <strong>1 Wallet = 1 Raffle Ticket:</strong> Each unique individual and wallet address may submit at most one raffle entry. Duplicate entries from the same address will be disregarded.
         </li>
         <li class="rule-item">
-          <strong>Anti-Cheat & Deterministic Replay Verification:</strong> Scores must be achieved through authentic human gameplay. Every entry requires submitting the run's recorded replay inputs. The server re-simulates the run physics; modified clients, memory injection, speed hacks, and bots will result in immediate disqualification.
+          <strong>Anti-Cheat & Server Replay Verification:</strong> Scores must be achieved through authentic human gameplay. Every entry requires submitting the run's recorded replay inputs. The server recalculates the run physics and timing; runs that do not pass server verification are not counted, and obvious bot farms will be excluded.
         </li>
         <li class="rule-item">
           <strong>Disqualification & Sybil Prevention:</strong> The organizers reserve the right to audit submissions and exclude bot clusters, automated farming scripts, or malicious actors attempting to game the raffle.
@@ -272,7 +272,7 @@
         </div>
         <div class="faq-item">
           <dt>Why do I sign a message instead of sending an on-chain transaction?</dt>
-          <dd>Signing an off-chain message (EIP-712 standard) verifies that you own your wallet address without costing any gas or broadcasting a transaction. It keeps entry instantaneous, frictionless, and completely free.</dd>
+          <dd>Signing an off-chain message (EIP-4361 (Sign-In with Ethereum)) verifies that you own your wallet address without costing any gas or broadcasting a transaction. It keeps entry instantaneous, frictionless, and completely free.</dd>
         </div>
         <div class="faq-item">
           <dt>Why is the raffle and collection on Sepolia testnet?</dt>
@@ -288,15 +288,15 @@
         </div>
         <div class="faq-item">
           <dt>Can I enter with multiple wallets or automated bots?</dt>
-          <dd>No. The raffle strictly enforces 1 wallet = 1 ticket. Entries are protected by deterministic server-side replay checks that detect synthetic inputs and bot patterns. Sybil attempts lead to immediate disqualification.</dd>
+          <dd>No. The raffle strictly enforces 1 wallet = 1 ticket. The server recalculates your run replay to verify the score and confirms that the run actually lasted its full duration, alongside captcha verification, wallet signatures, and rate limits. The organizers reserve the right to exclude obvious bot farms and abusive sybil clusters.</dd>
         </div>
         <div class="faq-item">
           <dt>When will the snapshot take place and when is the mint?</dt>
-          <dd>The qualification period is currently open. The exact score threshold, snapshot timestamp, and mint schedule will be announced once initial telemetry baselines are established. Keep an eye on the status panel above.</dd>
+          <dd>Entries are not open yet. Applications will open once the qualifying score threshold is announced based on gameplay statistics. The snapshot timestamp, designated target block, and mint schedule will be published on official project channels.</dd>
         </div>
         <div class="faq-item">
           <dt>What is the utility of a SqueekRunner Hamster NFT?</dt>
-          <dd>Hamsters are collectible digital badges celebrating early runners in the SqueekRunner experiment. They may unlock cosmetic runner skins in future updates, but carry zero monetary value, financial yield, or investment promises.</dd>
+          <dd>Hamsters are collectible digital badges celebrating early runners in the SqueekRunner experiment. They may unlock cosmetic runner skins in future updates, but carry zero monetary value, financial yield, or promises of economic returns.</dd>
         </div>
         <div class="faq-item">
           <dt>What score do I need to achieve to qualify?</dt>
