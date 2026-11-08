@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "simVersion": "squeek-1",
+  "simVersion": "squeek-3",
   "seed": 0,
   "tickHz": 60,
   "inputs": [],
@@ -11,7 +11,7 @@
     }
   ],
   "nuts": [],
-  "endTick": 311,
-  "clientScore": 628,
+  "endTick": 310,
+  "clientScore": 626,
   "mode": "live"
 }

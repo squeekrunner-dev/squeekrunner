@@ -1,9 +1,15 @@
 export interface Env {
   DB: D1Database; COLLECTOR: DurableObjectNamespace;
-  ENVIRONMENT: string; THRESHOLD: string; ENTRIES_OPEN: string;
-  SIWE_DOMAIN: string; SIWE_URI: string; ALLOWED_ORIGINS: string;
+  ENVIRONMENT: string; THRESHOLD: string; APPLICATIONS_OPEN: string;
+  /** Public site origin, e.g. https://squeekrunner.app (Turnstile hostname). */
+  SITE_URL: string; ALLOWED_ORIGINS: string;
   TURNSTILE_SECRET: string; ADMIN_TOKEN: string; IP_HASH_SALT: string;
-  ENTRY_DEADLINE?: string; SNAPSHOT_AT?: string;
+  /** Optional ISO date after which applications close. */
+  APPLICATION_DEADLINE?: string;
+  /** Optional override of the coins required to qualify (default: every coin, CONFIG.coins.count). */
+  REQUIRED_COINS?: string;
+  /** Alchemy API key for address-history signals in the review panel (secret, optional). */
+  ALCHEMY_KEY?: string;
 }
 export interface Runtime { now: () => number; fetcher: typeof fetch }
 export const runtime: Runtime = { now: () => Date.now(), fetcher: (...args) => fetch(...args) };
@@ -21,8 +27,7 @@ export async function ipHash(request: Request, env: Env): Promise<string> {
   if (!env.IP_HASH_SALT || env.IP_HASH_SALT.length < 32) fail(503, 'configuration', 'Service unavailable');
   const ip = request.headers.get('CF-Connecting-IP') ?? (env.ENVIRONMENT === 'development' ? 'local-development' : '');
   if (!ip) fail(403, 'network', 'Request must use the public service');
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.IP_HASH_SALT), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  return [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip)))].map(n => n.toString(16).padStart(2, '0')).join('');
+  return hmacHex(env.IP_HASH_SALT, ip);
 }
 export async function rateLimit(env: Env, hash: string, scope: string, max: number, now: number, window = 60000): Promise<void> {
   const bucket = Math.floor(now / window);
@@ -36,9 +41,24 @@ export function threshold(env: Env): number | null {
   if (!/^\d+$/.test(env.THRESHOLD) || !Number.isSafeInteger(Number(env.THRESHOLD))) fail(503, 'configuration', 'Service unavailable');
   return Number(env.THRESHOLD);
 }
-export function entriesOpen(env: Env, now: number): boolean {
-  const dates = [env.ENTRY_DEADLINE, env.SNAPSHOT_AT].filter(Boolean).map(v => Date.parse(v!));
-  return env.ENTRIES_OPEN === 'true' && threshold(env) !== null && dates.every(d => Number.isFinite(d) && now < d);
+export function requiredCoins(env: Env, all: number): number {
+  if (!env.REQUIRED_COINS?.trim()) return all;
+  if (!/^\d+$/.test(env.REQUIRED_COINS) || Number(env.REQUIRED_COINS) > all) fail(503, 'configuration', 'Service unavailable');
+  return Number(env.REQUIRED_COINS);
+}
+export function applicationsOpen(env: Env, now: number): boolean {
+  const deadline = env.APPLICATION_DEADLINE ? Date.parse(env.APPLICATION_DEADLINE) : Infinity;
+  return env.APPLICATIONS_OPEN === 'true' && threshold(env) !== null && !Number.isNaN(deadline) && now < deadline;
+}
+/** Constant-time comparison of two strings through their digests. */
+export async function sameSecret(a: string, b: string): Promise<boolean> {
+  const x = await digest(a), y = await digest(b);
+  let difference = 0; for (let i = 0; i < x.length; i++) difference |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return difference === 0;
+}
+export async function hmacHex(key: string, text: string): Promise<string> {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return [...new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(text)))].map(n => n.toString(16).padStart(2, '0')).join('');
 }
 export async function readJSON(request: Request, max: number): Promise<Record<string, unknown>> {
   if (!request.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) fail(415, 'content_type', 'JSON required');
@@ -82,6 +102,6 @@ export async function turnstile(token: unknown, action: string, env: Env, rt: Ru
     data = await reply.json();
   } catch { fail(503, 'turnstile_unavailable', 'Challenge verification unavailable'); }
   const development = env.ENVIRONMENT === 'development' && env.TURNSTILE_SECRET === '1x0000000000000000000000000000000AA';
-  const hostname = new URL(env.SIWE_URI).hostname;
+  const hostname = new URL(env.SITE_URL).hostname;
   if (!data!.success || (!development && (data!.hostname !== hostname || data!.action !== action))) fail(403, 'turnstile', 'Challenge failed or expired');
 }

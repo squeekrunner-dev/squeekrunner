@@ -25,6 +25,7 @@ export const TEXTURES = {
 
   // Collectibles & Effects
   nut: 'golden-nut',
+  coin: 'whitelist-coin',
   shield: 'shield-bubble',
   ground: 'ground',
   bgFar: 'bg-far',
@@ -319,6 +320,20 @@ export function createTextures(scene: Phaser.Scene): void {
   g.fillStyle(COLORS.lime).fillEllipse(22, 3, 10, 5);
   g.fillStyle(0xffffff, 0.6).fillEllipse(21, 2, 5, 2);
   g.generateTexture(TEXTURES.nut, 36, 38);
+
+  // -------------------------------------------------------------
+  // 3b. WHITELIST COIN (40x40) — circle radius 18 centred at (20, 20)
+  // -------------------------------------------------------------
+  g.clear();
+  g.fillStyle(0x81cce4, 0.22).fillCircle(20, 20, 20); // cool glow, distinct from the warm nut
+  g.fillStyle(0x9c6a12).fillCircle(20, 21, 17);
+  g.fillStyle(0xf2b630).fillCircle(20, 20, 16);
+  g.lineStyle(2, 0xffe08a, 1).strokeCircle(20, 20, 12);
+  // Paw print emblem
+  g.fillStyle(0x9c6a12).fillEllipse(20, 23, 9, 7);
+  g.fillCircle(14.5, 16.5, 2.4).fillCircle(18, 14, 2.4).fillCircle(22, 14, 2.4).fillCircle(25.5, 16.5, 2.4);
+  g.fillStyle(0xffffff, 0.8).fillEllipse(13, 11, 6, 3);
+  g.generateTexture(TEXTURES.coin, 40, 40);
 
   // -------------------------------------------------------------
   // 4. SHIELD BUBBLE (96x96)

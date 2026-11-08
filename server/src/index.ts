@@ -1,9 +1,12 @@
-import { SIM_VERSION } from '../../src/sim/core';
+import { CHUNK_TICKS, SIM_VERSION } from '../../src/sim/core';
+import { CONFIG } from '../../src/config';
 import { MAX_REPLAY_BYTES } from '../../src/sim/replay';
 import { TelemetryCollector, timeline } from './telemetry';
 import { authoritativeRun, checkRun, type SessionRow } from './verification';
-import { enter, SIWE_STATEMENT } from './entry';
-import { ApiError, digest, entriesOpen, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
+import { chunkSeeds, MAX_CHUNKS, mapPage } from './map';
+import { apply, codeFor, statusOf } from './application';
+import { admin } from './admin';
+import { ApiError, applicationsOpen, digest, requiredCoins, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
   textField, threshold, turnstile, type Env, type Runtime } from './security';
 export { TelemetryCollector };
 
@@ -17,22 +20,13 @@ async function stats(env: Env) {
   }
   const edges = [0, 500, 1000, 2000, 5000, 10000, 25000, 100000];
   const histogram = await env.DB.batch(edges.map((lower, i) => env.DB.prepare('SELECT COUNT(*) AS count FROM runs WHERE score>=? AND score<?').bind(lower, edges[i + 1] ?? Number.MAX_SAFE_INTEGER)));
-  return { verifiedRuns: count, percentiles, histogram: edges.map((from, i) => ({ from, to: edges[i + 1] ?? null, count: (histogram[i].results[0] as { count: number }).count })) };
+  const coins = await env.DB.prepare('SELECT coins, COUNT(*) AS count FROM runs GROUP BY coins ORDER BY coins').all<{ coins: number; count: number }>();
+  return { verifiedRuns: count, coinsCollected: coins.results, percentiles, histogram: edges.map((from, i) => ({ from, to: edges[i + 1] ?? null, count: (histogram[i].results[0] as { count: number }).count })) };
 }
 
 async function route(request: Request, env: Env, rt: Runtime): Promise<Response> {
   const url = new URL(request.url), path = url.pathname, now = rt.now();
-  if (path === '/v1/admin/export' && request.method === 'GET') {
-    if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 32) fail(503, 'configuration', 'Service unavailable');
-    const auth = request.headers.get('Authorization') ?? '';
-    const a = await digest(auth), b = await digest(`Bearer ${env.ADMIN_TOKEN}`);
-    let difference = 0; for (let i = 0; i < a.length; i++) difference |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    if (difference) fail(401, 'unauthorized', 'Authentication required');
-    const rows = await env.DB.prepare('SELECT address,1 AS allowance FROM entries ORDER BY address LIMIT 100001').all<{ address: string; allowance: number }>();
-    if (rows.results.length > 100000) fail(413, 'export_limit', 'Use a database export for this snapshot');
-    if (url.searchParams.get('format') === 'csv') return new Response('address,allowance\n' + rows.results.map(r => `${r.address},1`).join('\n') + '\n', { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="raffle-participants.csv"' } });
-    return Response.json(rows.results);
-  }
+  if (path.startsWith('/v1/admin/')) return admin(request, env, rt, path, url);
   const hash = await ipHash(request, env);
   await rateLimit(env, hash, 'api', 120, now);
   if (request.method === 'GET' && path === '/v1/telemetry') {
@@ -41,15 +35,11 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     return Response.json(await timeline(env, since));
   }
   if (request.method === 'GET' && path === '/v1/stats') return Response.json(await stats(env));
-  if (request.method === 'GET' && path === '/v1/raffle/status') {
-    const row = await env.DB.prepare('SELECT COUNT(*) AS count FROM entries').first<{ count: number }>();
-    return Response.json({ threshold: threshold(env), entriesOpen: entriesOpen(env, now), entriesCount: row?.count ?? 0, snapshotAt: env.SNAPSHOT_AT || null, deadline: env.ENTRY_DEADLINE || null });
-  }
-  if (request.method === 'GET' && path === '/v1/nonce') {
-    await rateLimit(env, hash, 'nonce', 10, now);
-    const nonce = randomToken(), expiresAt = now + 5 * 60000;
-    await env.DB.prepare('INSERT INTO nonces(nonce,created_at,expires_at,ip_hash) VALUES(?,?,?,?)').bind(nonce, now, expiresAt, hash).run();
-    return Response.json({ nonce, issuedAt: new Date(now).toISOString(), expirationTime: new Date(expiresAt).toISOString(), domain: env.SIWE_DOMAIN, uri: env.SIWE_URI, chainId: 11155111, statement: SIWE_STATEMENT });
+  if (request.method === 'GET' && path === '/v1/whitelist/status') {
+    const rows = await env.DB.prepare('SELECT status, COUNT(*) AS count FROM applications GROUP BY status').all<{ status: string; count: number }>();
+    return Response.json({ threshold: threshold(env), requiredCoins: requiredCoins(env, CONFIG.coins.count), applicationsOpen: applicationsOpen(env, now),
+      applications: rows.results.reduce((sum, r) => sum + r.count, 0), approved: rows.results.find(r => r.status === 'approved')?.count ?? 0,
+      deadline: env.APPLICATION_DEADLINE || null });
   }
   if (request.method === 'POST' && path === '/v1/session') {
     await rateLimit(env, hash, 'session', 3, now);
@@ -58,10 +48,19 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     const startedAt = rt.now();
     const page = await timeline(env, startedAt);
     if (!page.points.some(p => p.at <= startedAt)) fail(503, 'warming_up', 'Telemetry is warming up. Try again shortly.');
-    const sessionId = randomToken(), seed = crypto.getRandomValues(new Uint32Array(1))[0], expiresAt = startedAt + 30 * 60000 + 15000;
-    await env.DB.prepare('INSERT INTO sessions(id,seed,sim_version,started_at,expires_at,ip_hash) VALUES(?,?,?,?,?,?)')
-      .bind(sessionId, seed, SIM_VERSION, startedAt, expiresAt, hash).run();
-    return Response.json({ sessionId, seed, startedAt, expiresAt, simVersion: SIM_VERSION, timeline: page });
+    const sessionId = randomToken(), mapSecret = randomToken(), seed = crypto.getRandomValues(new Uint32Array(1))[0], expiresAt = startedAt + 30 * 60000 + 15000;
+    await env.DB.prepare('INSERT INTO sessions(id,seed,sim_version,started_at,expires_at,ip_hash,map_secret) VALUES(?,?,?,?,?,?,?)')
+      .bind(sessionId, seed, SIM_VERSION, startedAt, expiresAt, hash, mapSecret).run();
+    return Response.json({ sessionId, seed, startedAt, expiresAt, simVersion: SIM_VERSION, timeline: page, map: await mapPage(mapSecret, startedAt, 0, startedAt) });
+  }
+  if (request.method === 'POST' && path === '/v1/map') {
+    await rateLimit(env, hash, 'map', 40, now);
+    const body = await readJSON(request, 1024); fields(body, ['sessionId', 'from']);
+    const id = textField(body.sessionId, 64), from = body.from;
+    if (!Number.isSafeInteger(from) || (from as number) < 0 || (from as number) >= MAX_CHUNKS) fail(400, 'from', 'Invalid chunk index');
+    const session = await env.DB.prepare('SELECT * FROM sessions WHERE id=?').bind(id).first<SessionRow>();
+    if (!session || session.used || session.ip_hash !== hash || now > session.expires_at || !session.map_secret) fail(409, 'session', 'Session not found or already used');
+    return Response.json(await mapPage(session.map_secret, session.started_at, from as number, now));
   }
   if (request.method === 'POST' && path === '/v1/run') {
     await rateLimit(env, hash, 'run', 6, now);
@@ -74,16 +73,27 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     if (!claimed) fail(409, 'session', 'Session already used');
     // Claim before expensive verification: a bad final score consumes the session too.
     const page = await timeline(env, session.started_at, session.started_at + replay.endTick * 1000 / 60);
-    const result = authoritativeRun(replay, session, page.points);
-    const minimum = threshold(env), eligible = minimum !== null && result.score >= minimum;
+    const result = authoritativeRun(replay, session, page.points, await chunkSeeds(session.map_secret, Math.ceil(replay.endTick / CHUNK_TICKS)));
+    // Qualifying rule: reach the threshold AND collect every coin.
+    const minimum = threshold(env), eligible = minimum !== null && result.score >= minimum && result.coins >= requiredCoins(env, CONFIG.coins.count);
     const runToken = randomToken(), runId = randomToken();
-    await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,created_at,ip_hash,eligible,token_hash,token_expires)
-      VALUES(?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, now, hash, eligible ? 1 : 0, await digest(runToken), now + 24 * 3600000).run();
-    return Response.json({ ...result, eligible, runToken, runId });
+    await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,coins,created_at,ip_hash,eligible,token_hash,token_expires,signals)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, result.coins, now, hash, eligible ? 1 : 0,
+      await digest(runToken), now + 24 * 3600000, JSON.stringify(result.signals)).run();
+    const { signals: _signals, ...reply } = result;
+    return Response.json({ ...reply, eligible, runToken, runId });
   }
-  if (request.method === 'POST' && path === '/v1/entry') {
-    await rateLimit(env, hash, 'entry', 5, now);
-    return Response.json(await enter(await readJSON(request, 8192), env, hash, rt));
+  if (request.method === 'GET' && path === '/v1/application') {
+    await rateLimit(env, hash, 'lookup', 20, now);
+    return Response.json(await statusOf(url.searchParams.get('code'), env));
+  }
+  if (request.method === 'POST' && path === '/v1/application/code') {
+    await rateLimit(env, hash, 'code', 20, now);
+    return Response.json(await codeFor(await readJSON(request, 1024), env, rt));
+  }
+  if (request.method === 'POST' && path === '/v1/application') {
+    await rateLimit(env, hash, 'apply', 5, now);
+    return Response.json(await apply(await readJSON(request, 4096), env, hash, rt));
   }
   fail(404, 'not_found', 'Endpoint not found');
 }

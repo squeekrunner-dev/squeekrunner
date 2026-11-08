@@ -8,7 +8,6 @@
     "compile": "node scripts/hardhat.cjs compile",
     "test": "node scripts/hardhat.cjs test",
     "merkle": "node scripts/build-merkle.mjs",
-    "raffle": "node --env-file-if-exists=.env scripts/raffle.mjs",
     "deploy:sepolia": "node --env-file-if-exists=.env scripts/deploy.mjs"
   },
   "dependencies": {

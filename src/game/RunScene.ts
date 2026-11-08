@@ -3,7 +3,7 @@ import { CONFIG } from '../config';
 import { BlockDetector } from '../chain/blocks';
 import type { ChainSnapshot } from '../chain/types';
 import { baseSpeed } from '../logic/speed';
-import { distance, TICK_HZ, UNIT, type SimEvent } from '../sim/core';
+import { coinX, COIN_Y, distance, TICK_HZ, UNIT, type SimEvent } from '../sim/core';
 import { RunDriver, rpmSample } from './runDriver';
 import type { RunBlock } from '../logic/records';
 import { onSceneExit } from '../logic/lifecycle';
@@ -25,6 +25,8 @@ export class RunScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Sprite;
   private obstacleSprites = new Map<number, Phaser.GameObjects.Sprite>();
   private nutSprite: Phaser.GameObjects.Sprite | null = null;
+  private coinSprite: Phaser.GameObjects.Image | null = null;
+  private coinText!: Phaser.GameObjects.Text;
   private driver!: RunDriver;
   private bgFar!: Phaser.GameObjects.TileSprite;
   private bgMid!: Phaser.GameObjects.TileSprite;
@@ -64,7 +66,7 @@ export class RunScene extends Phaser.Scene {
   private runBlock: RunBlock | null = null;
   private lastMode = '';
   private dustIn = 0;
-  /** Server session of a raffle-eligible run; null for offline/unranked runs. */
+  /** Server session of a ranked run; null for offline/unranked runs. */
   private ranked: RankedRun | null = null;
   private starting = false;
   private abort = new AbortController();
@@ -85,6 +87,7 @@ export class RunScene extends Phaser.Scene {
     this.abort = new AbortController();
     this.obstacleSprites = new Map();
     this.nutSprite = null;
+    this.coinSprite = null;
     this.runBlock = null;
     this.detector = new BlockDetector();
     this.lastMode = '';
@@ -176,6 +179,7 @@ export class RunScene extends Phaser.Scene {
       this.tweens.killAll();
       this.obstacleSprites.clear();
       this.nutSprite = null;
+      this.coinSprite = null;
     });
 
     if (data.immediate) this.begin();
@@ -243,6 +247,8 @@ export class RunScene extends Phaser.Scene {
     this.speedBar = this.add.rectangle(205, 502, 1, 5, COLORS.lime).setOrigin(0, 0.5).setDepth(15);
 
     this.shieldText = label(this, 932, 466, 'DOUBLE JUMP', 16, '#ffcf75', true).setOrigin(1, 0).setDepth(15);
+    this.add.image(400, 501, TEXTURES.coin).setScale(0.5).setDepth(15);
+    this.coinText = label(this, 414, 494, `0 / ${CONFIG.coins.count}`, 15, '#ffcf75', true).setDepth(15);
     label(this, 932, 495, 'SPACE / ↑ / TAP    ·    P PAUSES    ·    M MUTE', 13, '#8b9ba6', true).setOrigin(1, 0).setDepth(15);
 
     if (this.context.source.kind === 'demo') {
@@ -298,14 +304,14 @@ export class RunScene extends Phaser.Scene {
     const { api, source, turnstileSiteKey } = this.context;
     if (!api || !(source instanceof ServerSource) || !turnstileSiteKey) { this.begin(); return; }
     this.starting = true;
-    this.notice('VERIFYING · STARTING A RAFFLE-ELIGIBLE RUN…');
+    this.notice('VERIFYING · STARTING A RANKED RUN…');
     startRanked(api, source, turnstileSiteKey, this.abort.signal)
       .then(ranked => {
         this.ranked = ranked;
         this.driver = new RunDriver(ranked.session.seed, 'live');
         this.notice('RANKED RUN · VERIFIED BY THE SERVER');
       })
-      .catch(() => { if (!this.abort.signal.aborted) this.notice('OFFLINE RUN · NOT RAFFLE-ELIGIBLE'); })
+      .catch(() => { if (!this.abort.signal.aborted) this.notice('OFFLINE RUN · DOES NOT QUALIFY'); })
       .finally(() => {
         this.starting = false;
         if (!this.abort.signal.aborted && this.state === 'ready') this.begin();
@@ -394,8 +400,19 @@ export class RunScene extends Phaser.Scene {
       } else if (event === 'nut' && this.ranked) {
         sound.playNewBlock();
         this.notice('⚡ NEW SQUEEK BLOCK! GOLDEN NUT INCOMING!');
+      } else if (event === 'coinSpawn') {
+        this.notice('WHITELIST COIN AHEAD · DOUBLE JUMP!');
+      } else if (event === 'coin') {
+        sound.playCollectNut();
+        this.emitDust(this.player.x, this.player.y - 60, 16);
+        this.notice(`WHITELIST COIN ${s.coins.collected} / ${CONFIG.coins.count}`);
+      } else if (event === 'coinMissed') {
+        sound.playShieldHit();
+        this.notice('COIN MISSED · THE WHITELIST NEEDS ALL 10');
       } else if (event === 'gameOver') this.endRun();
     }
+    this.coinText.setText(`${s.coins.collected} / ${CONFIG.coins.count}`)
+      .setColor(s.coins.missed ? '#ec8a79' : '#ffcf75');
   }
 
   private renderObjects(): void {
@@ -418,9 +435,14 @@ export class RunScene extends Phaser.Scene {
       this.nutSprite ??= this.add.sprite(0, CONFIG.groundY - CONFIG.bonus.floatHeight, TEXTURES.nut).setDepth(4);
       this.nutSprite.x = s.nut.x / UNIT;
     } else { this.nutSprite?.destroy(); this.nutSprite = null; }
+    if (s.coins.active) {
+      this.coinSprite ??= this.add.image(0, COIN_Y / UNIT, TEXTURES.coin).setDepth(4);
+      this.coinSprite.x = coinX(s, s.coins.active) / UNIT;
+    } else { this.coinSprite?.destroy(); this.coinSprite = null; }
   }
 
   private endRun(): void {
+    this.ranked?.timeline.stop();
     if (this.driver.replay) this.context.lastReplay = this.driver.replay;
     const { api, source } = this.context;
     const ranked = !!(this.ranked && this.driver.replay && api && source instanceof ServerSource);
@@ -447,6 +469,7 @@ export class RunScene extends Phaser.Scene {
       newBest,
       demo: this.context.source.kind === 'demo',
       ranked,
+      coins: this.driver.sim.coins.collected,
     };
     this.time.delayedCall(350, () => this.scene.start('GameOver', result));
   }

@@ -1,6 +1,7 @@
 import { LiveSource } from '../chain/live';
 import type { ChainSnapshot, TelemetrySource, TelemetryView } from '../chain/types';
-import { TimelineCursor, type SessionReply, type TimelinePage, type TimelinePoint } from './timeline';
+import { CHUNK_TICKS, MAX_TICKS, type TickInput } from '../sim/core';
+import { TimelineCursor, type MapPage, type SessionReply, type TimelinePage, type TimelinePoint } from './timeline';
 import { ApiClient } from './api';
 
 export class ServerSource implements TelemetrySource {
@@ -61,20 +62,59 @@ export class ServerSource implements TelemetrySource {
   serverNow(): number { return Date.now() + this.offset; }
 }
 
+/** Fetches map chunk seeds as the server releases them (a few seconds before each chunk starts). */
+export class MapFeed {
+  readonly seeds: number[] = [];
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private stopped = false;
+  constructor(private readonly api: ApiClient, private readonly sessionId: string, first: MapPage,
+    private readonly serverNow: () => number, private readonly signal?: AbortSignal) {
+    this.merge(first);
+    signal?.addEventListener('abort', () => this.stop(), { once: true });
+  }
+  merge(page: MapPage): number {
+    for (const chunk of page.chunks) {
+      if (chunk.index === this.seeds.length && Number.isInteger(chunk.seed) && chunk.seed >= 0 && chunk.seed <= 0xffffffff) this.seeds.push(chunk.seed);
+    }
+    return page.nextAt;
+  }
+  start(): void { if (!this.stopped) this.schedule(0); }
+  stop(): void { this.stopped = true; clearTimeout(this.timer); }
+  private schedule(ms: number): void {
+    if (this.stopped || this.seeds.length * CHUNK_TICKS >= MAX_TICKS) return;
+    this.timer = setTimeout(() => void this.poll(), Math.max(0, ms));
+  }
+  private async poll(): Promise<void> {
+    try {
+      const nextAt = this.merge(await this.api.map(this.sessionId, this.seeds.length, this.signal));
+      this.schedule(Math.min(5000, Math.max(200, nextAt - this.serverNow() + 100)));
+    } catch { this.schedule(1000); }
+  }
+}
+
 export class RankedTimeline {
   private readonly points: TimelinePoint[];
   private readonly cursor: TimelineCursor;
-  constructor(readonly session: SessionReply, private readonly source: ServerSource) {
+  readonly map: MapFeed;
+  constructor(readonly session: SessionReply, private readonly source: ServerSource, signal?: AbortSignal) {
     source.merge(session.timeline);
     this.points = [...session.timeline.points];
     this.cursor = new TimelineCursor(this.points, session.startedAt);
+    this.map = new MapFeed(source.api, session.sessionId, session.map, () => source.serverNow(), signal);
+    this.map.start();
   }
-  ready(tick: number): boolean { return this.session.startedAt + tick * 1000 / 60 <= this.source.completeThrough; }
+  /** A tick runs only once its telemetry is complete and its map chunk has been released. */
+  ready(tick: number): boolean {
+    return this.session.startedAt + tick * 1000 / 60 <= this.source.completeThrough && Math.floor(tick / CHUNK_TICKS) < this.map.seeds.length;
+  }
+  stop(): void { this.map.stop(); }
   /** Server-time tick the run should have reached by now. */
   targetTick(): number { return Math.max(0, Math.floor((this.source.serverNow() - this.session.startedAt) * 60 / 1000)); }
-  input(tick: number) {
+  input(tick: number): TickInput {
     const last = this.points[this.points.length - 1]?.at ?? -1;
     for (const point of this.source.points) if (point.at > last) this.points.push(point);
-    return this.cursor.input(tick);
+    const input = this.cursor.input(tick);
+    if (tick % CHUNK_TICKS === 0) input.chunkSeed = this.map.seeds[tick / CHUNK_TICKS];
+    return input;
   }
 }

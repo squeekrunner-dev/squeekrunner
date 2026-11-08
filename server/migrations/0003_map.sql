@@ -1,0 +1,1 @@
+ALTER TABLE sessions ADD COLUMN map_secret TEXT NOT NULL DEFAULT '';

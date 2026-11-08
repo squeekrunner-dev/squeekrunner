@@ -1,509 +1,249 @@
-import { ApiClient, loadRun, NetworkError, type StoredRun } from '../net/api';
+import { keccak_256 } from '@noble/hashes/sha3';
+import { ApiClient, forgetRun, loadRun, NetworkError, type ApplicationLookup, type ApplicationReply, type CodeReply, type StoredRun,
+  type WhitelistStatusReply } from '../net/api';
 import { challenge } from '../net/turnstile';
-import { formatSiweMessage } from './siwe';
-import { InjectedWallet, type WalletPort } from './wallet';
 
-export interface WhitelistStatus {
-  threshold: number | null;
-  thresholdLabel: string;
-  entriesCount: number | null;
-  entriesLabel: string;
-  snapshotBlock: number | null;
-  snapshotLabel: string;
-  isOpen: boolean;
-}
+/**
+ * Whitelist application (not a raffle): a server-verified qualifying run, a pasted Sepolia address,
+ * an X account and a public post with the application code. No wallet connection, no signatures.
+ * The team reviews every application by hand.
+ */
 
-export interface WhitelistSubmission {
-  address: string;
-  signature?: string;
-  runScore?: number;
-  replayData?: unknown;
-  /** Live mode: the verified run token stored by the game, and the wallet signer. */
-  run?: StoredRun;
-  sign?: (message: string) => Promise<string>;
-}
-
-export interface WhitelistResult {
-  success: boolean;
-  ticketId?: string;
-  message?: string;
-  error?: string;
-}
-
-export interface WhitelistApi {
-  getStatus(): Promise<WhitelistStatus>;
-  submitEntry(payload: WhitelistSubmission): Promise<WhitelistResult>;
-}
-
-export type WhitelistAppState =
-  | 'idle'
-  | 'connecting'
-  | 'connected'
-  | 'signing'
-  | 'submitted'
-  | 'error';
-
-export interface WhitelistState {
-  state: WhitelistAppState;
-  address: string | null;
-  ticketId: string | null;
-  score: number | null;
-  error: string | null;
-  status: WhitelistStatus | null;
-  isMock: boolean;
-}
-
-export const DEFAULT_STATUS: WhitelistStatus = {
-  threshold: null,
-  thresholdLabel: 'TBA',
-  entriesCount: null,
-  entriesLabel: '—',
-  snapshotBlock: null,
-  snapshotLabel: 'TBA',
-  isOpen: true,
-};
-
-export class MockWhitelistApi implements WhitelistApi {
-  constructor(private readonly delayMs = 150) {}
-
-  async getStatus(): Promise<WhitelistStatus> {
-    if (this.delayMs > 0) await new Promise(resolve => setTimeout(resolve, this.delayMs));
-    return { ...DEFAULT_STATUS };
+/** EIP-55 mixed-case checksum. */
+export function checksumAddress(address: string): string {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) throw new Error('Invalid address');
+  const lower = address.slice(2).toLowerCase();
+  const hash = keccak_256(new TextEncoder().encode(lower));
+  let out = '0x';
+  for (let i = 0; i < 40; i++) {
+    const nibble = (hash[i >> 1] >> (i % 2 ? 0 : 4)) & 0xf;
+    out += nibble >= 8 ? lower[i].toUpperCase() : lower[i];
   }
-
-  async submitEntry(payload: WhitelistSubmission): Promise<WhitelistResult> {
-    if (this.delayMs > 0) await new Promise(resolve => setTimeout(resolve, this.delayMs));
-    const address = payload.address?.trim() ?? '';
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      return {
-        success: false,
-        error: 'Invalid Ethereum address. Must be a 42-character hex address.',
-      };
-    }
-    if (address.toLowerCase().endsWith('000')) {
-      return {
-        success: false,
-        error: 'Simulated anti-cheat error: replay verification failed.',
-      };
-    }
-    const suffix = address.slice(2, 8).toUpperCase();
-    return {
-      success: true,
-      ticketId: `SQK-${suffix}`,
-      message: 'Replay verified. 1 raffle ticket assigned.',
-    };
-  }
+  return out;
+}
+/** Null when valid; otherwise a short reason. Mixed case must match the checksum (catches typos). */
+export function addressProblem(raw: string): string | null {
+  const value = raw.trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(value)) return 'Use a 0x address with 40 hex characters.';
+  if (/^0x0{40}$/i.test(value)) return 'The zero address cannot receive a hamster.';
+  const body = value.slice(2);
+  if (body !== body.toLowerCase() && body !== body.toUpperCase() && checksumAddress(value) !== value) return 'Checksum mismatch: check for a typo.';
+  return null;
+}
+export function normalizeHandle(raw: string): string | null {
+  const value = raw.trim().replace(/^@/, '');
+  return /^[A-Za-z0-9_]{1,15}$/.test(value) ? value : null;
+}
+const POST = /^https:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status\/(\d{1,20})\/?(?:\?[^#\s]*)?$/;
+export function postProblem(raw: string, handle: string | null): string | null {
+  const m = POST.exec(raw.trim());
+  if (!m) return 'Paste the post link, like https://x.com/yourname/status/123…';
+  if (handle && m[1].toLowerCase() !== handle.toLowerCase()) return `The link must be a post by @${handle}.`;
+  return null;
+}
+export function postText(code: string, score: number): string {
+  return `I ran ${score.toLocaleString('en-US')} points and caught 10/10 coins in #SqueekRunner, the endless runner powered by the live #Squeekchain hamster wheel.\n\nWhitelist application ${code}\n\nhttps://squeekrunner.app`;
+}
+export function intentUrl(code: string, score: number): string {
+  return `https://x.com/intent/post?text=${encodeURIComponent(postText(code, score))}`;
+}
+export function shortAddress(address: string): string {
+  return address.length === 42 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
 }
 
-/** Used when the site is built without VITE_API_BASE: honest "not live yet" state. */
-export class OfflineWhitelistApi implements WhitelistApi {
-  async getStatus(): Promise<WhitelistStatus> {
-    return { ...DEFAULT_STATUS, isOpen: false };
-  }
+export type View =
+  | { kind: 'loading' }
+  | { kind: 'offline' }
+  | { kind: 'closed'; status: WhitelistStatusReply | null }
+  | { kind: 'no-run'; status: WhitelistStatusReply }
+  | { kind: 'form'; status: WhitelistStatusReply; run: StoredRun; code: CodeReply; busy: boolean; error: string | null }
+  | { kind: 'applied'; code: string; status: string; reply: ApplicationReply | null }
+  | { kind: 'error'; message: string };
 
-  async submitEntry(): Promise<WhitelistResult> {
-    return { success: false, error: 'The raffle server is not live yet. Follow the announcements; add ?mock=1 to the URL to preview the flow.' };
-  }
+export interface Port {
+  status(): Promise<WhitelistStatusReply>;
+  code(runToken: string): Promise<CodeReply>;
+  apply(form: { runToken: string; address: string; xHandle: string; postUrl: string }): Promise<ApplicationReply>;
+  lookup(code: string): Promise<ApplicationLookup>;
 }
-
-export function statusFromServer(reply: { threshold: number | null; entriesOpen: boolean; entriesCount: number; snapshotAt: string | null; deadline: string | null }): WhitelistStatus {
-  const date = (iso: string | null): string => {
-    const t = iso ? Date.parse(iso) : NaN;
-    return Number.isFinite(t) ? new Date(t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'TBA';
-  };
+export function livePort(api: ApiClient, sitekey: string): Port {
   return {
-    threshold: reply.threshold,
-    thresholdLabel: reply.threshold === null ? 'TBA' : reply.threshold.toLocaleString('en-US'),
-    entriesCount: reply.entriesCount,
-    entriesLabel: reply.entriesCount.toLocaleString('en-US'),
-    snapshotBlock: null,
-    snapshotLabel: date(reply.snapshotAt ?? reply.deadline),
-    isOpen: reply.entriesOpen,
+    status: () => api.whitelistStatus(),
+    code: runToken => api.applicationCode(runToken),
+    apply: async form => {
+      const turnstileToken = await challenge(sitekey, 'application', new AbortController().signal, 'Verify to submit your application', 'Cancel');
+      return api.apply({ ...form, turnstileToken });
+    },
+    lookup: code => api.application(code),
   };
 }
 
-/** Real server: SIWE challenge, wallet signature, Turnstile, entry. */
-export class LiveWhitelistApi implements WhitelistApi {
-  constructor(private readonly api: ApiClient, private readonly sitekey: string,
-    private readonly verify: (sitekey: string, action: 'entry', signal: AbortSignal) => Promise<string> = challenge) {}
-
-  async getStatus(): Promise<WhitelistStatus> {
-    return statusFromServer(await this.api.raffleStatus());
-  }
-
-  async submitEntry(payload: WhitelistSubmission): Promise<WhitelistResult> {
-    if (!payload.run || !payload.sign) return { success: false, error: 'A verified qualifying run is required.' };
-    try {
-      const n = await this.api.nonce();
-      const message = formatSiweMessage({
-        domain: n.domain, address: payload.address, statement: n.statement, uri: n.uri, chainId: n.chainId,
-        nonce: n.nonce, issuedAt: n.issuedAt, expirationTime: n.expirationTime,
-        resources: [`urn:squeekrunner:run:${payload.run.runId}`],
-      });
-      const signature = await payload.sign(message);
-      const token = await this.verify(this.sitekey, 'entry', new AbortController().signal);
-      const entered = await this.api.entry(payload.run.runToken, message, signature, token);
-      return { success: true, ticketId: formatAddress(entered.address), message: '1 raffle ticket recorded for this wallet.' };
-    } catch (error) {
-      return { success: false, error: error instanceof NetworkError || error instanceof Error ? error.message : 'Entry failed.' };
-    }
-  }
-}
-
-export class WhitelistController {
-  private state: WhitelistState;
-  private run: StoredRun | null = null;
-  private readonly listeners = new Set<(state: WhitelistState) => void>();
-
-  constructor(
-    private readonly api: WhitelistApi,
-    isMock = false,
-    private readonly wallet: WalletPort | null = null,
-    private readonly runLoader: () => StoredRun | null = () => null,
-  ) {
-    this.state = {
-      state: 'idle',
-      address: null,
-      ticketId: null,
-      score: null,
-      error: null,
-      status: null,
-      isMock,
-    };
-  }
-
-  getState(): WhitelistState {
-    return { ...this.state };
-  }
-
-  subscribe(listener: (state: WhitelistState) => void): () => void {
-    this.listeners.add(listener);
-    listener(this.getState());
-    return () => this.listeners.delete(listener);
-  }
-
-  private notify(): void {
-    const current = this.getState();
-    for (const listener of this.listeners) {
-      listener(current);
-    }
-  }
+export class ApplicationController {
+  view: View = { kind: 'loading' };
+  private listeners = new Set<(view: View) => void>();
+  constructor(private readonly port: Port | null, private readonly run: () => StoredRun | null = () => loadRun()) {}
+  subscribe(fn: (view: View) => void): () => void { this.listeners.add(fn); fn(this.view); return () => this.listeners.delete(fn); }
+  private set(view: View): void { this.view = view; for (const fn of this.listeners) fn(view); }
 
   async init(): Promise<void> {
+    if (!this.port) { this.set({ kind: 'offline' }); return; }
+    let status: WhitelistStatusReply;
+    try { status = await this.port.status(); } catch (error) { this.set({ kind: 'error', message: message(error) }); return; }
+    if (!status.applicationsOpen) { this.set({ kind: 'closed', status }); return; }
+    const run = this.run();
+    if (!run) { this.set({ kind: 'no-run', status }); return; }
     try {
-      const status = await this.api.getStatus();
-      this.state.status = status;
-      this.notify();
+      const code = await this.port.code(run.runToken);
+      if (code.applied) { this.set({ kind: 'applied', code: code.code, status: code.status ?? 'pending', reply: null }); return; }
+      this.set({ kind: 'form', status, run, code, busy: false, error: null });
     } catch (error) {
-      this.state.error = error instanceof Error ? error.message : 'Failed to load status';
-      this.notify();
+      if (error instanceof NetworkError && error.status === 403) { forgetRun(); this.set({ kind: 'no-run', status }); return; }
+      this.set({ kind: 'error', message: message(error) });
     }
   }
 
-  async connect(addressOverride?: string): Promise<void> {
-    if (this.state.state !== 'idle' && this.state.state !== 'error') return;
-
-    this.state.state = 'connecting';
-    this.state.error = null;
-    this.notify();
-
-    if (this.state.isMock) {
-      // Simulate quick wallet connection
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const mockAddress = addressOverride ?? '0x71C8A932b1E83F0bE540C1D06f120FDb9c6C3A9F';
-      this.state.address = mockAddress;
-      this.state.score = 1420;
-      this.state.state = 'connected';
-      this.notify();
-      return;
-    }
-
-    if (this.state.status && !this.state.status.isOpen) {
-      return this.fail('Raffle entries are not open yet. The threshold and dates will be announced.');
-    }
-    this.run = this.runLoader();
-    if (!this.run) {
-      return this.fail('No verified qualifying run found in this browser. Play a ranked run on /play/ and reach the threshold, then come back.');
-    }
-    if (!this.wallet) return this.fail('No browser wallet available.');
+  async submit(fields: { address: string; xHandle: string; postUrl: string }): Promise<void> {
+    const view = this.view;
+    if (view.kind !== 'form' || view.busy || !this.port) return;
+    const handle = normalizeHandle(fields.xHandle);
+    const problem = addressProblem(fields.address) ?? (handle ? null : 'Enter your X username.') ?? postProblem(fields.postUrl, handle);
+    if (problem) { this.set({ ...view, error: problem }); return; }
+    this.set({ ...view, busy: true, error: null });
     try {
-      this.state.address = await this.wallet.requestAddress();
+      const reply = await this.port.apply({ runToken: view.run.runToken, address: fields.address.trim(), xHandle: handle!, postUrl: fields.postUrl.trim() });
+      this.set({ kind: 'applied', code: reply.code, status: reply.status, reply });
     } catch (error) {
-      return this.fail(error instanceof Error ? error.message : 'Wallet connection failed.');
+      this.set({ ...view, busy: false, error: message(error) });
     }
-    this.state.score = this.run.score;
-    this.state.state = 'connected';
-    this.notify();
   }
 
-  private fail(message: string): void {
-    this.state.state = 'error';
-    this.state.error = message;
-    this.notify();
-  }
-
-  async signAndSubmit(): Promise<void> {
-    if (this.state.state !== 'connected' || !this.state.address) return;
-
-    this.state.state = 'signing';
-    this.state.error = null;
-    this.notify();
-
-    const address = this.state.address;
-    const submission: WhitelistSubmission = this.state.isMock
-      ? { address, signature: '0xmock_signature_for_testing_purposes', runScore: this.state.score ?? 1420 }
-      : { address, runScore: this.state.score ?? undefined, run: this.run ?? undefined,
-          sign: message => this.wallet!.signMessage(address, message) };
-
+  async lookup(code: string): Promise<string> {
+    if (!this.port) return 'The application service is not configured on this build.';
+    const value = code.trim().toUpperCase();
+    if (!/^SQR-[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(value)) return 'Codes look like SQR-ABCD-1234.';
     try {
-      const result = await this.api.submitEntry(submission);
-      if (result.success && result.ticketId) {
-        this.state.state = 'submitted';
-        this.state.ticketId = result.ticketId;
-        this.notify();
-      } else {
-        this.state.state = 'error';
-        this.state.error = result.error ?? 'Submission was rejected by the verification service.';
-        this.notify();
-      }
-    } catch (error) {
-      this.state.state = 'error';
-      this.state.error = error instanceof Error ? error.message : 'Network error during submission.';
-      this.notify();
-    }
-  }
-
-  reset(): void {
-    this.state = {
-      state: 'idle',
-      address: null,
-      ticketId: null,
-      score: null,
-      error: null,
-      status: this.state.status,
-      isMock: this.state.isMock,
-    };
-    this.notify();
+      const reply = await this.port.lookup(value);
+      return `${reply.code}: ${label(reply.status)}${reply.xStatus === 'unchecked' ? ' · X post will be checked by hand' : ''}`;
+    } catch (error) { return message(error); }
   }
 }
-
-export function formatAddress(address: string): string {
-  if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : 'Something went wrong. Try again.';
+}
+export function label(status: string): string {
+  return status === 'approved' ? 'Approved: you are on the allowlist' : status === 'rejected' ? 'Not approved' : 'Pending team review';
 }
 
-export function renderWhitelistApp(
-  container: HTMLElement,
-  controller: WhitelistController,
-): () => void {
-  const unsubscribe = controller.subscribe(state => {
-    container.innerHTML = '';
-    const wrapper = document.createElement('div');
-    wrapper.className = 'app-box';
+/* ---------------- DOM ---------------- */
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...children: (Node | string)[]): HTMLElementTagNameMap[K] {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === 'class') node.className = v; else node.setAttribute(k, v); }
+  node.append(...children);
+  return node;
+}
+function field(id: string, labelText: string, hint: string, input: HTMLInputElement): HTMLElement {
+  input.id = id; input.className = 'app-input'; input.setAttribute('aria-describedby', `${id}-hint`);
+  return el('div', { class: 'app-field' }, el('label', { for: id }, labelText), input, el('p', { class: 'app-field-hint', id: `${id}-hint` }, hint));
+}
+function box(title: string, ...body: (Node | string)[]): HTMLElement {
+  return el('div', { class: 'app-box' }, el('h3', { class: 'app-title' }, title), ...body);
+}
+const p = (text: string, cls = 'app-desc') => el('p', { class: cls }, text);
+const link = (href: string, text: string, cls = 'button app-action-btn') => el('a', { class: cls, href }, text);
 
-    // Live status announcement for screen readers
-    const srStatus = document.createElement('div');
-    srStatus.className = 'sr-only';
-    srStatus.setAttribute('role', 'status');
-    srStatus.setAttribute('aria-live', 'polite');
-
-    if (state.state === 'idle') {
-      srStatus.textContent = 'Raffle application is ready. Connect your wallet to begin.';
-      wrapper.appendChild(srStatus);
-
-      const heading = document.createElement('h3');
-      heading.className = 'app-title';
-      heading.textContent = 'Enter the Hamster Raffle';
-      wrapper.appendChild(heading);
-
-      const desc = document.createElement('p');
-      desc.className = 'app-desc';
-      desc.textContent =
-        'Achieved a qualifying run? Connect your Sepolia wallet and sign a zero-gas message to claim 1 raffle ticket.';
-      wrapper.appendChild(desc);
-
-      const modeBadge = document.createElement('p');
-      modeBadge.className = 'app-badge-note';
-      if (state.isMock) {
-        modeBadge.textContent = 'Mode: Interactive Mock (?mock=1 active)';
-      } else {
-        modeBadge.textContent = 'Sepolia testnet · Zero gas fee · 1 ticket per wallet';
+export function render(container: HTMLElement, controller: ApplicationController): () => void {
+  const draft = { address: '', xHandle: '', postUrl: '' };
+  let posted = false;
+  return controller.subscribe(view => {
+    const live = el('p', { class: 'sr-only', 'aria-live': 'polite' });
+    let content: HTMLElement;
+    switch (view.kind) {
+      case 'loading': content = el('div', { class: 'app-loading' }, 'Loading application status…'); break;
+      case 'offline': content = box('Applications are not available on this build', p('This copy of the site is not connected to the SqueekRunner server. Visit squeekrunner.app to apply.')); break;
+      case 'error': content = box('Service unavailable', p(view.message), el('button', { type: 'button', class: 'app-secondary-btn' }, 'Try again')); content.querySelector('button')!.addEventListener('click', () => void controller.init()); break;
+      case 'closed': content = box('Applications are not open yet',
+        p('Practise now: the qualifying rule is already live. Applications open at launch; dates will be announced on X.'),
+        link('../play/', 'Play SqueekRunner ↗')); break;
+      case 'no-run': content = box('First, a qualifying run',
+        p(`Score ${view.status.threshold?.toLocaleString('en-US') ?? 'the threshold'}+ points in a ranked run and catch all ${view.status.requiredCoins} coins. Coins hang at double-jump height in the first 10,000 m. Then come back here within 24 hours, from the same browser.`),
+        link('../play/', 'Play to qualify ↗')); break;
+      case 'applied': {
+        const unchecked = view.reply?.xStatus === 'unchecked';
+        content = box('Application received',
+          el('p', { class: 'ticket-tag' }, view.code),
+          p(label(view.status)),
+          p(unchecked ? 'X could not confirm your post automatically right now. That is fine: the team will check it by hand. Keep the post public.' :
+            'Your X post is confirmed. Keep it public until the review is over.'),
+          p('Save your code. You can check the status below at any time. The team reviews every application by hand; decisions are final.', 'app-hint'));
+        break;
       }
-      wrapper.appendChild(modeBadge);
-
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'button app-action-btn';
-      button.textContent = state.isMock ? 'Connect Mock Wallet (Demo)' : 'Connect Sepolia Wallet';
-      button.addEventListener('click', () => {
-        void controller.connect();
-      });
-      wrapper.appendChild(button);
-
-      if (!state.isMock) {
-        const hint = document.createElement('p');
-        hint.className = 'app-hint';
-        hint.innerHTML = 'You need a verified run above the threshold from this browser. <a href="../play/">Play a ranked run →</a>';
-        wrapper.appendChild(hint);
+      case 'form': {
+        const address = el('input', { type: 'text', inputmode: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: '0x…', maxlength: '42' });
+        const handle = el('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: '@yourname', maxlength: '16' });
+        const post = el('input', { type: 'url', autocomplete: 'off', spellcheck: 'false', placeholder: 'https://x.com/yourname/status/…' });
+        address.value = draft.address; handle.value = draft.xHandle; post.value = draft.postUrl;
+        const share = el('a', { class: 'button app-share-btn', href: intentUrl(view.code.code, view.run.score), target: '_blank', rel: 'noopener' }, 'Post on X ↗');
+        const submit = el('button', { type: 'submit', class: 'button app-action-btn' }, view.busy ? 'Submitting…' : 'Submit application');
+        const error = el('p', { class: 'app-error', role: 'alert' }, view.error ?? '');
+        const form = el('form', { class: 'app-form', novalidate: '' },
+          el('div', { class: 'app-details' },
+            el('div', { class: 'app-detail-row' }, el('span', {}, 'Qualifying run'), el('strong', {}, `${view.code.score.toLocaleString('en-US')} pts · ${view.code.coins}/10 coins`)),
+            el('div', { class: 'app-detail-row' }, el('span', {}, 'Your application code'), el('strong', { class: 'font-mono' }, view.code.code))),
+          el('p', { class: 'step-badge' }, 'Step 1 · Your Sepolia address'),
+          field('wl-address', 'Sepolia address (paste it; no wallet connection)', 'The address that will receive the free mint. Use one with some on-chain history.', address),
+          el('p', { class: 'step-badge' }, 'Step 2 · Your X account'),
+          field('wl-handle', 'X username', 'A real, active account. One X account = one application.', handle),
+          el('p', { class: 'step-badge' }, 'Step 3 · Post your code on X'),
+          p('Opens X with a ready post containing your code. Publish it publicly, then copy its link.', 'app-desc'), share,
+          field('wl-post', 'Link to your post', 'Open your post on X and copy the address from the browser bar or Share → Copy link.', post),
+          error, submit,
+          p('By submitting you agree that the team reviews your run, X account and address history by hand. Not a raffle; decisions are final.', 'app-hint'));
+        const sync = (): void => {
+          draft.address = address.value; draft.xHandle = handle.value; draft.postUrl = post.value;
+          const h = normalizeHandle(handle.value);
+          const ready = !addressProblem(address.value) && !!h && !postProblem(post.value, h) && posted;
+          submit.disabled = view.busy || !ready;
+        };
+        for (const input of [address, handle, post]) input.addEventListener('input', sync);
+        share.addEventListener('click', () => { posted = true; sync(); });
+        post.addEventListener('input', () => { if (post.value.trim()) posted = true; sync(); });
+        sync();
+        form.addEventListener('submit', event => { event.preventDefault(); void controller.submit({ ...draft }); });
+        content = box('Apply for the whitelist', p('Three steps, about two minutes. No wallet connection, no signatures, no fees.'), form);
+        break;
       }
-    } else if (state.state === 'connecting') {
-      srStatus.textContent = 'Connecting to wallet...';
-      wrapper.appendChild(srStatus);
-
-      const loading = document.createElement('div');
-      loading.className = 'app-loading';
-      loading.textContent = 'Connecting wallet...';
-      wrapper.appendChild(loading);
-    } else if (state.state === 'connected') {
-      srStatus.textContent = `Wallet connected: ${state.address ?? ''}. Ready to sign entry.`;
-      wrapper.appendChild(srStatus);
-
-      const heading = document.createElement('h3');
-      heading.className = 'app-title';
-      heading.textContent = 'Wallet Connected';
-      wrapper.appendChild(heading);
-
-      const details = document.createElement('div');
-      details.className = 'app-details';
-
-      const rowWallet = document.createElement('div');
-      rowWallet.className = 'app-detail-row';
-      rowWallet.innerHTML = `<span class="detail-label">Wallet:</span> <strong class="detail-val font-mono">${state.address ? formatAddress(state.address) : '—'}</strong>`;
-      details.appendChild(rowWallet);
-
-      const rowScore = document.createElement('div');
-      rowScore.className = 'app-detail-row';
-      rowScore.innerHTML = `<span class="detail-label">Run Score:</span> <strong class="detail-val text-accent">${state.score ? `${state.score} pts (Qualified)` : 'Qualified'}</strong>`;
-      details.appendChild(rowScore);
-
-      const rowCost = document.createElement('div');
-      rowCost.className = 'app-detail-row';
-      rowCost.innerHTML = '<span class="detail-label">Gas Cost:</span> <strong class="detail-val">0 ETH (Off-chain signature)</strong>';
-      details.appendChild(rowCost);
-
-      wrapper.appendChild(details);
-
-      const signBtn = document.createElement('button');
-      signBtn.type = 'button';
-      signBtn.className = 'button app-action-btn';
-      signBtn.textContent = 'Sign & Enter Raffle';
-      signBtn.addEventListener('click', () => {
-        void controller.signAndSubmit();
-      });
-      wrapper.appendChild(signBtn);
-
-      const cancelBtn = document.createElement('button');
-      cancelBtn.type = 'button';
-      cancelBtn.className = 'app-secondary-btn';
-      cancelBtn.textContent = 'Disconnect';
-      cancelBtn.addEventListener('click', () => {
-        controller.reset();
-      });
-      wrapper.appendChild(cancelBtn);
-    } else if (state.state === 'signing') {
-      srStatus.textContent = 'Awaiting signature and verifying replay on server...';
-      wrapper.appendChild(srStatus);
-
-      const loading = document.createElement('div');
-      loading.className = 'app-loading';
-      loading.innerHTML = '<p><strong>Waiting for your wallet signature…</strong></p><p class="app-hint">Sign the message in your wallet. It is an off-chain signature: no transaction, no gas.</p>';
-      wrapper.appendChild(loading);
-    } else if (state.state === 'submitted') {
-      srStatus.textContent = `Success! Ticket ${state.ticketId ?? ''} confirmed for the raffle.`;
-      wrapper.appendChild(srStatus);
-
-      const successCard = document.createElement('div');
-      successCard.className = 'ticket-card';
-
-      const tag = document.createElement('span');
-      tag.className = 'ticket-tag';
-      tag.textContent = 'Ticket Confirmed';
-      successCard.appendChild(tag);
-
-      const ticketHeading = document.createElement('h3');
-      ticketHeading.className = 'ticket-number';
-      ticketHeading.textContent = state.ticketId ?? 'SQK-VERIFIED';
-      successCard.appendChild(ticketHeading);
-
-      const info = document.createElement('p');
-      info.className = 'ticket-info';
-      info.textContent = `Wallet: ${state.address ? formatAddress(state.address) : ''} · 1 ticket entered in Merkle pool.`;
-      successCard.appendChild(info);
-
-      const notice = document.createElement('p');
-      notice.className = 'ticket-note';
-      notice.textContent =
-        'Your verified run is linked to this wallet. After entries close, winners are drawn from the published entry list using the hash of an announced future Sepolia block. Keep an eye on announcements!';
-      successCard.appendChild(notice);
-
-      const resetBtn = document.createElement('button');
-      resetBtn.type = 'button';
-      resetBtn.className = 'app-secondary-btn';
-      resetBtn.textContent = 'Done / Reset';
-      resetBtn.addEventListener('click', () => {
-        controller.reset();
-      });
-      successCard.appendChild(resetBtn);
-
-      wrapper.appendChild(successCard);
-    } else if (state.state === 'error') {
-      srStatus.textContent = `Error: ${state.error ?? 'Unknown error occurred'}`;
-      wrapper.appendChild(srStatus);
-
-      const errorBox = document.createElement('div');
-      errorBox.className = 'app-error-box';
-      errorBox.setAttribute('role', 'alert');
-
-      const errTitle = document.createElement('h3');
-      errTitle.className = 'error-title';
-      errTitle.textContent = 'Unable to Submit Entry';
-      errorBox.appendChild(errTitle);
-
-      const errMsg = document.createElement('p');
-      errMsg.className = 'error-message';
-      errMsg.textContent = state.error ?? 'An unexpected error occurred during submission.';
-      errorBox.appendChild(errMsg);
-
-      const retryBtn = document.createElement('button');
-      retryBtn.type = 'button';
-      retryBtn.className = 'button app-action-btn';
-      retryBtn.textContent = 'Try Again';
-      retryBtn.addEventListener('click', () => {
-        controller.reset();
-      });
-      errorBox.appendChild(retryBtn);
-
-      wrapper.appendChild(errorBox);
     }
-
-    container.appendChild(wrapper);
+    live.textContent = view.kind === 'form' && view.error ? view.error : '';
+    container.replaceChildren(content, live, lookupBox(controller));
   });
-
-  return unsubscribe;
 }
 
-function paintStatus(status: WhitelistStatus | null): void {
-  if (!status) return;
-  const set = (selector: string, text: string): void => {
-    const el = document.querySelector(selector);
-    if (el) el.textContent = text;
-  };
-  set('[data-status-threshold]', status.thresholdLabel);
-  set('[data-status-entries]', status.entriesLabel);
-  set('[data-status-snapshot]', status.snapshotLabel);
+function lookupBox(controller: ApplicationController): HTMLElement {
+  const input = el('input', { type: 'text', class: 'app-input', id: 'wl-lookup', placeholder: 'SQR-XXXX-XXXX', autocomplete: 'off', spellcheck: 'false', maxlength: '13' });
+  const out = el('p', { class: 'app-desc', 'aria-live': 'polite' });
+  const button = el('button', { type: 'submit', class: 'app-secondary-btn' }, 'Check status');
+  const form = el('form', { class: 'app-lookup' }, el('label', { for: 'wl-lookup' }, 'Already applied? Check your application'), input, button, out);
+  form.addEventListener('submit', event => { event.preventDefault(); void controller.lookup(input.value).then(text => { out.textContent = text; }); });
+  return form;
 }
 
-// Browser bootstrap when loaded via <script type="module">
+function paintStatus(status: WhitelistStatusReply): void {
+  const set = (selector: string, text: string): void => { const node = document.querySelector(selector); if (node) node.textContent = text; };
+  set('[data-status-threshold]', status.threshold === null ? 'TBA' : status.threshold.toLocaleString('en-US'));
+  set('[data-status-coins]', `${status.requiredCoins} / ${status.requiredCoins}`);
+  set('[data-status-open]', status.applicationsOpen ? 'Open' : 'Not open yet');
+  set('[data-status-applications]', status.applications.toLocaleString('en-US'));
+  set('[data-status-approved]', status.approved.toLocaleString('en-US'));
+}
+
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const container = document.querySelector<HTMLElement>('[data-whitelist-app]');
   if (container) {
-    const isMock = new URLSearchParams(window.location.search).get('mock') === '1';
     const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim() ?? '';
     const sitekey = (import.meta.env.VITE_TURNSTILE_SITEKEY as string | undefined)?.trim() ?? '';
-    const api: WhitelistApi = isMock ? new MockWhitelistApi() : base ? new LiveWhitelistApi(new ApiClient(base), sitekey) : new OfflineWhitelistApi();
-    const controller = new WhitelistController(api, isMock, isMock ? null : new InjectedWallet(), () => loadRun());
-    renderWhitelistApp(container, controller);
-    controller.subscribe(state => paintStatus(state.status));
+    const controller = new ApplicationController(base ? livePort(new ApiClient(base), sitekey) : null);
+    render(container, controller);
+    controller.subscribe(view => { if ('status' in view && view.status && typeof view.status === 'object') paintStatus(view.status); });
     void controller.init();
   }
 }

@@ -39,3 +39,22 @@ it('waits instead of guessing when the timeline is not yet complete', () => {
   driver.advanceRanked(600, { input: t => cursor.input(t), ready: t => t < 30 }, () => {});
   expect(driver.sim.tick).toBe(30);
 });
+
+it('a ranked tick waits for its map chunk and applies the server chunk seed', async () => {
+  const { ApiClient } = await import('./api');
+  const { RankedTimeline, ServerSource } = await import('./source');
+  const { CHUNK_TICKS } = await import('../sim/core');
+  const serverNow = startedAt + 1000;
+  const api = new ApiClient('http://api.test', (async () => new Response(JSON.stringify({ chunks: [], nextAt: serverNow + 60000, serverNow }))) as typeof fetch);
+  const source = new ServerSource(api, { kind: 'live', start() {}, stop() {}, read: () => ({ mode: 'NO DATA', rpm: 0, reason: '', snapshot: null }), subscribe: () => () => {} } as never);
+  const abort = new AbortController();
+  const timeline = new RankedTimeline({ sessionId: 's', seed: 1, startedAt, expiresAt: startedAt + 1e6, simVersion: 'squeek-3',
+    timeline: { points, completeThrough: startedAt + 600000, serverNow }, map: { chunks: [{ index: 0, seed: 77 }, { index: 2, seed: 5 }], nextAt: serverNow, serverNow } },
+  source, abort.signal);
+  expect(timeline.map.seeds).toEqual([77]); // out-of-order chunk ignored
+  expect(timeline.ready(CHUNK_TICKS - 1)).toBe(true);
+  expect(timeline.ready(CHUNK_TICKS)).toBe(false);
+  expect(timeline.input(0).chunkSeed).toBe(77);
+  expect(timeline.input(1).chunkSeed).toBeUndefined();
+  abort.abort();
+});

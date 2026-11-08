@@ -1,22 +1,22 @@
 {
   "idle": {
-    "score": 628,
-    "endTick": 311,
-    "hash": "c495224c"
+    "score": 626,
+    "endTick": 310,
+    "hash": "106e8d09"
   },
   "rpm-dropout": {
-    "score": 839,
-    "endTick": 237,
-    "hash": "7eb8be5e"
+    "score": 1372,
+    "endTick": 360,
+    "hash": "3474ca65"
   },
   "nuts-and-resets": {
-    "score": 1019,
-    "endTick": 429,
-    "hash": "08ad9667"
+    "score": 1021,
+    "endTick": 430,
+    "hash": "ffc87e0e"
   },
   "minute-run": {
-    "score": 13820,
-    "endTick": 3678,
-    "hash": "cbff92d4"
+    "score": 13980,
+    "endTick": 3725,
+    "hash": "6cb96fe6"
   }
 }

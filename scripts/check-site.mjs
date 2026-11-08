@@ -8,8 +8,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dist = resolve(root, 'dist');
 const preview = process.argv.slice(2).find(argument => !argument.startsWith('--')) ?? 'http://127.0.0.1:4173/';
-const pages = ['', 'play/', 'play/?demo=1', 'whitepaper/', 'whitelist/', 'collection/'];
-const titles = ['SqueekRunner', 'Play', 'Play', 'Whitepaper', 'Whitelist', 'Collection'];
+const pages = ['', 'play/', 'play/?demo=1', 'whitepaper/', 'whitelist/', 'collection/', 'admin/'];
+const titles = ['SqueekRunner', 'Play', 'Play', 'Whitepaper', 'Whitelist', 'Collection', 'Review Panel'];
 
 async function checkPages(base) {
   const seen = new Map();

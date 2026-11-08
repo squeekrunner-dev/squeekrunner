@@ -358,3 +358,54 @@ th:first-child { width: 48%; }
 }
 
 
+
+/* Whitelist application form */
+.app-form { display: grid; gap: 14px; }
+.app-field { display: grid; gap: 6px; }
+.app-field label, .app-lookup label { font-weight: 700; font-size: .92rem; }
+.app-input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: .95rem Consolas, monospace; }
+.app-input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; border-color: var(--accent-ink); }
+.app-field-hint { margin: 0; font-size: .8rem; color: var(--muted); }
+.app-error { margin: 0; min-height: 1.2em; color: var(--no-data); font-weight: 700; font-size: .9rem; }
+.app-error:empty { min-height: 0; }
+.app-share-btn { justify-content: center; gap: 12px; background: var(--ink); color: var(--paper); box-shadow: none; }
+.app-action-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.app-form .step-badge { margin: 10px 0 0; }
+.app-lookup { max-width: 620px; margin: 22px auto 0; display: grid; gap: 8px; }
+.app-lookup .app-secondary-btn { margin-top: 0; }
+.criteria-list { display: grid; gap: 12px; padding: 0; list-style: none; }
+.criteria-list li { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 16px 18px; }
+.criteria-list strong { display: block; margin-bottom: 4px; }
+
+/* Review panel (/admin/) */
+.admin { padding-block: 24px 80px; }
+.admin h1 { font-size: 1.8rem; margin: 0 0 8px; }
+.admin-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+.admin-toolbar > .app-input { flex: 1 1 280px; width: auto; }
+.admin-toolbar > .app-secondary-btn { width: auto; margin: 0; }
+.admin-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-tabs .button, .admin-tabs .app-secondary-btn { width: auto; margin: 0; padding: 8px 16px; min-height: 0; font-size: .9rem; text-transform: capitalize; }
+.admin-list { display: grid; gap: 16px; }
+.admin-card { border: 1px solid var(--line); border-left: 5px solid var(--muted); border-radius: 10px; background: var(--surface); padding: 16px 18px; }
+.admin-card.status-approved { border-left-color: var(--live); }
+.admin-card.status-rejected { border-left-color: var(--no-data); }
+.admin-card-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; }
+.admin-badge { font: 700 .72rem Consolas, monospace; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--line); }
+.badge-approved, .x-verified { color: var(--live); border-color: var(--live); }
+.badge-rejected, .x-failed { color: var(--no-data); border-color: var(--no-data); }
+.x-unchecked { color: #131b27; background: #ffcf75; border-color: #ffcf75; }
+.admin-muted { color: var(--muted); font-size: .85rem; }
+.admin-flags { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-flags li { font-size: .8rem; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); }
+.admin-flags .flag-bad { color: var(--no-data); border-color: var(--no-data); font-weight: 700; }
+.admin-flags .flag-warn { color: #8a5a00; border-color: #e0b04d; }
+.admin-flags .flag-good { color: var(--live); border-color: var(--live); }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 24px; }
+.admin-grid h4 { margin: 0 0 6px; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.admin-row { display: flex; justify-content: space-between; gap: 12px; font-size: .85rem; padding-block: 3px; border-bottom: 1px solid var(--line); }
+.admin-row strong { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+.admin-actions .app-input { flex: 1 1 240px; }
+.admin-actions .button, .admin-actions .app-secondary-btn { width: auto; margin: 0; padding: 8px 14px; min-height: 0; font-size: .85rem; gap: 8px; }
+.admin-reject { background: var(--no-data); box-shadow: none; }
+@media (prefers-color-scheme: dark) { .admin-flags .flag-warn { color: #ffcf75; } }

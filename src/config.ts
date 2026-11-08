@@ -45,6 +45,20 @@ export const CONFIG = {
     floatHeight: 54,
     noticeMs: 2600,
   },
+  /**
+   * Whitelist coins (sim squeek-3): exactly `count` coins, one per equal segment of the first
+   * 10,000 m (= 100,000 distance points). Coin centre sits `heightAboveGround` px above the track:
+   * a single jump tops out near 110 px (hitbox top ≈ 154 px), a well-timed double jump near
+   * 194 px (top ≈ 238 px), so only the double jump can collect them.
+   */
+  coins: {
+    count: 10,
+    firstMetres: 400,
+    lastMetres: 9800,
+    segmentMarginMetres: 60,
+    heightAboveGround: 200,
+    radius: 18,
+  },
   telemetry: {
     url: 'https://api.squeekchain.com/v1/status',
     pollMs: 1500,
