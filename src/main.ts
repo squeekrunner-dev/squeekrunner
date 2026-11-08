@@ -8,9 +8,19 @@ import { BootScene } from './game/BootScene';
 import { RunScene } from './game/RunScene';
 import { GameOverScene } from './game/GameOverScene';
 import type { GameContext } from './game/context';
+import { ApiClient } from './net/api';
+import { ServerSource } from './net/source';
+import type { TelemetrySource } from './chain/types';
 
-const source = new URLSearchParams(window.location.search).get('demo') === '1' ? new DemoSource() : new LiveSource();
-const context: GameContext = { source, records: new RecordStore(source.kind) };
+const demo = new URLSearchParams(window.location.search).get('demo') === '1';
+// Without VITE_API_BASE the game is a pure client exactly as before (no ranked runs).
+const apiBase = (import.meta.env.VITE_API_BASE as string | undefined)?.trim() ?? '';
+const api = !demo && apiBase ? new ApiClient(apiBase) : undefined;
+const source: TelemetrySource = demo ? new DemoSource() : api ? new ServerSource(api) : new LiveSource();
+const context: GameContext = {
+  source, records: new RecordStore(source.kind), api,
+  turnstileSiteKey: (import.meta.env.VITE_TURNSTILE_SITEKEY as string | undefined)?.trim() ?? '',
+};
 const game = new Phaser.Game({
   // The MVP uses 2D textures only; Canvas also works without a WebGL device.
   type: Phaser.CANVAS,

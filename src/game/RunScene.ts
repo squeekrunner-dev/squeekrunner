@@ -11,6 +11,8 @@ import { sound } from '../audio/sound';
 import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, compactHeight, createMuteButton, label, pill } from './ui';
+import { ServerSource } from '../net/source';
+import { startRanked, submitRanked, type RankedRun } from '../net/ranked';
 
 type RunState = 'ready' | 'playing' | 'paused' | 'ended';
 
@@ -62,6 +64,10 @@ export class RunScene extends Phaser.Scene {
   private runBlock: RunBlock | null = null;
   private lastMode = '';
   private dustIn = 0;
+  /** Server session of a raffle-eligible run; null for offline/unranked runs. */
+  private ranked: RankedRun | null = null;
+  private starting = false;
+  private abort = new AbortController();
 
   constructor(private readonly context: GameContext) {
     super('Run');
@@ -72,8 +78,11 @@ export class RunScene extends Phaser.Scene {
     this.distance = this.elapsed = this.jumpsUsed = 0;
     this.shieldUntil = this.noticeUntil = this.dustIn = 0;
     this.speed = CONFIG.speed.base;
-    const seed = this.context.seedProvider?.() ?? crypto.getRandomValues(new Uint32Array(1))[0];
-    this.driver = new RunDriver(seed, this.context.source.kind);
+    // Offline seed; a ranked run replaces the driver with the server-issued seed on start.
+    this.driver = new RunDriver(crypto.getRandomValues(new Uint32Array(1))[0], this.context.source.kind);
+    this.ranked = null;
+    this.starting = false;
+    this.abort = new AbortController();
     this.obstacleSprites = new Map();
     this.nutSprite = null;
     this.runBlock = null;
@@ -158,6 +167,7 @@ export class RunScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', visibility);
 
     onSceneExit(this.events, () => {
+      this.abort.abort();
       unsubscribe();
       this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', keyboard);
@@ -283,10 +293,30 @@ export class RunScene extends Phaser.Scene {
     if (current.mode !== 'NO DATA' && current.snapshot) this.onSnapshot(current.snapshot);
   }
 
+  /** With a server configured, try a ranked session first; any failure falls back to an offline run. */
+  private start(): void {
+    const { api, source, turnstileSiteKey } = this.context;
+    if (!api || !(source instanceof ServerSource) || !turnstileSiteKey) { this.begin(); return; }
+    this.starting = true;
+    this.notice('VERIFYING · STARTING A RAFFLE-ELIGIBLE RUN…');
+    startRanked(api, source, turnstileSiteKey, this.abort.signal)
+      .then(ranked => {
+        this.ranked = ranked;
+        this.driver = new RunDriver(ranked.session.seed, 'live');
+        this.notice('RANKED RUN · VERIFIED BY THE SERVER');
+      })
+      .catch(() => { if (!this.abort.signal.aborted) this.notice('OFFLINE RUN · NOT RAFFLE-ELIGIBLE'); })
+      .finally(() => {
+        this.starting = false;
+        if (!this.abort.signal.aborted && this.state === 'ready') this.begin();
+      });
+  }
+
   private action(): void {
     if (this.state === 'ready') {
+      if (this.starting) return;
       sound.playUiClick();
-      this.begin();
+      this.start();
     } else if (this.state === 'paused') {
       sound.playUiClick();
       this.togglePause();
@@ -296,6 +326,8 @@ export class RunScene extends Phaser.Scene {
   }
 
   private togglePause(): void {
+    // A ranked run follows server time and cannot be paused (that would desync it from the verifier).
+    if (this.ranked && this.state === 'playing') return;
     if (this.state === 'playing') {
       this.state = 'paused';
       this.driver.pause();
@@ -313,6 +345,13 @@ export class RunScene extends Phaser.Scene {
 
   private onSnapshot(snapshot: ChainSnapshot): void {
     const { bonus, reset } = this.detector.observe(snapshot.installationId, snapshot.confirmedHeight);
+    if (this.ranked) {
+      // Ranked nuts come only from the server timeline inside the simulation ('nut' events).
+      if (this.state === 'playing' && !this.runBlock && snapshot.confirmedHeight !== null) {
+        this.runBlock = { installationId: snapshot.installationId, height: snapshot.confirmedHeight };
+      }
+      return;
+    }
     if (reset) {
       this.driver.resetNut();
       this.noticeUntil = 0;
@@ -352,6 +391,9 @@ export class RunScene extends Phaser.Scene {
         this.cameras.main.shake(120, 0.005);
         this.emitDust(this.player.x + 28, this.player.y - 20, 14);
         this.notice('SHIELD DEFLECTED IMPACT!');
+      } else if (event === 'nut' && this.ranked) {
+        sound.playNewBlock();
+        this.notice('⚡ NEW SQUEEK BLOCK! GOLDEN NUT INCOMING!');
       } else if (event === 'gameOver') this.endRun();
     }
   }
@@ -380,6 +422,11 @@ export class RunScene extends Phaser.Scene {
 
   private endRun(): void {
     if (this.driver.replay) this.context.lastReplay = this.driver.replay;
+    const { api, source } = this.context;
+    const ranked = !!(this.ranked && this.driver.replay && api && source instanceof ServerSource);
+    this.context.submission = ranked
+      ? submitRanked(api!, this.ranked!, this.driver.replay!, () => (source as ServerSource).serverNow())
+      : undefined;
     this.state = 'ended';
     this.player.anims.stop();
     this.player.setTexture(TEXTURES.hamsterHit);
@@ -399,6 +446,7 @@ export class RunScene extends Phaser.Scene {
       runBlock: this.runBlock,
       newBest,
       demo: this.context.source.kind === 'demo',
+      ranked,
     };
     this.time.delayedCall(350, () => this.scene.start('GameOver', result));
   }
@@ -489,7 +537,8 @@ export class RunScene extends Phaser.Scene {
 
     if (this.state !== 'playing') return;
 
-    this.driver.advance(delta, rpmSample(view), events => this.onTick(events));
+    if (this.ranked) this.driver.advanceRanked(this.ranked.timeline.targetTick(), this.ranked.timeline, events => this.onTick(events));
+    else this.driver.advance(delta, rpmSample(view), events => this.onTick(events));
     this.renderObjects();
     if (this.driver.sim.gameOver) return;
 

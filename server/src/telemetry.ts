@@ -14,7 +14,7 @@ export async function history(db: D1Database, since: number, until: number): Pro
 export async function collect(env: Env, rt: Runtime): Promise<void> {
   let snapshot = null;
   try {
-    const reply = await rt.fetcher(CONFIG.telemetry.url, { credentials: 'omit', signal: AbortSignal.timeout(4000) });
+    const reply = await rt.fetcher(CONFIG.telemetry.url, { signal: AbortSignal.timeout(4000) });
     if (reply.ok) snapshot = parseStatus(await reply.json(), rt.now());
   } catch { /* Failure is an explicit NO DATA point, never stale RPM. */ }
   const now = rt.now(), at = now + TELEMETRY_LEAD_MS;
@@ -34,13 +34,13 @@ export async function collect(env: Env, rt: Runtime): Promise<void> {
 
 /** A single publisher. Serialize collection and reads so no late write can cross a returned watermark. */
 export class TelemetryCollector {
-  constructor(private readonly state: DurableObjectState, private readonly env: Env) {}
+  constructor(private readonly state: DurableObjectState, private readonly env: Env, private readonly rt: Runtime = runtime) {}
   async fetch(request: Request): Promise<Response> {
     return this.state.blockConcurrencyWhile(async () => {
-      if (!(await this.state.storage.getAlarm())) await this.state.storage.setAlarm(Date.now() + 1);
+      if (!(await this.state.storage.getAlarm())) await this.state.storage.setAlarm(this.rt.now() + 1);
       const url = new URL(request.url);
       if (url.pathname === '/wake') return new Response('ok');
-      const now = Date.now();
+      const now = this.rt.now();
       const since = Math.max(now - RETENTION, Number(url.searchParams.get('since') ?? now - 60000));
       const until = Math.min(now + TELEMETRY_LEAD_MS, Number(url.searchParams.get('until') ?? now + TELEMETRY_LEAD_MS));
       if (!Number.isFinite(since) || !Number.isFinite(until)) return new Response('Invalid time', { status: 400 });
@@ -50,12 +50,12 @@ export class TelemetryCollector {
   }
   async alarm(): Promise<void> {
     await this.state.blockConcurrencyWhile(async () => {
-      const now = Date.now();
+      const now = this.rt.now();
       const last = await this.state.storage.get<number>('lastCollection');
       // At-least-once delivery and retry after restart must not manufacture a burst of points.
       if (last && now - last < 9000) { await this.state.storage.setAlarm(last + 10000); return; }
       await this.state.storage.setAlarm(now + 10000);
-      await collect(this.env, runtime);
+      await collect(this.env, this.rt);
       await this.state.storage.put('lastCollection', now);
     });
   }

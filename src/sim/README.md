@@ -96,9 +96,9 @@ for regression detection only; it is not a cryptographic digest or a security cr
 `RunDriver` accumulates frame time, caps one frame at 50 ms and records each applied tick
 once. Pause clears the fractional accumulator/pending jump, advances no simulation time,
 and preserves queued chain resets. Each new scene gets a new driver and recorder.
-`GameContext.seedProvider` synchronously returns the externally supplied uint32 seed for
-the next run; T008 must obtain its session before starting the scene. Without a provider,
-the scene uses `crypto.getRandomValues`. Finished replays live in `context.lastReplay`.
+In ranked mode (T008) the server issues the uint32 seed through `POST /v1/session` for
+the run, obtained when the player presses Start (`src/net/ranked.ts`). Offline runs
+use `crypto.getRandomValues`. Finished replays live in `context.lastReplay`.
 
 Server integration must:
 

@@ -10,7 +10,7 @@ export const runtime: Runtime = { now: () => Date.now(), fetcher: (...args) => f
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string, readonly extra: Record<string, unknown> = {}) { super(message); }
 }
-export const fail = (status: number, code: string, message: string): never => { throw new ApiError(status, code, message); };
+export function fail(status: number, code: string, message: string): never { throw new ApiError(status, code, message); }
 export function randomToken(): string {
   return [...crypto.getRandomValues(new Uint8Array(32))].map(n => n.toString(16).padStart(2, '0')).join('');
 }
@@ -57,7 +57,7 @@ export async function readJSON(request: Request, max: number): Promise<Record<st
   const bytes = new Uint8Array(size); let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   let value: unknown;
-  try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+  try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes)); }
   catch { fail(400, 'json', 'Invalid JSON'); }
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(400, 'json', 'JSON object required');
   return value as Record<string, unknown>;

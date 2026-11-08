@@ -57,6 +57,8 @@ export class ServerSource implements TelemetrySource {
       reason: 'Server wheel timeline · 5s broadcast delay', snapshot };
   }
   subscribe(fn: (snapshot: ChainSnapshot) => void): () => void { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+  /** Best estimate of the server clock from the latest timeline reply. */
+  serverNow(): number { return Date.now() + this.offset; }
 }
 
 export class RankedTimeline {
@@ -68,6 +70,8 @@ export class RankedTimeline {
     this.cursor = new TimelineCursor(this.points, session.startedAt);
   }
   ready(tick: number): boolean { return this.session.startedAt + tick * 1000 / 60 <= this.source.completeThrough; }
+  /** Server-time tick the run should have reached by now. */
+  targetTick(): number { return Math.max(0, Math.floor((this.source.serverNow() - this.session.startedAt) * 60 / 1000)); }
   input(tick: number) {
     const last = this.points[this.points.length - 1]?.at ?? -1;
     for (const point of this.source.points) if (point.at > last) this.points.push(point);

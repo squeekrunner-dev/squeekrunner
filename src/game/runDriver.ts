@@ -9,6 +9,8 @@ export function rpmSample(view: TelemetryView): number | null {
     Math.min(MAX_RPM_MILLI, Math.round(view.rpm * 1000));
 }
 
+export interface RankedInputs { input(tick: number): TickInput; ready(tick: number): boolean }
+
 /** Frame-to-tick adapter, independent of rendering, subscriptions and clocks. */
 export class RunDriver {
   readonly sim: SimState;
@@ -25,6 +27,25 @@ export class RunDriver {
   nut(): void { this.pending.nut = true; }
   resetNut(): void { this.pending.resetNut = true; this.pending.nut = false; }
   pause(): void { this.accumulator = 0; this.pending.jump = false; }
+
+  /**
+   * Ranked runs are locked to server wall time and take RPM/nuts only from the server timeline,
+   * exactly like the verifier. Local frame stalls are caught up (bounded per frame), never dropped,
+   * so a submission is never "late" because the browser lagged.
+   */
+  advanceRanked(targetTick: number, timeline: RankedInputs, onTick: (events: SimEvent[]) => void, maxSteps = 240): void {
+    let steps = 0;
+    while (!this.sim.gameOver && this.sim.tick < targetTick && steps < maxSteps && timeline.ready(this.sim.tick)) {
+      const input: TickInput = timeline.input(this.sim.tick);
+      if (this.pending.jump) input.jump = true;
+      this.pending = {};
+      this.recorder.record(this.sim.tick, input);
+      const events = step(this.sim, input);
+      if (this.sim.gameOver) this.replay = this.recorder.finish(this.sim);
+      onTick(events);
+      steps++;
+    }
+  }
 
   advance(deltaMs: number, rpmMilli: number | null, onTick: (events: SimEvent[]) => void): void {
     if (this.sim.gameOver || !Number.isFinite(deltaMs) || deltaMs <= 0) return;

@@ -166,6 +166,27 @@ export class GameOverScene extends Phaser.Scene {
       '#8b9ba6',
     ).setOrigin(0.5).setDepth(12);
 
+    // Ranked run: show the server's verdict (its score is the only one that counts for the raffle).
+    if (result.ranked && this.context.submission) {
+      const verdict = label(this, 480, 398, 'VERIFYING RUN WITH THE SERVER…', 15, '#81cce4', true)
+        .setOrigin(0.5).setDepth(16);
+      void this.context.submission.then(outcome => {
+        if (!verdict.active) return;
+        if (outcome.status === 'verified' && outcome.eligible) {
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · YOU QUALIFY · ENTER THE RAFFLE →`).setColor('#ffcf75')
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', (_p: unknown, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+              event.stopPropagation();
+              window.location.assign(new URL('../whitelist/', window.location.href).href);
+            });
+        } else if (outcome.status === 'verified') {
+          verdict.setText(`✓ VERIFIED ${outcome.score.toLocaleString()} · NOT RAFFLE-ELIGIBLE (THRESHOLD TBA OR NOT REACHED)`).setColor('#c4ef6e');
+        } else {
+          verdict.setText(`RUN NOT VERIFIED · ${outcome.message.toUpperCase()}`.slice(0, 80)).setColor('#ec8a79');
+        }
+      });
+    }
+
     let restarting = false;
     const restart = (): void => {
       if (restarting) return;
