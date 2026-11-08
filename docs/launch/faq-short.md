@@ -1,6 +1,6 @@
 # SqueekRunner — Quick FAQ for Social Media & Community Replies
 
-A collection of 15 concise, factual answers designed for quick copy-pasting when responding to player inquiries on X (Twitter), Discord, and Telegram. All details are strictly aligned with `/whitelist/index.html` and project documentation.
+A collection of 18 concise, factual answers designed for quick copy-pasting when responding to player inquiries on X (Twitter), Discord, and Telegram. All details are strictly aligned with `/whitelist/index.html` and project documentation.
 
 This is an application process with manual review, not a raffle.
 
@@ -55,8 +55,17 @@ This is an application with manual review, not a raffle.
 ### Q13: Can bots or multi-accounters farm all the spots?
 **A:** We enforce strictly 1 application per address and X account. Level maps and coins are delivered in progressive chunks from the server during the run so layout cannot be precalculated offline. Additionally, our engine checks 60 Hz replay physics, real-time elapsed duration, input rhythm variance, IP hash clusters, and on-chain wallet history. Obvious bot farms will be rejected.
 
-### Q14: Do SqueekRunner Hamsters NFTs have financial value or yield?
-**A:** No. SqueekRunner Hamsters are free testnet collectibles created solely for gaming fun and experimentation. They carry zero cash value, offer no passive yield or investment returns, and are not financial instruments.
+### Q14: Do SqueekRunner Hamsters NFTs have monetary value?
+**A:** Today, SqueekRunner Hamsters are free testnet collectibles created solely for gaming fun and experimentation, carrying zero monetary value on Sepolia. In the future, a migration to Ethereum mainnet, the $HMSTR coin, and The Wheel utility are planned — see our What's Next roadmap.
 
 ### Q15: Is SqueekRunner an official Squeekchain project?
 **A:** No. SqueekRunner is an independent community project created by builders participating in the Squeekchain Genesis Code Lane. It is not created, owned, operated, or endorsed by the Squeekchain core team.
+
+### Q16: What happens after the mint?
+**A:** Following the free testnet mint on Sepolia, the collection is planned to migrate to Ethereum mainnet (mechanism and schedule to be announced later). We are also planning the launch of $HMSTR, The Wheel locking shifts, and expanding utility for hamster holders.
+
+### Q17: What is $HMSTR?
+**A:** $HMSTR is the planned coin of SqueekRunner. SqueekRunner Hamster NFT holders will receive an allocation from the total supply of $HMSTR. Tokenomics will be announced later. The team takes no trading fees and no royalties for itself — they flow back to the community treasury and the hamsters on the wheel.
+
+### Q18: What is the Wheel?
+**A:** The Wheel is an interactive NFT locking feature (staking). You can send your hamster to spin the wheel for a shift duration of your choice: 1 week, 1 month, 3 months, or 1 year. The rule is simple: the longer the shift, the bigger the perks. The team takes no trading fees and no royalties for itself — they flow back to the community treasury and hamsters on the wheel. Specific perks and details will be announced later.

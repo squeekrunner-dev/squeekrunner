@@ -222,7 +222,7 @@
             <li><strong>Anti-cheat and ranked verification.</strong> To protect the whitelist application process, ranked runs are validated by an independent server. The server issues a one-time session seed, delivers map chunks progressively, feeds an authoritative 5-second delayed telemetry stream, and re-simulates all inputs tick-by-tick at 60&nbsp;Hz with integer physics. Client-reported RPM and nut spawns are discarded. Ranked runs cannot be paused, must match elapsed server wall-clock time, and require Cloudflare Turnstile. Each applicant is limited to one address and one X account. No wallet connection or cryptographic signatures are required on the site.</li>
             <li><strong>Residual cheating risks (honest disclosure).</strong> Because the client receives map chunks as the run progresses, offline pre-computation of the entire level is impossible. However, an automated bot could still attempt to calculate jump inputs in real time for visible obstacles. Cloudflare Turnstile, server-side replay physics, wall-clock duration enforcement, input rhythm analysis, IP-hash cluster detection, on-chain address history vetting, and manual team review make automated farming operationally and economically expensive, but no software defense can make bot creation mathematically impossible. The organizers reserve the right to audit application logs and reject obvious bot clusters or automated Sybil farming operations. The team's decision is final.</li>
             <li><strong>SqueekRunner Hamsters testnet collection.</strong> The SqueekRunner Hamsters collection consists of exactly 1,000 NFTs deployed exclusively on Ethereum Sepolia testnet. Minting is free (requiring only free testnet gas from public faucets). The collection is allocated as 700 game whitelist spots via applications (70%), 200 Twitter/X and community giveaway spots (20%), and 100 team and treasury spots (10%). This is an application process with manual review, not a raffle.</li>
-            <li><strong>No SqueekRunner token, no payouts, no monetary value.</strong> SqueekRunner Hamsters NFTs and in-game golden nuts carry zero monetary value, offer no passive yield, represent no financial asset or equity, and make no promises of economic return. There is no SqueekRunner token, no paid mint, and no financial payout. In-game score and nuts are not SQK.</li>
+            <li><strong>Today: free testnet collectibles.</strong> SqueekRunner Hamsters NFTs on Sepolia testnet carry zero monetary value and represent no financial asset or equity. Minting on testnet is free and requires only faucet gas. A coin ($HMSTR) and further utility are planned for the future — see <a href="#roadmap">Roadmap</a>. In-game score and golden nuts are arcade mechanics, not SQK or currency.</li>
             <li><strong>The API may go quiet.</strong> Fresh measurements are not guaranteed on every poll. Squeekchain work settlement proceeds independently from instantaneous RPM; network latency, counter faults, and installation changes can occur. Baseline speed preserves gameplay during telemetry outages.</li>
             <li><strong>Varying tempo means varying runs.</strong> LIVE runs occur at whatever RPM the wheel provides. A personal best is an arcade milestone, not a standardized esport competition.</li>
             <li><strong>Storage may be restricted.</strong> If localStorage is unavailable, casual high scores persist only in page memory for the current session. Landscape orientation is recommended for mobile players.</li>
@@ -230,13 +230,42 @@
         </section>
         <section id="roadmap">
           <p class="eyebrow">10 / Roadmap</p>
-          <h2>Where we can run next. <span class="planned">Plans, not promises</span></h2>
-          <p>The items below represent potential directions for ongoing experimentation. They are exploratory ideas, not promised features, roadmap deadlines, or investment commitments.</p>
+          <h2>Where we can run next: the hamster roadmap. <span class="planned">Plans, not promises</span></h2>
+          <p>The free testnet mint on Sepolia represents our starting line. SqueekRunner is an evolving experiment, and the team intends to care for the collection and expand its utility across successive development phases. All roadmap points below are planned directions, subject to change.</p>
+
+          <h3>1. Ethereum Mainnet migration</h3>
+          <p>While the initial collection of 1,000 SqueekRunner Hamsters mints exclusively on the Ethereum Sepolia testnet, the collection is planned to migrate to Ethereum mainnet. The exact migration mechanism, smart contract architecture, and migration timeline will be announced later as mainnet preparations proceed.</p>
+
+          <h3>2. The $HMSTR coin</h3>
+          <p>$HMSTR is the planned coin of the SqueekRunner ecosystem. Holders of SqueekRunner Hamster NFTs will receive an allocation from the total supply of $HMSTR. Complete tokenomics, including total supply, distribution allocations, and launch dates, will be announced later. No premature figures or speculative schedules are published.</p>
+
+          <h3>3. The Wheel (NFT locking)</h3>
+          <p>Hamsters are made to run. SqueekRunner will introduce <strong>The Wheel</strong>, an interactive NFT locking feature (staking) where holders can commit their hamsters to spin the wheel on scheduled shifts. Four shift durations will be offered:</p>
+          <ul>
+            <li><strong>1 week</strong> — A quick sprint shift on the wheel providing baseline perks.</li>
+            <li><strong>1 month</strong> — A steady pacing shift with enhanced perks as momentum builds.</li>
+            <li><strong>3 months</strong> — A seasonal shift offering major perks for sustained commitment.</li>
+            <li><strong>1 year</strong> — The elite shift on the wheel, delivering the highest tier of perks.</li>
+          </ul>
+          <p>The core rule of The Wheel is straightforward: <em>the longer the shift, the bigger the perks</em>. Specific perks, utility multipliers, and release mechanics will be announced later.</p>
+
+          <h3>4. Community first: fees and royalties</h3>
+          <p>The economic alignment of SqueekRunner is centered on its players. The team takes no trading fees and no royalties for itself. They flow back to the community — the treasury and the hamsters on the wheel.</p>
+
+          <h3>5. Ongoing collection utility</h3>
+          <p>SqueekRunner Hamsters are designed to be active game participants, not static artwork. The team is committed to continuous collection care, exploring dynamic cosmetic perks, competitive events, and ecosystem utility as the game matures.</p>
+
+          <h3>Additional gameplay directions</h3>
           <ul>
             <li><strong>Public verified leaderboard.</strong> An authenticated online scoreboard showcasing top scores from verified ranked replays, letting the community celebrate legitimate high-distance runs.</li>
-            <li><strong>Holder cosmetic skins.</strong> Holders of SqueekRunner Hamster NFTs <em>may</em> be able to unlock alternative in-game hamster skins, accessories, or visual themes during runs.</li>
+            <li><strong>Holder cosmetic skins.</strong> Holders of SqueekRunner Hamster NFTs may unlock alternative in-game hamster skins, accessories, or visual themes during runs.</li>
             <li><strong>Community mods and challenges.</strong> Custom obstacle packs, fixed-condition time trials, and alternative wheel telemetry modes while preserving the living connection to Squeekchain.</li>
           </ul>
+
+          <div class="callout" style="margin-top: 24px;">
+            <p><strong>Mandatory disclaimer:</strong> This is a plan, not a promise. Everything after the free testnet mint is planned and may change. No numbers are final. Nothing here is financial advice or an offer of any asset. SqueekRunner is not affiliated with Squeekchain.</p>
+          </div>
+
           <p class="callout">Already live: full arcade runner, double jump, LIVE and DEMO modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and whitelist application tooling (applications open at launch — dates will be announced on X). <a href="../play/">Run on the wheel →</a></p>
         </section>
         <section id="sources">

@@ -1,6 +1,6 @@
 # SqueekRunner — Social Media & X (Twitter) Threads Kit
 
-This document provides ready-to-use publication drafts for the project owner. All posts are drafted in a friendly, transparent tone without hype, price speculation, or investment promises. SqueekRunner is an experimental game on Ethereum Sepolia testnet.
+This document provides ready-to-use publication drafts for the project owner. All posts are drafted in a friendly, transparent tone without hype, price speculation, or financial promises. SqueekRunner is an experimental game on Ethereum Sepolia testnet.
 
 This is an application process with manual team review, not a raffle.
 
@@ -52,10 +52,10 @@ We are also introducing SqueekRunner Hamsters: 1,000 generative vector NFTs on S
 Score 100k+ with 10/10 coins in ranked mode to apply for manual review (not a raffle):
 <SITE_URL>/whitelist/
 
-#### Post 6/6 (251 chars)
+#### Post 6/6 (248 chars)
 Transparency note: SqueekRunner is an independent community project built for the Squeekchain Genesis Code Lane.
 
-Not an official Squeekchain core product. Testnet only, zero monetary value.
+Not an official Squeekchain core product. Today: free testnet collectibles.
 
 Jump onto the track and tell us your high score!
 <SITE_URL>
@@ -114,12 +114,12 @@ Whitepaper:
 
 ### Variant C: Community, Art & Free Testnet Mint Focus
 
-#### Post 1/6 (262 chars)
+#### Post 1/6 (266 chars)
 Calling all runners: 1,000 SqueekRunner Hamsters are coming to Ethereum Sepolia testnet!
 
 A free, community-first generative NFT collection celebrating the fastest runners on the wheel.
 
-No paid mints. No token purchases. Zero gas to enter.
+No paid mints. Zero gas to enter. Planned roadmap ahead.
 <SITE_URL>/whitelist/
 
 #### Post 2/6 (272 chars)
@@ -155,10 +155,10 @@ Applications are vetted by human review against published rules: verified 100k+ 
 
 Obvious bot farms are rejected; team decision is final.
 
-#### Post 6/6 (236 chars)
+#### Post 6/6 (226 chars)
 SqueekRunner is an independent community build for Squeekchain Genesis Code Lane.
 
-Not an official Squeekchain core team project. Built for fun and experimentation with zero monetary value.
+Not an official Squeekchain core team project. Free testnet collectibles today; roadmap planned.
 
 Start practicing your jumps today:
 <SITE_URL>
@@ -209,10 +209,10 @@ Application Timeline:
 Check requirements on the portal:
 <SITE_URL>/whitelist/
 
-#### Post 5/5 (253 chars)
-Reminder: SqueekRunner Hamsters is an experimental testnet collection with zero monetary value.
+#### Post 5/5 (237 chars)
+Reminder: SqueekRunner Hamsters is an experimental testnet collection on Sepolia.
 
-No payments or tokens are ever accepted. We are an independent community project built for Squeekchain Genesis.
+No payments are needed to apply or mint. Planned coin & roadmap ahead. We are an independent community build.
 
 Good luck on the track, runners!
 <SITE_URL>
