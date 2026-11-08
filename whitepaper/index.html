@@ -190,7 +190,7 @@
             <li><strong>Session initialization.</strong> When a player initiates a ranked run, the client requests a single-use session from the verification server (<code>POST /v1/session</code>). Protected by Cloudflare Turnstile, the server issues a unique uint32 PRNG seed and records the authoritative start timestamp.</li>
             <li><strong>Synchronized telemetry timeline.</strong> In ranked mode, the game receives wheel RPM and confirmed block heights from <code>GET /v1/telemetry</code> with a 5-second broadcast delay. This ensures the client and the server verifier observe an identical historical sequence of wheel events. Ranked runs cannot be paused and must be completed in real time.</li>
             <li><strong>Deterministic re-simulation.</strong> Upon a collision or completion, the client submits the recorded input ticks (<code>POST /v1/run</code>). The server executes the exact 60&nbsp;Hz integer simulation engine (<code>squeek-1</code>), applying its own authoritative telemetry and block history while discarding client-supplied RPM or nut claims.</li>
-            <li><strong>Timing and score validation.</strong> The server verifies that the client score matches the re-simulated score and ensures the run took its genuine real-world duration (rejecting runs submitted faster than elapsed simulation time or more than 15&nbsp;seconds late). If the run exceeds the qualifying threshold, the server issues a signed, one-time run token.</li>
+            <li><strong>Timing and score validation.</strong> The server verifies that the client score matches the re-simulated score and ensures the run took its genuine real-world duration (rejecting runs submitted faster than elapsed simulation time or more than 15&nbsp;seconds late). If the run exceeds the qualifying threshold, the server issues a one-time run token.</li>
             <li><strong>Cryptographic entry (zero gas).</strong> The player connects a Sepolia wallet and signs a Sign-In with Ethereum (<a href="https://eips.ethereum.org/EIPS/eip-4361">EIP-4361</a>) verification message. Signature verification is performed with viem. The server enforces strictly <strong>one wallet = one raffle ticket</strong> (<code>POST /v1/entry</code>).</li>
           </ol>
 
@@ -203,7 +203,7 @@
             <li><strong>Snapshot and Merkle root.</strong> When entries close, the full list of qualified wallet addresses is frozen. An OpenZeppelin StandardMerkleTree is generated, and its root hash is published publicly to GitHub and community channels.</li>
             <li><strong>Future block commitment.</strong> Before the draw, a target Ethereum Sepolia block height is announced in advance. Because the target block lies in the future, its block hash cannot be predicted or manipulated by players or the team.</li>
             <li><strong>Deterministic shuffle.</strong> Once confirmed on Sepolia, the target block hash serves as the verifiable pseudorandom seed for a Fisher-Yates shuffle algorithm over the participant list, deterministically selecting the 700 winning addresses.</li>
-            <li><strong>Independent verification script.</strong> A standalone open-source script allows anyone to input the published Merkle tree and the confirmed Sepolia block hash to independently reproduce and verify the exact winning allowlist.</li>
+            <li><strong>Independent verification script.</strong> A standalone open-source script allows anyone to input the published entry list, the commitment and the confirmed Sepolia block hash to independently reproduce and verify the exact winning allowlist.</li>
           </ul>
         </section>
         <section id="limits">
@@ -229,7 +229,7 @@
             <li><strong>Holder cosmetic skins.</strong> Holders of SqueekRunner Hamster NFTs <em>may</em> be able to unlock alternative in-game hamster skins, accessories, or visual themes during runs.</li>
             <li><strong>Community mods and challenges.</strong> Custom obstacle packs, fixed-condition time trials, and alternative wheel telemetry modes while preserving the living connection to Squeekchain.</li>
           </ul>
-          <p class="callout">Already live: full arcade runner, double jump, LIVE and DEMO modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and the Sepolia whitelist raffle. <a href="../play/">Run on the wheel →</a></p>
+          <p class="callout">Already live: full arcade runner, double jump, LIVE and DEMO modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and the whitelist raffle tooling (entries open after the threshold is announced). <a href="../play/">Run on the wheel →</a></p>
         </section>
         <section id="sources">
           <p class="eyebrow">11 / Sources</p>
