@@ -78,6 +78,6 @@ export function telemetryView(snapshot: ChainSnapshot | null, now = Date.now(), 
       m.observedAt - now > CONFIG.telemetry.futureToleranceMs) return noData('Measurement clock mismatch');
   return {
     mode: m.rpm > 0 ? 'LIVE' : 'WHEEL IDLE', rpm: m.rpm,
-    reason: m.rpm > 0 ? 'The real wheel is turning' : 'Wheel still. Keep running.', snapshot,
+    reason: m.rpm > 0 ? 'Squeektoshi is running · the real wheel is turning' : 'Squeektoshi is resting · he runs mostly at night (UTC)', snapshot,
   };
 }

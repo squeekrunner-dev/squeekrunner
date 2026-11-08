@@ -55,7 +55,8 @@ export class ServerSource implements TelemetrySource {
     if (point.at !== this.lastAt) { this.lastAt = point.at; for (const fn of this.listeners) fn(snapshot); }
     const rpm = now >= point.validUntil || now > this.completeThrough ? null : point.rpmMilli;
     return { mode: rpm === null ? 'NO DATA' : rpm === 0 ? 'WHEEL IDLE' : 'LIVE', rpm: (rpm ?? 0) / 1000,
-      reason: 'Server wheel timeline · 5s broadcast delay', snapshot };
+      reason: rpm === null ? 'Server wheel timeline · 5s broadcast delay' : rpm === 0
+        ? 'Squeektoshi is resting · he runs mostly at night (UTC)' : 'Squeektoshi is running · 5s broadcast delay', snapshot };
   }
   subscribe(fn: (snapshot: ChainSnapshot) => void): () => void { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   /** Best estimate of the server clock from the latest timeline reply. */
