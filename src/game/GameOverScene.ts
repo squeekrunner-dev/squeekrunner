@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { CONFIG } from '../config';
+import { onSceneExit } from '../logic/lifecycle';
 import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, label, pill } from './ui';
@@ -39,7 +40,7 @@ export class GameOverScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown', key);
     button.on('pointerover', () => button.setFillStyle(0xd6ffa2));
     button.on('pointerout', () => button.setFillStyle(COLORS.lime));
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    onSceneExit(this.events, () => {
       this.input.off('pointerdown', restart);
       this.input.keyboard?.off('keydown', key);
     });

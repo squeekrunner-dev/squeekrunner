@@ -4,6 +4,7 @@ import { BlockDetector } from '../chain/blocks';
 import type { ChainSnapshot } from '../chain/types';
 import { baseSpeed, obstacleGap, rpmMultiplier, smoothSpeed } from '../logic/speed';
 import type { RunBlock } from '../logic/records';
+import { onSceneExit } from '../logic/lifecycle';
 import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, compactHeight, label, pill } from './ui';
@@ -99,7 +100,7 @@ export class RunScene extends Phaser.Scene {
     this.input.keyboard?.addCapture(['SPACE', 'UP']);
     this.input.keyboard?.on('keydown', keyboard);
     document.addEventListener('visibilitychange', visibility);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    onSceneExit(this.events, () => {
       unsubscribe();
       this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', keyboard);

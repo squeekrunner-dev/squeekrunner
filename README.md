@@ -57,6 +57,8 @@ changes. Polling pauses while the document is hidden. A successful HTTP read exp
 after 12 seconds, and device timestamps/freshness are checked independently.
 Stopping the source cancels both polling and request deadlines. Destroying the game
 removes its page lifecycle listeners; restoring a cached page resumes an existing game.
+Scene subscriptions and input/visibility handlers are disposed on either shutdown or
+direct destruction, without retaining cleanup callbacks across run restarts.
 
 The parser validates the fields the game consumes and rejects invalid schema versions,
 missing fields, unknown enums, bad timestamps, negative/fractional milli-RPM and invalid
