@@ -8,6 +8,6 @@ export default defineConfig({
   server: { host: '127.0.0.1', port: 5173, strictPort: true },
   build: {
     target: 'es2020', outDir: 'dist', sourcemap: true,
-    rollupOptions: { input: { home: 'index.html', play: 'play/index.html', whitepaper: 'whitepaper/index.html' } },
+    rollupOptions: { input: { home: 'index.html', play: 'play/index.html', whitepaper: 'whitepaper/index.html', whitelist: 'whitelist/index.html' } },
   },
 });
