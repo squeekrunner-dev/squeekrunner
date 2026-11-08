@@ -7,6 +7,7 @@ import { TimelineCursor, type SessionReply, type TimelinePoint } from '../../src
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { harness, ORIGIN, type Harness } from './harness';
+import { formatSiweMessage } from '../../src/site/siwe';
 
 const ACCOUNT = privateKeyToAccount('0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d');
 const SECOND_ACCOUNT = privateKeyToAccount('0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a');
@@ -125,6 +126,20 @@ describe('sessions and authoritative runs', () => {
 
 describe('SIWE raffle entries', () => {
   const open = { THRESHOLD: '1', ENTRIES_OPEN: 'true' };
+
+  it('accepts the message produced by the website formatter (lowercase wallet address)', async () => {
+    const h = harness(open);
+    const run = await eligibleRun(h);
+    const n = await json<{ nonce: string; issuedAt: string; expirationTime: string; domain: string; uri: string; chainId: number; statement: string }>(await h.call('GET', '/v1/nonce'));
+    const address = ACCOUNT.address.toLowerCase();
+    const siweMessage = formatSiweMessage({ ...n, address, resources: [`urn:squeekrunner:run:${run.runId}`] });
+    expect(siweMessage).toBe(createSiweMessage({ address: address as `0x${string}`, chainId: n.chainId, domain: n.domain, uri: n.uri,
+      nonce: n.nonce, version: '1', statement: n.statement, issuedAt: new Date(n.issuedAt), expirationTime: new Date(n.expirationTime),
+      resources: [`urn:squeekrunner:run:${run.runId}`] }));
+    const signature = await ACCOUNT.signMessage({ message: siweMessage });
+    const reply = await h.call('POST', '/v1/entry', { runToken: run.runToken, siweMessage, signature, turnstileToken: 't' });
+    expect(reply.status).toBe(200);
+  });
 
   it('accepts one signed entry per wallet and per run', async () => {
     const h = harness(open);

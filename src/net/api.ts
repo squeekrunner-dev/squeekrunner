@@ -33,11 +33,28 @@ export class ApiClient {
   entry(runToken: string, siweMessage: string, signature: string, turnstileToken: string, signal?: AbortSignal): Promise<{ address: string; entered: true }> {
     return this.request('/v1/entry', { runToken, siweMessage, signature, turnstileToken }, signal);
   }
+  raffleStatus(signal?: AbortSignal): Promise<RaffleStatusReply> { return this.request('/v1/raffle/status', undefined, signal); }
 }
+export interface RaffleStatusReply { threshold: number | null; entriesOpen: boolean; entriesCount: number; snapshotAt: string | null; deadline: string | null }
 
+/** The best eligible run token survives navigation to /whitelist/ (and new tabs) for its 24 h lifetime. */
 export const RUN_TOKEN_KEY = 'squeekrunner.raffle-run.v1';
-export function rememberRun(run: RunReply): void {
+export interface StoredRun { runToken: string; runId: string; score: number; savedAt: number }
+const RUN_TTL_MS = 23 * 3600000;
+
+export function rememberRun(run: RunReply, now = Date.now()): void {
   if (!run.eligible) return;
-  try { sessionStorage.setItem(RUN_TOKEN_KEY, JSON.stringify({ runToken: run.runToken, runId: run.runId, score: run.score })); }
-  catch { /* In-memory result is still available to this page. */ }
+  const previous = loadRun(now);
+  if (previous && previous.score >= run.score) return; // keep the best qualifying run
+  try { localStorage.setItem(RUN_TOKEN_KEY, JSON.stringify({ runToken: run.runToken, runId: run.runId, score: run.score, savedAt: now })); }
+  catch { /* Storage may be blocked; the Game Over link still works within this page. */ }
 }
+export function loadRun(now = Date.now()): StoredRun | null {
+  try {
+    const value = JSON.parse(localStorage.getItem(RUN_TOKEN_KEY) ?? 'null') as Partial<StoredRun> | null;
+    if (!value || typeof value.runToken !== 'string' || !/^[0-9a-f]{64}$/.test(value.runToken) || typeof value.runId !== 'string' ||
+        !Number.isSafeInteger(value.score) || !Number.isSafeInteger(value.savedAt) || now - value.savedAt! > RUN_TTL_MS) return null;
+    return value as StoredRun;
+  } catch { return null; }
+}
+export function forgetRun(): void { try { localStorage.removeItem(RUN_TOKEN_KEY); } catch { /* ignore */ } }

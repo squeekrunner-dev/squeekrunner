@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "engines": { "node": "^22.12.0 || ^24.0.0 || >=26.0.0" },
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+  },
   "description": "SqueekRunner — browser endless runner powered by the live Squeekchain hamster (RPM drives world speed, Squeek blocks drop bonuses).",
   "scripts": {
     "dev": "vite --configLoader native",
@@ -14,6 +16,7 @@
     "verify-replay": "node scripts/verify-replay.mjs"
   },
   "dependencies": {
+    "@noble/hashes": "^1.8.0",
     "phaser": "^3.88.2"
   },
   "devDependencies": {
