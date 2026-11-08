@@ -122,7 +122,7 @@ const TRAIT_WEIGHTS = {
     { value: 'Heart Pin', weight: 11 },
     { value: 'Dapper Bowtie', weight: 9 },
     { value: 'Mechanic Tool Belt', weight: 7 },
-    { value: 'Golden Chain & SQK Coin', weight: 5 },
+    { value: 'Golden Chain & Nut Medallion', weight: 5 },
     { value: 'Red Running Cape', weight: 4 },
   ],
   heldItem: [
@@ -325,7 +325,7 @@ export function generateCollection(outputBaseDir = resolve(__dirname, 'out')) {
         id,
         isLegendary: false,
         name: `SqueekRunner Hamster #${id}`,
-        description: `A unique generative hamster athlete from the SqueekRunner Genesis collection. Powered by Squeekchain wheel telemetry.`,
+        description: `A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.`,
         attributes,
         svg,
       };
@@ -561,7 +561,7 @@ function generatePreviewHtml(tokens) {
 <body>
   <header>
     <h1>SqueekRunner Hamsters Collection</h1>
-    <p class="lead">1000 Generative NFTs · Powered by Squeekchain Wheel Telemetry · Preview of First 100 Tokens</p>
+    <p class="lead">1000 Generative NFTs · A SqueekRunner Collection · Preview of First 100 Tokens</p>
   </header>
   <main class="grid">
     ${cardsHtml}

@@ -127,12 +127,12 @@ export const BACKGROUNDS = {
   'Squeekchain Blue': () => `
     <rect width="1000" height="1000" fill="#131b27" />
     <defs>
-      <pattern id="sqkGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <pattern id="runnerGrid" width="60" height="60" patternUnits="userSpaceOnUse">
         <circle cx="30" cy="30" r="2" fill="#293c4d" />
         <path d="M30 0v60M0 30h60" stroke="#1c2738" stroke-width="1" />
       </pattern>
     </defs>
-    <rect width="1000" height="1000" fill="url(#sqkGrid)" />
+    <rect width="1000" height="1000" fill="url(#runnerGrid)" />
     <circle cx="500" cy="500" r="420" fill="none" stroke="#293c4d" stroke-width="2" stroke-dasharray="8 12" />
     <circle cx="500" cy="500" r="460" fill="none" stroke="#1d2b3a" stroke-width="4" />
   `,
@@ -280,7 +280,7 @@ export const SPECIAL_AURAS = {
   'PoW Matrix': () => `
     <g id="aura-matrix" fill="#c4ef6e" opacity="0.75" font-family="monospace" font-size="16" font-weight="bold">
       <rect x="140" y="220" width="70" height="70" rx="8" fill="#132717" stroke="#c4ef6e" stroke-width="3" />
-      <text x="175" y="262" text-anchor="middle" fill="#c4ef6e">SQK</text>
+      <text x="175" y="262" text-anchor="middle" fill="#c4ef6e">RUN</text>
       <rect x="790" y="220" width="70" height="70" rx="8" fill="#132717" stroke="#c4ef6e" stroke-width="3" />
       <text x="825" y="262" text-anchor="middle" fill="#c4ef6e">#1999</text>
       <rect x="110" y="480" width="60" height="60" rx="8" fill="#132717" stroke="#c4ef6e" stroke-width="2.5" />
@@ -636,7 +636,7 @@ export const HEADWEAR = {
   `,
   'Squeek Ninja Headband': () => `
     <g id="headwear-ninja-bandana">
-      <!-- Red ninja runner headband with metallic SQK plate -->
+      <!-- Red ninja runner headband with metallic runner plate -->
       <path d="M320 335 Q500 310 680 335 L678 370 Q500 345 322 370 Z" fill="#c0392b" stroke="#781e14" stroke-width="3" />
       <!-- Trailing ribbon tails on right side -->
       <path d="M680 350 Q750 370 810 360 Q750 390 680 365 Z" fill="#c0392b" stroke="#781e14" stroke-width="2" />
@@ -644,8 +644,8 @@ export const HEADWEAR = {
       <rect x="450" y="325" width="100" height="30" rx="4" fill="#bdc3c7" stroke="#7f8c8d" stroke-width="2.5" />
       <circle cx="460" cy="340" r="2.5" fill="#34495e" />
       <circle cx="540" cy="340" r="2.5" fill="#34495e" />
-      <!-- SQK symbol -->
-      <path d="M490 340 h20 M493 334 h14 M493 346 h14" stroke="#2c3e50" stroke-width="2.5" stroke-linecap="round" />
+      <!-- Speed runner emblem -->
+      <path d="M488 343 L498 333 L502 347 L512 337" stroke="#2c3e50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     </g>
   `,
 };
@@ -669,15 +669,18 @@ export const ACCESSORIES = {
       <circle cx="570" cy="705" r="3.5" fill="#95a5a6" />
     </g>
   `,
-  'Golden Chain & SQK Coin': () => `
+  'Golden Chain & Nut Medallion': () => `
     <g id="acc-gold-chain">
       <!-- Thick golden necklace -->
       <path d="M380 570 Q500 680 620 570" fill="none" stroke="#f1c40f" stroke-width="14" stroke-dasharray="14 10" stroke-linecap="round" />
       <path d="M380 570 Q500 680 620 570" fill="none" stroke="#d4ac0d" stroke-width="6" stroke-linecap="round" />
-      <!-- Giant SQK Medallion -->
+      <!-- Giant Golden Nut Medallion -->
       <circle cx="500" cy="670" r="44" fill="#f39c12" stroke="#b7770d" stroke-width="5" />
       <circle cx="500" cy="670" r="36" fill="#f1c40f" />
-      <text x="500" y="682" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="#784206" text-anchor="middle">$SQK</text>
+      <!-- Embossed Acorn icon -->
+      <ellipse cx="500" cy="674" rx="16" ry="19" fill="#8a5325" />
+      <path d="M482 663 Q500 651 518 663 L516 669 Q500 658 484 669 Z" fill="#56351d" />
+      <circle cx="500" cy="651" r="2.5" fill="#56351d" />
     </g>
   `,
   'Red Running Cape': () => `
@@ -839,14 +842,14 @@ function renderPaws(fur, leftX, leftY, rightX, rightY) {
 // -------------------------------------------------------------
 export const LEGENDARY_EDITIONS = [
   {
-    name: 'Squeektoshi The Wheel Master',
-    title: 'Squeektoshi Prime',
-    description: 'Legendary 1/1 #001: The mythical creator of Squeekchain. Radiating pure proof-of-work energy and clutching the Genesis Wheel.',
+    name: 'SqueekRunner Prime — The First Runner',
+    title: 'SqueekRunner Prime',
+    description: 'Legendary 1/1 #001: The founding champion of SqueekRunner. The first paws to step onto the endless track and master the golden nut.',
     render: () => `
       <rect width="1000" height="1000" fill="#0a0f18" />
       <circle cx="500" cy="500" r="440" fill="none" stroke="#ffcf75" stroke-width="4" stroke-dasharray="16 12" />
       <circle cx="500" cy="500" r="390" fill="#141f30" stroke="#f39c12" stroke-width="8" />
-      <!-- Golden WHEELY9000 Halo -->
+      <!-- Golden Runner Halo -->
       <g stroke="#ffd700" stroke-width="8" opacity="0.8">
         <line x1="500" y1="120" x2="500" y2="880" />
         <line x1="120" y1="500" x2="880" y2="500" />
@@ -860,16 +863,16 @@ export const LEGENDARY_EDITIONS = [
       ${MOUTHS['Joyful Open Smile']()}
       <!-- Master Crown -->
       ${HEADWEAR['Golden Crown']()}
-      <!-- Genesis Medallion -->
+      <!-- First Runner Medallion -->
       <circle cx="500" cy="670" r="50" fill="#ffd700" stroke="#b8860b" stroke-width="6" />
-      <text x="500" y="682" font-family="monospace" font-weight="900" font-size="28" fill="#2d1c02" text-anchor="middle">GENESIS</text>
+      <text x="500" y="680" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="#2d1c02" text-anchor="middle">#001</text>
       ${HELD_ITEMS['Golden Squeek Nut'](FUR_COLORS['Classic Golden Brown'])}
     `,
     attributes: [
       { trait_type: 'Edition', value: '1 of 1 Legendary' },
-      { trait_type: 'Character', value: 'Squeektoshi Prime' },
-      { trait_type: 'Aura', value: 'Cosmic Genesis Halo' },
-      { trait_type: 'Status', value: 'The Wheel Master' },
+      { trait_type: 'Character', value: 'SqueekRunner Prime' },
+      { trait_type: 'Role', value: 'The First Runner' },
+      { trait_type: 'Status', value: 'Founding Champion' },
     ],
   },
   {
@@ -897,7 +900,7 @@ export const LEGENDARY_EDITIONS = [
       { trait_type: 'Edition', value: '1 of 1 Legendary' },
       { trait_type: 'Character', value: 'Overclocked Sprinter' },
       { trait_type: 'Speed Record', value: '98.316 RPM' },
-      { trait_type: 'Status', value: 'Speed God' },
+      { trait_type: 'Status', value: 'Speed Champion' },
     ],
   },
   {
@@ -924,7 +927,7 @@ export const LEGENDARY_EDITIONS = [
   {
     name: 'CyberSqueek 2077',
     title: 'Neon Runner',
-    description: 'Legendary 1/1 #004: Upgraded with bionic implants and sub-millisecond block prediction hardware.',
+    description: 'Legendary 1/1 #004: Upgraded with bionic implants and sub-millisecond obstacle reaction hardware.',
     render: () => `
       ${BACKGROUNDS['Cyber Grid']()}
       ${SPECIAL_AURAS['PoW Matrix']()}
@@ -934,14 +937,14 @@ export const LEGENDARY_EDITIONS = [
       <line x1="380" y1="427" x2="620" y2="427" stroke="#ffffff" stroke-width="4" stroke-dasharray="14 10" />
       ${MOUTHS['Determined Grit']()}
       ${HEADWEAR['None']()}
-      ${ACCESSORIES['Golden Chain & SQK Coin']()}
+      ${ACCESSORIES['Golden Chain & Nut Medallion']()}
       ${HELD_ITEMS['Squeek Block #1999'](FUR_COLORS['Midnight Shadow'])}
     `,
     attributes: [
       { trait_type: 'Edition', value: '1 of 1 Legendary' },
       { trait_type: 'Character', value: 'CyberSqueek 2077' },
       { trait_type: 'Implants', value: 'Quantum Visor' },
-      { trait_type: 'Core', value: 'Neural PoW' },
+      { trait_type: 'Core', value: 'Bionic Agility' },
     ],
   },
   {
@@ -978,7 +981,7 @@ export const LEGENDARY_EDITIONS = [
   {
     name: 'Grand Mechanic WHEELY',
     title: 'Master Engineer',
-    description: 'Legendary 1/1 #006: The master engineer who built the physical WHEELY9000 magnet sensors and wheel bearings.',
+    description: 'Legendary 1/1 #006: The master mechanic keeping the track bearings greased and the wheel spinning smoothly.',
     render: () => `
       ${BACKGROUNDS['Sawdust Track']()}
       ${SPECIAL_AURAS['WHEELY9000 Wheel']()}
@@ -992,7 +995,7 @@ export const LEGENDARY_EDITIONS = [
     attributes: [
       { trait_type: 'Edition', value: '1 of 1 Legendary' },
       { trait_type: 'Character', value: 'Grand Mechanic WHEELY' },
-      { trait_type: 'Specialty', value: 'Magnetic Sensor Calibrator' },
+      { trait_type: 'Specialty', value: 'Track Bearing Specialist' },
       { trait_type: 'Tool', value: 'Master Titanium Wrench' },
     ],
   },
@@ -1023,7 +1026,7 @@ export const LEGENDARY_EDITIONS = [
   {
     name: 'The 24K Golden Runner',
     title: 'Solid Gold Athlete',
-    description: 'Legendary 1/1 #008: Cast in pure 24K solid gold. Unstoppable momentum on the Sepolia track.',
+    description: 'Legendary 1/1 #008: Cast in pure 24K solid gold. Unstoppable momentum on the SqueekRunner track.',
     render: () => `
       <defs>
         <radialGradient id="pureGoldGrad" cx="50%" cy="50%" r="50%">
@@ -1047,7 +1050,7 @@ export const LEGENDARY_EDITIONS = [
       ${EYES['Starry Eyed']()}
       ${MOUTHS['Joyful Open Smile']()}
       ${HEADWEAR['Golden Crown']()}
-      ${ACCESSORIES['Golden Chain & SQK Coin']()}
+      ${ACCESSORIES['Golden Chain & Nut Medallion']()}
       ${HELD_ITEMS['Golden Squeek Nut']({
         main: '#ffd700',
         shadow: '#b8860b',
@@ -1084,7 +1087,7 @@ export const LEGENDARY_EDITIONS = [
   {
     name: 'Diamond Paws Hodler',
     title: 'Unbreakable Champion',
-    description: 'Legendary 1/1 #010: Never paper paws. Holds the wheel through every block difficulty adjustment.',
+    description: 'Legendary 1/1 #010: Never paper paws. Running steady and strong through every tricky obstacle.',
     render: () => `
       <rect width="1000" height="1000" fill="#0f1923" />
       <!-- Diamond refraction facets -->
@@ -1101,7 +1104,7 @@ export const LEGENDARY_EDITIONS = [
     attributes: [
       { trait_type: 'Edition', value: '1 of 1 Legendary' },
       { trait_type: 'Character', value: 'Diamond Paws Hodler' },
-      { trait_type: 'Trait', value: 'Diamond Hands' },
+      { trait_type: 'Trait', value: 'Diamond Paws' },
       { trait_type: 'Resilience', value: '100% Unbreakable' },
     ],
   },
