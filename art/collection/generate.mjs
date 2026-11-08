@@ -60,7 +60,7 @@ function createPRNG(seed) {
 const TRAIT_WEIGHTS = {
   background: [
     { value: 'Sawdust Track', weight: 14 },
-    { value: 'Squeekchain Blue', weight: 14 },
+    { value: 'Wheel Night Blue', weight: 14 },
     { value: 'Sunny Meadow', weight: 12 },
     { value: 'Sepolia Violet', weight: 12 },
     { value: 'Sunset Sprint', weight: 11 },

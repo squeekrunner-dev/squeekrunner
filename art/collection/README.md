@@ -40,7 +40,7 @@ The generator uses deterministic weighted random sampling (Mulberry32 PRNG with 
 | Category | Trait Value | Target Weight | Estimated % |
 |---|---|---|---|
 | **Background** | Sawdust Track | 14 | ~14.0% |
-| | Squeekchain Blue | 14 | ~14.0% |
+| | Wheel Night Blue | 14 | ~14.0% |
 | | Sunny Meadow | 12 | ~12.0% |
 | | Sepolia Violet | 12 | ~12.0% |
 | | Sunset Sprint | 11 | ~11.0% |

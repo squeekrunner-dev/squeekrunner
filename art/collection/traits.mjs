@@ -124,7 +124,7 @@ export const BACKGROUNDS = {
       <ellipse cx="680" cy="150" rx="15" ry="7" transform="rotate(-40 680 150)" />
     </g>
   `,
-  'Squeekchain Blue': () => `
+  'Wheel Night Blue': () => `
     <rect width="1000" height="1000" fill="#131b27" />
     <defs>
       <pattern id="runnerGrid" width="60" height="60" patternUnits="userSpaceOnUse">
