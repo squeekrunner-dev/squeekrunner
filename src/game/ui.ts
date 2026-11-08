@@ -24,8 +24,9 @@ export function label(
 
 export function backdrop(scene: Phaser.Scene): void {
   const g = scene.add.graphics();
-  g.fillStyle(COLORS.background).fillRect(0, 0, CONFIG.width, CONFIG.height);
-  g.fillStyle(0x15222d).fillRect(0, 110, CONFIG.width, CONFIG.groundY - 110);
+  // Drawn wider than the design so wide (phone) screens never show bare edges; see viewport.ts.
+  g.fillStyle(COLORS.background).fillRect(-120, 0, CONFIG.width + 240, CONFIG.height);
+  g.fillStyle(0x15222d).fillRect(-120, 110, CONFIG.width + 240, CONFIG.groundY - 110);
   // Warm ambient starfield / ceiling speckles
   for (let i = 0; i < 28; i++) {
     const sx = (i * 137 + 39) % CONFIG.width;

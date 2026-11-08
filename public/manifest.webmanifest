@@ -1,0 +1,14 @@
+{
+  "name": "SqueekRunner",
+  "short_name": "SqueekRunner",
+  "description": "An arcade runner paced by Squeekchain's real hamster wheel.",
+  "start_url": "./play/",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#131b27",
+  "theme_color": "#131b27",
+  "icons": [
+    { "src": "./site/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -11,6 +11,8 @@ import type { GameContext } from './game/context';
 import { ApiClient } from './net/api';
 import { ServerSource } from './net/source';
 import type { TelemetrySource } from './chain/types';
+import { bindViewport } from './game/viewport';
+import { bindMobileControls } from './site/mobile';
 
 const demo = new URLSearchParams(window.location.search).get('demo') === '1';
 // Without VITE_API_BASE the game is a pure client exactly as before (no ranked runs).
@@ -35,5 +37,7 @@ const game = new Phaser.Game({
 });
 
 game.events.once(Phaser.Core.Events.DESTROY, bindPageLifecycle(source));
+game.events.once(Phaser.Core.Events.DESTROY, bindViewport(game, document.getElementById('game')!));
+bindMobileControls(document);
 // Dev server only: lets local tooling inspect the running scenes (stripped from production builds).
 if (import.meta.env.DEV) (window as unknown as { __squeekGame?: Phaser.Game }).__squeekGame = game;
