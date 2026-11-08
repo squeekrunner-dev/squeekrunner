@@ -104,4 +104,47 @@ describe('live source scheduling and failure handling', () => {
     expect(retryAfterMs('bad', SAMPLE_TIME)).toBe(0);
     expect(retryAfterMs(null, SAMPLE_TIME)).toBe(0);
   });
+
+  it('clears all timers immediately on stop even when fetch ignores cancellation', async () => {
+    let resolveResponse: ((response: Response) => void) | undefined;
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(() => new Promise(resolve => { resolveResponse = resolve; }));
+    const { source } = setup(fetcher); const listener = vi.fn(); source.subscribe(listener);
+    source.start(); await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(1);
+    source.stop();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(fetcher.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    resolveResponse?.(okay()); await vi.advanceTimersByTimeAsync(0);
+    expect(listener).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('does not keep LIVE after stop or a failed poll, even with a recent snapshot', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(okay()).mockRejectedValue(new Error('offline'));
+    const { source } = setup(fetcher); source.start(); await vi.advanceTimersByTimeAsync(0);
+    expect(source.read().mode).toBe('LIVE');
+    source.stop(); expect(source.read()).toMatchObject({ mode: 'NO DATA', rpm: 0 });
+    source.start(); await vi.advanceTimersByTimeAsync(CONFIG.telemetry.pollMs);
+    expect(source.read()).toMatchObject({ mode: 'NO DATA', rpm: 0 });
+    expect(source.read().snapshot?.confirmedHeight).toBe(1999n);
+  });
+
+  it('does not accumulate scene subscribers or source timers across restarts', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => okay());
+    const { source } = setup(fetcher);
+    const previousScene = vi.fn();
+    for (let i = 0; i < 20; i++) {
+      const unsubscribe = source.subscribe(previousScene);
+      source.start(); source.start(); unsubscribe(); source.stop();
+      expect(vi.getTimerCount()).toBe(0);
+    }
+    const currentScene = vi.fn(); const unsubscribe = source.subscribe(currentScene);
+    source.start(); await vi.advanceTimersByTimeAsync(0);
+    expect(previousScene).not.toHaveBeenCalled();
+    expect(currentScene).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(1);
+    unsubscribe(); await vi.advanceTimersByTimeAsync(CONFIG.telemetry.pollMs);
+    expect(currentScene).toHaveBeenCalledTimes(1);
+  });
 });

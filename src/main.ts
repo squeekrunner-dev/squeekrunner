@@ -2,6 +2,7 @@
 import { CONFIG } from './config';
 import { LiveSource } from './chain/live';
 import { DemoSource } from './chain/demo';
+import { bindPageLifecycle } from './chain/lifecycle';
 import { RecordStore } from './logic/records';
 import { BootScene } from './game/BootScene';
 import { RunScene } from './game/RunScene';
@@ -24,6 +25,4 @@ const game = new Phaser.Game({
   scene: [new BootScene(context), new RunScene(context), new GameOverScene(context)],
 });
 
-game.events.once(Phaser.Core.Events.DESTROY, () => source.stop());
-window.addEventListener('pagehide', () => source.stop());
-window.addEventListener('pageshow', event => { if (event.persisted) source.start(); });
+game.events.once(Phaser.Core.Events.DESTROY, bindPageLifecycle(source));

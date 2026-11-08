@@ -31,6 +31,7 @@ export class LiveSource implements TelemetrySource {
   private running = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private controller: AbortController | undefined;
+  private requestTimeout: ReturnType<typeof setTimeout> | undefined;
   private unsubscribeVisibility: (() => void) | undefined;
   private generation = 0;
   private failures = 0;
@@ -57,7 +58,9 @@ export class LiveSource implements TelemetrySource {
   }
 
   read(now = this.clock()): TelemetryView {
-    return telemetryView(this.snapshot, now, this.visibility.hidden() ? 'Polling paused while hidden' : this.error);
+    const error = !this.running ? 'Telemetry stopped' :
+      this.visibility.hidden() ? 'Polling paused while hidden' : this.error;
+    return telemetryView(this.snapshot, now, error);
   }
 
   subscribe(listener: (snapshot: ChainSnapshot) => void): () => void {
@@ -68,7 +71,11 @@ export class LiveSource implements TelemetrySource {
   private cancel(): void {
     this.generation++;
     clearTimeout(this.timer);
+    this.timer = undefined;
+    clearTimeout(this.requestTimeout);
+    this.requestTimeout = undefined;
     this.controller?.abort();
+    this.controller = undefined;
   }
 
   private onVisibility(): void {
@@ -90,6 +97,7 @@ export class LiveSource implements TelemetrySource {
     const controller = new AbortController();
     this.controller = controller;
     const timeout = setTimeout(() => controller.abort(), CONFIG.telemetry.timeoutMs);
+    this.requestTimeout = timeout;
     let retry = 0;
     let delay: number = CONFIG.telemetry.pollMs;
     try {
@@ -116,6 +124,10 @@ export class LiveSource implements TelemetrySource {
         CONFIG.telemetry.pollMs * 2 ** Math.min(this.failures, 16)));
     } finally {
       clearTimeout(timeout);
+      if (this.controller === controller) {
+        this.controller = undefined;
+        this.requestTimeout = undefined;
+      }
       if (generation === this.generation && this.running && !this.visibility.hidden()) {
         this.nextAllowedAt = this.clock() + delay;
         this.schedule(delay);

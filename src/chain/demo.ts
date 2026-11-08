@@ -5,7 +5,7 @@ import type { ChainSnapshot, TelemetrySource, TelemetryView } from './types';
 /** Deliberately separate installation and storage namespace: never masquerades as live. */
 export class DemoSource implements TelemetrySource {
   readonly kind = 'demo' as const;
-  private startedAt = 0;
+  private startedAt: number | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
   private snapshot: ChainSnapshot | null = null;
   private listeners = new Set<(snapshot: ChainSnapshot) => void>();
@@ -14,15 +14,15 @@ export class DemoSource implements TelemetrySource {
 
   start(): void {
     if (this.timer !== undefined) return;
-    this.startedAt = this.clock();
-    this.tick();
+    this.startedAt ??= this.clock();
     this.timer = setInterval(() => this.tick(), CONFIG.demo.tickMs);
+    this.tick();
   }
 
   stop(): void { clearInterval(this.timer); this.timer = undefined; }
 
   read(now = this.clock()): TelemetryView {
-    const view = telemetryView(this.snapshot, now);
+    const view = telemetryView(this.snapshot, now, this.timer === undefined ? 'Telemetry stopped' : undefined);
     return { ...view, reason: view.mode === 'NO DATA' ? view.reason :
       view.rpm > 0 ? 'Simulated wheel is turning' : 'Simulated wheel is still' };
   }
@@ -34,7 +34,7 @@ export class DemoSource implements TelemetrySource {
 
   private tick(): void {
     const now = this.clock();
-    const elapsed = Math.max(0, now - this.startedAt);
+    const elapsed = Math.max(0, now - (this.startedAt ?? now));
     const phase = elapsed % CONFIG.demo.cycleMs;
     const running = phase >= CONFIG.demo.idleMs;
     const rpm = running ? CONFIG.speed.peakRpm * Math.sin(Math.PI *
