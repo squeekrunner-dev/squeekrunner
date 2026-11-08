@@ -3,18 +3,21 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": { "node": "^22.12.0 || ^24.0.0 || >=26.0.0" },
   "description": "SqueekRunner — browser endless runner powered by the live Squeekchain hamster (RPM drives world speed, Squeek blocks drop bonuses).",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "dev": "vite --configLoader native",
+    "build": "tsc --noEmit && vite build --configLoader native",
+    "preview": "vite preview --configLoader native",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --pool=threads --configLoader=native"
   },
   "dependencies": {
     "phaser": "^3.88.2"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
-    "vite": "^5.4.10"
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
   }
 }

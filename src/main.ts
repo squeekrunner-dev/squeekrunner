@@ -1,39 +1,29 @@
-import Phaser from "phaser";
+﻿import Phaser from 'phaser';
+import { CONFIG } from './config';
+import { LiveSource } from './chain/live';
+import { DemoSource } from './chain/demo';
+import { RecordStore } from './logic/records';
+import { BootScene } from './game/BootScene';
+import { RunScene } from './game/RunScene';
+import { GameOverScene } from './game/GameOverScene';
+import type { GameContext } from './game/context';
 
-// Entry point placeholder scaffold. The real scenes (Boot, Run, GameOver) and the
-// Squeekchain telemetry integration are implemented on top of this skeleton.
-// See ../README.md and the project tech reference for the live API contract.
-
-class BootScene extends Phaser.Scene {
-  constructor() {
-    super("Boot");
-  }
-
-  create(): void {
-    const { width, height } = this.scale;
-    this.add
-      .text(width / 2, height / 2, "SqueekRunner\nscaffold — scenes TBD", {
-        fontFamily: "monospace",
-        fontSize: "24px",
-        color: "#ffffff",
-        align: "center",
-      })
-      .setOrigin(0.5);
-  }
-}
-
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: "game",
-  backgroundColor: "#1a1a20",
+const source = new URLSearchParams(window.location.search).get('demo') === '1' ? new DemoSource() : new LiveSource();
+const context: GameContext = { source, records: new RecordStore(source.kind) };
+const game = new Phaser.Game({
+  // The MVP uses 2D textures only; Canvas also works without a WebGL device.
+  type: Phaser.CANVAS,
+  audio: { noAudio: true },
+  parent: 'game',
+  backgroundColor: '#131b27',
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 960,
-    height: 540,
+    mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: CONFIG.width, height: CONFIG.height,
   },
-  physics: { default: "arcade", arcade: { gravity: { x: 0, y: 1200 }, debug: false } },
-  scene: [BootScene],
-};
+  physics: { default: 'arcade', arcade: { gravity: { x: 0, y: CONFIG.gravity }, debug: false } },
+  scene: [new BootScene(context), new RunScene(context), new GameOverScene(context)],
+});
 
-new Phaser.Game(config);
+game.events.once(Phaser.Core.Events.DESTROY, () => source.stop());
+window.addEventListener('pagehide', () => source.stop());
+window.addEventListener('pageshow', event => { if (event.persisted) source.start(); });

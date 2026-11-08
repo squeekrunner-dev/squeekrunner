@@ -1,0 +1,55 @@
+{
+  "capture": {
+    "url": "https://api.squeekchain.com/v1/status",
+    "fetchedAt": "2026-11-07T21:33:01.392Z",
+    "httpStatus": 200,
+    "cors": "*"
+  },
+  "body": {
+    "schemaVersion": 1,
+    "installationId": "sepolia-core-sepolia-20261103",
+    "generatedAt": "2026-11-07T21:33:02.221Z",
+    "measurement": {
+      "freshness": "online",
+      "observedAt": "2026-11-07T21:33:00.792Z",
+      "receivedAt": "2026-11-07T21:33:00.895Z",
+      "staleAfterSeconds": 120,
+      "counterEpoch": "c53e3951-4e69-4ad3-b59c-d122a064d15a",
+      "cumulativeWorkUnits": "18988",
+      "provenance": "hardware",
+      "coreStatus": "IDLE",
+      "rpmMilli": 0,
+      "speedMmPerSecond": 0,
+      "distanceMm": 381930
+    },
+    "builder": {
+      "status": "available",
+      "anchor": {
+        "cumulativeWork": "18553",
+        "cumulativeBlockUnits": "1999322478319",
+        "blockHeight": "1999",
+        "blockProgress": "322478319",
+        "workPerThousandBlocks": "8238",
+        "settledThroughRound": "585",
+        "confirmedAt": "2026-11-07T21:20:36.000Z",
+        "transactionHash": "0x7875ebfccb0009999a3d30a91181c043bd42716980270a55d84852fede49152f"
+      },
+      "queued": {
+        "closedRoundCount": "1",
+        "closedWorkUnits": "281",
+        "openRoundWorkUnits": "154"
+      },
+      "projected": {
+        "cumulativeWork": "18988",
+        "cumulativeBlockUnits": "2052220060475",
+        "blockHeight": "2052",
+        "blockProgress": "220060475",
+        "workPerThousandBlocks": "8052",
+        "firstCompletedBlock": "2000",
+        "lastCompletedBlock": "2052",
+        "completedBlockCount": "53",
+        "lifecycle": "optimistic"
+      }
+    }
+  }
+}
