@@ -1,5 +1,7 @@
 ﻿# SqueekRunner
 
+squeekchain-project: 45c45a42-046a-4243-b0cc-061c87733508
+
 A free, client-only endless runner paced by Squeekchain's real hamster wheel.
 Double jump over crates, travel farther, and catch golden nuts dropped by new
 **confirmed Squeek blocks**. No wallet, backend, API key, or external art required.
