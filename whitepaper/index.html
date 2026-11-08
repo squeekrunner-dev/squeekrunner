@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>SqueekRunner Whitepaper — how a real wheel shapes the game</title>
-  <meta name="description" content="SqueekRunner game whitepaper: speed model, Squeekchain telemetry, confirmed block bonuses, architecture, whitelist raffle, anti-cheat, and roadmap." />
+  <meta name="description" content="SqueekRunner game whitepaper: speed model, Squeekchain telemetry, confirmed block bonuses, architecture, whitelist application, anti-cheat, and roadmap." />
   <meta property="og:title" content="SqueekRunner — Game Whitepaper" />
-  <meta property="og:description" content="From a real wheel to a double jump: mechanics, architecture, whitelist raffle, anti-cheat, and honest limitations of SqueekRunner." />
+  <meta property="og:description" content="From a real wheel to a double jump: mechanics, architecture, whitelist application, anti-cheat, and honest limitations of SqueekRunner." />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:site_name" content="SqueekRunner" />
@@ -25,7 +25,7 @@
       <p class="eyebrow">SqueekRunner / Game Whitepaper</p>
       <h1>From the wheel<br /><em>to a big run.</em></h1>
       <p class="lead">Turning a living rhythm into a tiny game you want to play one more time.</p>
-      <p class="paper-meta">Version 0.2 · Whitelist Raffle &amp; Anti-Cheat Edition · November 8, 2026</p>
+      <p class="paper-meta">Version 0.3 · Whitelist Application &amp; Anti-Cheat Edition · November 8, 2026</p>
     </div>
     <div class="paper-layout">
       <nav class="toc" aria-labelledby="toc-title">
@@ -38,7 +38,7 @@
           <li><a href="#data-modes">Data states</a></li>
           <li><a href="#blocks">Confirmed blocks</a></li>
           <li><a href="#architecture">Architecture</a></li>
-          <li><a href="#raffle">Whitelist raffle</a></li>
+          <li><a href="#whitelist">Whitelist application</a></li>
           <li><a href="#limits">Honesty and limitations</a></li>
           <li><a href="#roadmap">Roadmap</a></li>
           <li><a href="#sources">Sources</a></li>
@@ -49,7 +49,7 @@
           <p class="eyebrow">01 / Abstract</p>
           <h2>Living rhythm. Personal best.</h2>
           <p>SqueekRunner is a free, client-first browser endless runner. The player controls a hamster: jumping over crates, collecting golden nuts, and trying to run farther. World speed responds to the RPM of Squeekchain's real hamster wheel, while newly confirmed Squeek block heights drop bonus nuts.</p>
-          <p>The game remains fully playable when the wheel is idle or telemetry is unavailable. Starting a casual run requires no account, wallet, or installation. For competitive players, an optional server-verified ranked mode allows runners to qualify for a provably fair testnet NFT whitelist raffle. This document describes <strong>our game</strong>; the underlying network design is documented in the <a href="https://docs.squeekchain.com/whitepaper/">official Squeekchain whitepaper v1.1</a>.</p>
+          <p>The game remains fully playable when the wheel is idle or telemetry is unavailable. Starting a casual run requires no account, wallet, or installation. For competitive players, an optional server-verified ranked mode allows runners to qualify for an application with manual review for the free testnet NFT whitelist. This is an application with manual review, not a raffle. This document describes <strong>our game</strong>; the underlying network design is documented in the <a href="https://docs.squeekchain.com/whitepaper/">official Squeekchain whitepaper v1.1</a>.</p>
         </section>
         <section id="idea">
           <p class="eyebrow">02 / Concept</p>
@@ -77,7 +77,7 @@
             <code>speed ← speed + trunc((target − speed) × α)</code>
           </div>
           <p>At 0 RPM the multiplier is 1. At the historically observed peak near 98.3 RPM it reaches 2.7 and caps there. This is a game-balance calibration, not a physiological limit of the hamster. Fixed-step smoothing approximates a 1.4-second time constant; when data drops out, speed glides smoothly back to baseline. The speed update above uses integer milli-pixels per second.</p>
-          <p>Gameplay advances at 60 fixed ticks per second. Jump inputs take effect on the next tick (up to 16.67 ms later), obstacle intervals round up to ticks, and pauses freeze simulation time. Runs end on collision or after 30 minutes of simulation. Integer physics and seeded obstacle randomness let the same recorded inputs and wheel samples deterministically reproduce the same score. In casual play, replays can be inspected locally; in ranked play, server-issued sessions, real-time duration enforcement, and independent server-side telemetry validation secure entries for the whitelist raffle.</p>
+          <p>Gameplay advances at 60 fixed ticks per second. Jump inputs take effect on the next tick (up to 16.67 ms later), obstacle intervals round up to ticks, and pauses freeze simulation time. Runs end on collision or after 30 minutes of simulation. Integer physics and seeded obstacle randomness let the same recorded inputs and wheel samples deterministically reproduce the same score. In casual play, replays can be inspected locally; in ranked play, server-issued sessions, dynamic chunked map delivery, real-time duration enforcement, and independent server-side telemetry validation secure qualifications for the whitelist application.</p>
           <p>Difficulty increases with distance: baseline speed ramps up and obstacle gaps tighten. Score is the integer floor of game distance multiplied by 10, plus collected bonuses. Game metres are not the measured physical distance of the real hamster.</p>
           <div class="table-wrap"><table>
             <caption>MVP constants from src/config.ts; verified against configuration by a build test.</caption>
@@ -149,24 +149,24 @@
           <p>Subsequent polls are scheduled <span data-config="telemetry.pollMs">1500</span> ms after the previous request completes. Timeout is <span data-config="telemetry.timeoutMs">8000</span> ms. Errors trigger exponential backoff up to <span data-config="telemetry.maxBackoffMs">60000</span> ms; longer <code>Retry-After</code> directives are honored. Per technical inspection, the status API rate limit is 30 requests/s per IP with a burst of 60; exceeding it yields HTTP 429. This is an external limit, not a service guarantee.</p>
           <p>A successful read expires after <span data-config="telemetry.maxReadAgeMs">12000</span> ms. Measurement freshness and timestamps are validated independently: capped at <span data-config="telemetry.maxMeasurementAgeMs">120000</span> ms or less if the API reports a lower <code>staleAfterSeconds</code>. Polling pauses while the tab is hidden; aborted requests never publish late responses.</p>
           <p>The source interface is shared between LIVE and DEMO. Parser, block detector, speed calculations, record storage, and widget logic are unit-tested independently of Phaser. Scene subscriptions are torn down on both shutdown and destroy. No external CDN fonts, trackers, or analytics scripts are loaded; the only network request in the application during casual play is the Squeekchain read in LIVE mode.</p>
-          <p>For casual play and local scoreboards, SqueekRunner operates entirely client-side and serverless. To support the competitive whitelist raffle, an optional companion server deployed on Cloudflare Workers and Cloudflare D1 provides telemetry archival and deterministic replay verification. A Durable Object (<code>TelemetryCollector</code>) polls Squeekchain's <code>/v1/status</code> endpoint approximately every 10 seconds, retaining verified historical RPM and block heights in D1 for 48 hours. In ranked mode, the server feeds this delayed timeline to both the client and the verifier, re-simulating the player's inputs at 60&nbsp;Hz to guarantee fair qualification. If the raffle server is unavailable, SqueekRunner continues to run seamlessly as a standalone client.</p>
+          <p>For casual play and local scoreboards, SqueekRunner operates entirely client-side and serverless. To support competitive ranked qualification and whitelist applications, an optional companion server deployed on Cloudflare Workers and Cloudflare D1 provides telemetry archival and deterministic replay verification. A Durable Object (<code>TelemetryCollector</code>) polls Squeekchain's <code>/v1/status</code> endpoint approximately every 10 seconds, retaining verified historical RPM and block heights in D1 for 48 hours. In ranked mode, the server delivers map chunks progressively and feeds this delayed timeline to both the client and the verifier, re-simulating the player's inputs at 60&nbsp;Hz to guarantee fair qualification. If the application server is unavailable, SqueekRunner continues to run seamlessly as a standalone client.</p>
         </section>
-        <section id="raffle">
-          <p class="eyebrow">08 / Whitelist raffle</p>
-          <h2>Earn your chance. Provably fair.</h2>
-          <p>Alongside casual play, SqueekRunner hosts a whitelist raffle for <strong>SqueekRunner Hamsters</strong>, an experimental collection of 1,000 NFTs on Ethereum Sepolia testnet. Minting is completely free, requiring only testnet gas obtained from public faucets. The collection is partitioned into 700 player raffle spots (70%), 200 Twitter/X and community giveaway spots (20%), and 100 team and treasury reserve spots (10%).</p>
+        <section id="whitelist">
+          <p class="eyebrow">08 / Whitelist application</p>
+          <h2>Earn your place. Manual review.</h2>
+          <p>Alongside casual play, SqueekRunner hosts a whitelist application for <strong>SqueekRunner Hamsters</strong>, an experimental collection of 1,000 NFTs on Ethereum Sepolia testnet. Minting is completely free, requiring only testnet gas obtained from public faucets. The collection is partitioned into 700 game whitelist spots via applications (70%), 200 Twitter/X and community giveaway spots (20%), and 100 team and treasury reserve spots (10%). This is an application process with manual review by the team, not a raffle.</p>
           
           <figure class="flow">
-            <svg viewBox="0 0 520 440" role="img" aria-labelledby="raffle-flow-title raffle-flow-desc">
-              <title id="raffle-flow-title">SqueekRunner whitelist raffle verification flow</title>
-              <desc id="raffle-flow-desc">Player requests a session with Turnstile. The server sends a seed and 5-second delayed telemetry. The player completes a real-time run without pause. The server re-simulates the run at 60 Hz and checks elapsed wall-clock time. If qualified, the player signs an EIP-4361 message to record one ticket per wallet. Merkle root and future Sepolia block hash determine the 700 winners.</desc>
+            <svg viewBox="0 0 520 440" role="img" aria-labelledby="wl-flow-title wl-flow-desc">
+              <title id="wl-flow-title">SqueekRunner whitelist qualification and application flow</title>
+              <desc id="wl-flow-desc">Player requests a session with Turnstile. The server delivers map chunks progressively and feeds 5-second delayed telemetry. The player completes a real-time run without pause scoring 100,000+ points with 10/10 coins. The server re-simulates the run at 60 Hz. The runner submits an application on /whitelist/ with a Sepolia address and verified X post. The team manually reviews applications against published criteria to populate the Merkle allowlist.</desc>
               <rect class="flow-box" x="10" y="10" width="500" height="58" rx="8" />
               <text class="flow-text" x="260" y="35" text-anchor="middle">Player initiates ranked run · Turnstile challenge</text>
-              <text class="flow-note" x="260" y="54" text-anchor="middle">server issues single-use session, uint32 seed and start timestamp</text>
+              <text class="flow-note" x="260" y="54" text-anchor="middle">server issues session; map delivered in chunks dynamically</text>
               <path class="flow-arrow" d="M260 68v24m-5-5 5 5 5-5" />
               <rect class="flow-box" x="10" y="94" width="500" height="58" rx="8" />
               <text class="flow-text" x="260" y="119" text-anchor="middle">Real-time ranked run · no pause allowed</text>
-              <text class="flow-note" x="260" y="138" text-anchor="middle">synchronized 5s-delayed telemetry timeline · inputs recorded at 60 Hz</text>
+              <text class="flow-note" x="260" y="138" text-anchor="middle">qualify: score ≥ 100,000 AND 10/10 coins in first 10,000 m</text>
               <path class="flow-arrow" d="M260 152v24m-5-5 5 5 5-5" />
               <rect class="flow-box" x="10" y="178" width="500" height="66" rx="8" />
               <text class="flow-text" x="260" y="204" text-anchor="middle">Server headless re-simulation · Cloudflare Worker</text>
@@ -174,46 +174,54 @@
               <text class="flow-note" x="260" y="238" text-anchor="middle">run duration validated against server wall-clock time (±15s window)</text>
               <path class="flow-arrow" d="M260 244v24m-5-5 5 5 5-5" />
               <rect class="flow-box" x="10" y="270" width="500" height="64" rx="8" />
-              <text class="flow-text" x="260" y="296" text-anchor="middle">EIP-4361 wallet signature · Sign-In with Ethereum</text>
-              <text class="flow-note" x="260" y="316" text-anchor="middle">gasless off-chain signature · strictly 1 wallet = 1 raffle ticket in D1</text>
+              <text class="flow-text" x="260" y="296" text-anchor="middle">Application form · /whitelist/ (within 24 hours)</text>
+              <text class="flow-note" x="260" y="316" text-anchor="middle">paste Sepolia address (no wallet connection) · link verified X post</text>
               <path class="flow-arrow" d="M260 334v24m-5-5 5 5 5-5" />
               <rect class="flow-box" x="10" y="360" width="500" height="64" rx="8" />
-              <text class="flow-text" x="260" y="386" text-anchor="middle">Provably fair cryptographic draw</text>
-              <text class="flow-note" x="260" y="406" text-anchor="middle">frozen Merkle root + future Sepolia block hash → 700 winners</text>
+              <text class="flow-text" x="260" y="386" text-anchor="middle">Manual team review · published criteria</text>
+              <text class="flow-note" x="260" y="406" text-anchor="middle">not a raffle · approved addresses added to Merkle allowlist</text>
             </svg>
-            <figcaption>Ranked raffle verification pipeline. The server independently verifies replay inputs and confirms real-time duration before issuing a raffle ticket.</figcaption>
+            <figcaption>Ranked qualification and whitelist application pipeline. The server independently verifies replay inputs and map progression before players submit an application for manual team review.</figcaption>
           </figure>
 
-          <h3>The ranked verification pipeline</h3>
-          <p>Qualifying for the raffle requires demonstrating genuine skill on the wheel without financial barriers or gas costs:</p>
+          <h3>The ranked qualification &amp; application pipeline</h3>
+          <p>Qualifying for the whitelist requires demonstrating genuine skill on the wheel without financial barriers, wallet connections, or gas costs:</p>
           <ol>
-            <li><strong>Session initialization.</strong> When a player initiates a ranked run, the client requests a single-use session from the verification server (<code>POST /v1/session</code>). Protected by Cloudflare Turnstile, the server issues a unique uint32 PRNG seed and records the authoritative start timestamp.</li>
+            <li><strong>Session initialization &amp; chunked map delivery.</strong> When a player initiates a ranked run, the client requests a single-use session from the verification server (<code>POST /v1/session</code>). Protected by Cloudflare Turnstile, the server issues a unique session seed. Instead of sending the full level layout, the server delivers map segments (obstacles and coins) in progressive chunks as the run unfolds. Because the client cannot predict upcoming chunks, offline bots cannot pre-compute optimal jump paths ahead of time.</li>
             <li><strong>Synchronized telemetry timeline.</strong> In ranked mode, the game receives wheel RPM and confirmed block heights from <code>GET /v1/telemetry</code> with a 5-second broadcast delay. This ensures the client and the server verifier observe an identical historical sequence of wheel events. Ranked runs cannot be paused and must be completed in real time.</li>
-            <li><strong>Deterministic re-simulation.</strong> Upon a collision or completion, the client submits the recorded input ticks (<code>POST /v1/run</code>). The server executes the exact 60&nbsp;Hz integer simulation engine (<code>squeek-1</code>), applying its own authoritative telemetry and block history while discarding client-supplied RPM or nut claims.</li>
-            <li><strong>Timing and score validation.</strong> The server verifies that the client score matches the re-simulated score and ensures the run took its genuine real-world duration (rejecting runs submitted faster than elapsed simulation time or more than 15&nbsp;seconds late). If the run exceeds the qualifying threshold, the server issues a one-time run token.</li>
-            <li><strong>Cryptographic entry (zero gas).</strong> The player connects a Sepolia wallet and signs a Sign-In with Ethereum (<a href="https://eips.ethereum.org/EIPS/eip-4361">EIP-4361</a>) verification message. Signature verification is performed with viem. The server enforces strictly <strong>one wallet = one raffle ticket</strong> (<code>POST /v1/entry</code>).</li>
+            <li><strong>Qualification requirements (100k + 10/10 coins).</strong> To qualify for an application, a run must achieve a server-verified score of <strong>≥ 100,000 points</strong> AND collect all <strong>10 / 10 coins</strong>. Coins float at double-jump height, randomly placed across the first 10,000 metres. Beyond 10,000 metres, no further coins appear. If even a single coin is missed, the run does not qualify for an application.</li>
+            <li><strong>Deterministic re-simulation.</strong> Upon run completion, the client submits the recorded input ticks (<code>POST /v1/run</code>). The server executes the exact 60&nbsp;Hz integer simulation engine (<code>squeek-1</code>), applying its authoritative telemetry, block history, and chunk layout while discarding client-supplied RPM or nut claims. The server verifies that the client score matches the re-simulation and confirms the run took its genuine real-world duration (rejecting runs submitted faster than simulation time or more than 15&nbsp;seconds late).</li>
+            <li><strong>Application submission (within 24 hours, no wallet connection).</strong> After completing a qualified run, a runner unlocks the "Apply for the whitelist" button directing to <code>/whitelist/</code>. The applicant manually pastes their Ethereum Sepolia address (no wallet connection is required, and no cryptographic signatures are requested). The runner enters their X handle and clicks "Post on X", which generates a draft post with a unique application code and score. Once posted, the runner pastes the post URL. The server verifies the post via public X oEmbed (confirming the post exists, belongs to the handle, and includes the unique code). If X verification is temporarily unavailable, the application can still be submitted for manual verification. Applications must be submitted within 24 hours of the qualifying run. Strictly <strong>one address and one X account = one application</strong>.</li>
           </ol>
 
-          <h3>Threshold calibration</h3>
-          <p>The qualifying score is not an arbitrary target. The server records aggregate metrics from verified runs via <code>GET /v1/stats</code>, analyzing percentiles (p50 through p99) and score distributions across all wheel speeds. The qualification threshold is calibrated against real player data to ensure the milestone rewards dedicated runners while remaining reasonably achievable.</p>
-
-          <h3>Provably fair cryptographic draw</h3>
-          <p>Winner selection is auditable by any observer, eliminating black-box databases or opaque random number generation:</p>
+          <h3>Manual review criteria</h3>
+          <p>The core team reviews submitted applications manually against transparent, published criteria. This is an application process with human evaluation, not a raffle. The review evaluates:</p>
           <ul>
-            <li><strong>Snapshot and Merkle root.</strong> When entries close, the full list of qualified wallet addresses is frozen. An OpenZeppelin StandardMerkleTree is generated, and its root hash is published publicly to GitHub and community channels.</li>
-            <li><strong>Future block commitment.</strong> Before the draw, a target Ethereum Sepolia block height is announced in advance. Because the target block lies in the future, its block hash cannot be predicted or manipulated by players or the team.</li>
-            <li><strong>Deterministic shuffle.</strong> Once confirmed on Sepolia, the target block hash serves as the verifiable pseudorandom seed for a Fisher-Yates shuffle algorithm over the participant list, deterministically selecting the 700 winning addresses.</li>
-            <li><strong>Independent verification script.</strong> A standalone open-source script allows anyone to input the published entry list, the commitment and the confirmed Sepolia block hash to independently reproduce and verify the exact winning allowlist.</li>
+            <li>Qualified: server-verified run of 100,000+ points with all 10 coins.</li>
+            <li>A real, active X account that published the application post.</li>
+            <li>The Sepolia address has on-chain history (not a fresh empty wallet).</li>
+            <li>Plus: activity on Squeekchain (Squeeks, $SQK).</li>
+            <li>Obvious farms are rejected (clusters of addresses, accounts or networks; scripted input).</li>
+            <li>The team's decision is final.</li>
           </ul>
+
+          <h3>Why manual review (not a raffle)</h3>
+          <p>This is not a lottery and there is no random draw. Automated draws and lotteries are notoriously vulnerable to Sybil attacks: bot operators can generate thousands of burner wallets and route traffic through residential proxy networks. By combining dynamic chunked map delivery, real-time input rhythm verification, and manual inspection of on-chain account history, manual review provides honest, robust protection against automated bot clusters that cannot be bypassed with cheap disposable addresses or automated scripts.</p>
+
+          <h3>Privacy and data retention</h3>
+          <p>We respect player privacy. The server stores only the applicant's Sepolia address, X handle, application post URL, a salted one-way hash of the IP address (never the raw IP address), and raw run telemetry (input timing and rhythm). Address activity signals are evaluated exclusively from publicly verifiable blockchain data. No personal identities, email addresses, or off-chain tracking profiles are stored.</p>
+
+          <h3>Application status &amp; allocation</h3>
+          <p>Applications open at launch — dates will be announced on X. The 1,000 SqueekRunner Hamsters are allocated as <strong>700 game whitelist spots (applications)</strong> (70%), 200 Twitter/X community spots (20%), and 100 team and treasury spots (10%). Approved addresses are published to an OpenZeppelin Merkle tree, allowing recipients to execute a free mint on Ethereum Sepolia testnet.</p>
         </section>
         <section id="limits">
           <p class="eyebrow">09 / Honesty and limitations</p>
           <h2>Just a game. No financial promises.</h2>
           <ul>
             <li><strong>Local records remain local.</strong> Casual runs and personal bests persist in localStorage, globally and keyed by starting block, isolated between LIVE and DEMO. The latest 100 block records are retained. If the starting block is unknown, the first confirmed height seen during the run is pinned. Local storage is client-editable; casual scores are not verifiable proofs of fair play and do not sync across devices.</li>
-            <li><strong>Anti-cheat and ranked verification.</strong> To protect the whitelist raffle, ranked runs are validated by an independent server. The server issues a one-time session seed, feeds an authoritative 5-second delayed telemetry stream, and re-simulates all inputs tick-by-tick at 60&nbsp;Hz with integer physics. Client-reported RPM and nut spawns are discarded. Ranked runs cannot be paused, must match elapsed server wall-clock time, and require Cloudflare Turnstile and an EIP-4361 wallet signature. Each wallet may claim at most one raffle ticket.</li>
-            <li><strong>Residual cheating risks (honest disclosure).</strong> Because the client must receive the obstacle seed to render upcoming crates, a bot with knowledge of the seed could theoretically simulate physics offline to compute optimal jump inputs. Turnstile, real-time duration enforcement, cryptographic wallet signatures, IP-hash rate limits, and statistical qualification thresholds make automated farming costly and inconvenient, but cannot make it mathematically impossible. The organizers reserve the right to audit entry logs and disqualify obvious bot clusters or automated Sybil farming operations.</li>
-            <li><strong>SqueekRunner Hamsters testnet collection.</strong> The SqueekRunner Hamsters collection consists of exactly 1,000 NFTs deployed exclusively on Ethereum Sepolia testnet. Minting is free (requiring only free testnet gas from public faucets). The collection is allocated as 700 player raffle spots (70%), 200 Twitter/X and community giveaway spots (20%), and 100 team and treasury spots (10%).</li>
+            <li><strong>Anti-cheat and ranked verification.</strong> To protect the whitelist application process, ranked runs are validated by an independent server. The server issues a one-time session seed, delivers map chunks progressively, feeds an authoritative 5-second delayed telemetry stream, and re-simulates all inputs tick-by-tick at 60&nbsp;Hz with integer physics. Client-reported RPM and nut spawns are discarded. Ranked runs cannot be paused, must match elapsed server wall-clock time, and require Cloudflare Turnstile. Each applicant is limited to one address and one X account. No wallet connection or cryptographic signatures are required on the site.</li>
+            <li><strong>Residual cheating risks (honest disclosure).</strong> Because the client receives map chunks as the run progresses, offline pre-computation of the entire level is impossible. However, an automated bot could still attempt to calculate jump inputs in real time for visible obstacles. Cloudflare Turnstile, server-side replay physics, wall-clock duration enforcement, input rhythm analysis, IP-hash cluster detection, on-chain address history vetting, and manual team review make automated farming operationally and economically expensive, but no software defense can make bot creation mathematically impossible. The organizers reserve the right to audit application logs and reject obvious bot clusters or automated Sybil farming operations. The team's decision is final.</li>
+            <li><strong>SqueekRunner Hamsters testnet collection.</strong> The SqueekRunner Hamsters collection consists of exactly 1,000 NFTs deployed exclusively on Ethereum Sepolia testnet. Minting is free (requiring only free testnet gas from public faucets). The collection is allocated as 700 game whitelist spots via applications (70%), 200 Twitter/X and community giveaway spots (20%), and 100 team and treasury spots (10%). This is an application process with manual review, not a raffle.</li>
             <li><strong>No SqueekRunner token, no payouts, no monetary value.</strong> SqueekRunner Hamsters NFTs and in-game golden nuts carry zero monetary value, offer no passive yield, represent no financial asset or equity, and make no promises of economic return. There is no SqueekRunner token, no paid mint, and no financial payout. In-game score and nuts are not SQK.</li>
             <li><strong>The API may go quiet.</strong> Fresh measurements are not guaranteed on every poll. Squeekchain work settlement proceeds independently from instantaneous RPM; network latency, counter faults, and installation changes can occur. Baseline speed preserves gameplay during telemetry outages.</li>
             <li><strong>Varying tempo means varying runs.</strong> LIVE runs occur at whatever RPM the wheel provides. A personal best is an arcade milestone, not a standardized esport competition.</li>
@@ -229,7 +237,7 @@
             <li><strong>Holder cosmetic skins.</strong> Holders of SqueekRunner Hamster NFTs <em>may</em> be able to unlock alternative in-game hamster skins, accessories, or visual themes during runs.</li>
             <li><strong>Community mods and challenges.</strong> Custom obstacle packs, fixed-condition time trials, and alternative wheel telemetry modes while preserving the living connection to Squeekchain.</li>
           </ul>
-          <p class="callout">Already live: full arcade runner, double jump, LIVE and DEMO modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and the whitelist raffle tooling (entries open after the threshold is announced). <a href="../play/">Run on the wheel →</a></p>
+          <p class="callout">Already live: full arcade runner, double jump, LIVE and DEMO modes, block bonuses, deterministic 60&nbsp;Hz simulation, server-verified ranked replays, and whitelist application tooling (applications open at launch — dates will be announced on X). <a href="../play/">Run on the wheel →</a></p>
         </section>
         <section id="sources">
           <p class="eyebrow">11 / Sources</p>

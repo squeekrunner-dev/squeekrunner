@@ -1,8 +1,8 @@
 # SqueekRunner Hamsters — Collection Contract
 
 An isolated ERC-721 project for **Sepolia (chain ID 11155111)**. Collection: maximum
-**1000 NFTs**, free mint, only network gas is paid. There is no raffle,
-game score validation, SIWE, backend, or minting from the game UI: the contract
+**1000 NFTs**, free mint, only network gas is paid. This is an application process with manual review, not a raffle:
+game score validation, applications, backend, or minting from the game UI do not exist in the contract: it
 accepts the final allowlist prepared according to decision D-0001.
 
 The contract is not deployed to any public network. The deployment script is run only by the owner.
@@ -62,9 +62,9 @@ IDs are sequential from **1 to 1000**. Burning and modifying limits are not supp
 | reserveMinted | Minted via ownerMint all-time, maximum 100 |
 | claimed(address) | Total claims by address all-time, not its current balance |
 
-The distribution of **700 raffle / 200 Twitter / 100 team and treasury** is a project rule.
+The distribution of **700 game whitelist (applications) / 200 Twitter / 100 team and treasury** is a project rule.
 The contract strictly partitions **900 allowlist / 100 reserve**. It does not determine
-whether an address came from raffle or Twitter: this is verified by the organizer
+whether an address came from application review or Twitter: this is verified by the organizer
 when preparing the list. Unused reserve does not roll over into allowlist, and vice versa.
 A single address can receive reserve and have a separate allowlist allowance.
 
@@ -137,7 +137,7 @@ allowance, and proof for each address, as well as `tree` — a dump for
 output file is not overwritten: use a new version name. The `generated` directory
 is ignored by git; the owner publishes approved data and proofs separately.
 
-When receiving two sequential lists, prepare a **cumulative combined raffle and Twitter list**,
+When receiving two sequential lists, prepare a **cumulative combined application and Twitter list**,
 accounting for address intersections. The script does not automatically sum duplicates:
 the organizer must explicitly assign the total allowance. It does not read on-chain
 claimed amounts or verify old root history. Removing previously minted addresses from a
@@ -198,10 +198,10 @@ contract. No royalties: ERC-2981 is not implemented, the contract does not set a
 recipient/rate or collect fees. This is a minimal free collection; the contract does not
 control third-party marketplace fee policies.
 
-No proxies, upgrades, oracle calls, randomness, on-chain raffle, or game score
+No proxies, upgrades, oracle calls, randomness, on-chain lottery, or game score
 verification exist. The administrator is trusted: they can replace the root, close
 minting, direct the reserve, and change URI before freeze. Committing a root does not prove
-the fairness of an external draw. Tests do not replace an independent Solidity audit.
+the fairness of external review. Tests do not replace an independent Solidity audit.
 
 Hardhat 2 was chosen for a reproducible in-process solc-js workflow in this environment and
 permitted by the brief, but the branch is approaching EOL. `npm audit` reports vulnerabilities
@@ -269,25 +269,20 @@ was sent by the T009 author.
 - [StandardMerkleTree and double-hashed leaves](https://github.com/OpenZeppelin/merkle-tree)
 - [Hardhat: local Solidity compiler](https://v2.hardhat.org/hardhat-runner/docs/other-guides/using-custom-solc)
 
-## Provably fair raffle (`scripts/raffle.mjs`)
+## Allowlist preparation from approved applications
 
-The 700 raffle winners are drawn so that anyone can reproduce the result:
+The 700 game whitelist spots are vetted manually by the team (this is an application with manual review, not a raffle), then exported and combined into the final Merkle tree:
 
-1. **Close entries** on the server and export them: `GET /v1/admin/export?format=csv` → `entries.csv` (`address,allowance`, one ticket per address).
-2. **Commit** before the draw block exists — choose a Sepolia block well in the future (for example current height + 7,200 ≈ 1 day):
+1. **Export approved applications:** The team exports the reviewed and approved applications from the admin panel:
+   `approved.csv` (`address,allowance`, with allowance = 1 for each approved address, up to 700).
+2. **Combine lists:** Merge `approved.csv` with the Twitter/X community winners list (`twitter.csv`, up to 200 rows) into `allowlist.csv`:
+   - Combine addresses and resolve any intersections by setting total allowance = 1 (or desired sum ≤ 900).
+   - Ensure the total sum of allowances in `allowlist.csv` is strictly ≤ 900.
+3. **Generate Merkle tree:** In the `contracts/` directory:
    ```sh
-   npm run raffle -- commit entries.csv <targetBlock> commit.json
+   npm run merkle -- allowlist.csv allowlist.json
    ```
-   Publish `entries.csv` and `commit.json` (entry count, Merkle root of the entries, target block, algorithm) in the repository and on social channels **before** that block is mined.
-3. **Draw** once the target block is final (wait for finality, about 15 minutes after it is mined). Pass the block hash from a block explorer, or `rpc` with `SEPOLIA_RPC_URL` set in `.env` (the script then refuses a block that is not finalized yet):
-   ```sh
-   npm run raffle -- draw entries.csv commit.json <blockHash|rpc> result.json
-   ```
-   This writes `result.json` and `result.winners.csv`.
-4. **Verify** (anyone):
-   ```sh
-   npm run raffle -- verify entries.csv commit.json <blockHash|rpc> result.json
-   ```
-5. **Allowlist:** combine `result.winners.csv` with the Twitter/X list (≤ 200 rows, `address,allowance`) into one CSV, then `npm run merkle -- allowlist.csv allowlist.json`, `setMerkleRoot`, `setPhase(1)`.
-
-Algorithm: canonical entry order is lowercase-address ascending; the entries' Merkle root (OpenZeppelin `StandardMerkleTree`, leaf `address`) is committed. Winners are chosen with a partial Fisher–Yates shuffle, `j = i + uniform(n − i)`, where `uniform` draws `keccak256(abi.encode(blockHash, entriesRoot, counter))` and uses rejection sampling, so every entry has exactly the same probability. If there are fewer than 700 entries, everyone wins. The organizers cannot predict the block hash when the commitment is published; a block proposer could in theory withhold a block to re-roll once, which is an accepted limitation for a free testnet raffle.
+   This generates `allowlist.json` containing the Merkle root (`bytes32`) and individual inclusion proofs for every address.
+4. **Update on-chain root and open phase:**
+   - Contract owner calls `setMerkleRoot(root)`.
+   - Contract owner calls `setPhase(1)` to enable the `Allowlist` minting phase.

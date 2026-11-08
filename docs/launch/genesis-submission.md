@@ -13,7 +13,7 @@
 
 ## Elevator Pitch
 
-SqueekRunner is an arcade endless runner where gameplay speed is directly driven by Squeekchain's physical hamster wheel, while newly confirmed Sepolia blocks drop golden nuts and protective shields. Built with deterministic 60-tick physics, a zero-gas Sign-In with Ethereum (EIP-4361) whitelist engine, and an on-chain 1,000-piece SVG NFT collection with a provably fair Merkle raffle.
+SqueekRunner is an arcade endless runner where gameplay speed is directly driven by Squeekchain's physical hamster wheel, while newly confirmed Sepolia blocks drop golden nuts and protective shields. Built with deterministic 60-tick physics, a gasless whitelist application engine with manual team review (not a raffle), and an on-chain 1,000-piece SVG NFT collection with a Merkle allowlist.
 
 ---
 
@@ -41,7 +41,7 @@ SqueekRunner streams live telemetry from `https://api.squeekchain.com/v1/status`
 - Collecting a golden nut awards **+150 bonus points** and equips a **12-second one-hit shield**, allowing the player to absorb a collision that would otherwise end the run.
 
 ### 3. Server-Side Telemetry Timeline for Replay Verification
-- To protect competitive gameplay and raffle qualification, SqueekRunner includes a Cloudflare Worker server backed by a D1 SQLite database and a Durable Object (`TelemetryCollector`).
+- To protect competitive gameplay and whitelist qualification, SqueekRunner includes a Cloudflare Worker server backed by a D1 SQLite database and a Durable Object (`TelemetryCollector`).
 - The Durable Object polls the Squeekchain status API every ~10 seconds and logs a continuous, verified timeline of RPM and block heights.
 - Ranked mode broadcasts this timeline to clients with a 5-second buffer. Client replays are re-simulated tick-by-tick against the server's own recorded telemetry, ignoring client-reported scores or wheel claims.
 
@@ -54,7 +54,7 @@ Genesis Code Lane strictly rejects read-only dashboards, link-hubs, and thin API
 1. **Active Gameplay, Not Passive Viewing:** Data is not merely displayed on a chart; it changes physics, timing, and collision hazards in real time.
 2. **Deterministic Physics Simulation:** Runs advance at 60 fixed ticks per second using integer milli-pixel coordinates and seeded Mulberry32 pseudo-randomness. Raw inputs (jump ticks) are captured in compact JSON (<1.6 KB per minute).
 3. **Server-Side Replay Execution:** The server imports and executes the exact same deterministic simulation engine (`src/sim/replay.ts`) to verify scores. Fake client claims are rejected.
-4. **Zero-Gas EIP-4361 (SIWE) Whitelist Portal:** Players who surpass the qualification threshold connect a Sepolia wallet and sign an off-chain EIP-4361 message. Nonces, domains, chains, and run tokens are verified server-side with zero transaction fees for players.
+4. **Gasless Whitelist Application Portal (No Wallet Connection):** Players who achieve 100,000+ points and 10/10 coins unlock the application form. Applicants paste their Sepolia address manually and link a verified post on X with zero gas, zero transaction fees, and no wallet connection or signature requirements. Applications are reviewed manually by the team (not a raffle).
 5. **On-Chain Smart Contract & Merkle Tree:** An ERC-721 contract (`SqueekRunnerHamsters.sol`) deployed on Sepolia partitions 900 allowlist spots and 100 reserve spots, using OpenZeppelin StandardMerkleTree for trustless claims.
 6. **1,000 Generative SVG Collection:** Complete art pipeline producing 1,000 unique vector NFTs (990 algorithmic combinations across 8 layers + 10 handcrafted 1/1 legendaries) ready for IPFS metadata hosting.
 
@@ -67,7 +67,7 @@ SqueekRunner is fully implemented and tested across all components:
 - **Game Client:** Production build ready (`dist/play/`). Touch and keyboard controls, pause/resume, audio, HUD, and demo mode (`/play/?demo=1`).
 - **Unit Test Suite:** 18 test files with 131 tests covering physics, speed formulas, block detection, telemetry lifecycle, and replay validation — 100% passing offline.
 - **Documentation:** Full game whitepaper at `/whitepaper/` with mathematical formulas and balance tables; whitelist portal at `/whitelist/`.
-- **Raffle Server:** Cloudflare Worker with D1 migrations, telemetry collector Durable Object, SIWE verification via `viem`, and Turnstile integration (`server/`).
+- **Companion Server:** Cloudflare Worker with D1 migrations, telemetry collector Durable Object, progressive map chunk streaming, X oEmbed post verification, and Turnstile integration (`server/`).
 - **Smart Contract:** Hardhat 2 + Solc 0.8.28 test suite verifying reentrancy protection, double-hashed Merkle proofs, and phase transitions (`contracts/`).
 - **Art Generator:** Node.js generative script creating 1,000 valid SVG files and metadata JSONs (`art/collection/`).
 
