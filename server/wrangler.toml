@@ -9,12 +9,11 @@ cpu_ms = 1000
 [vars]
 ENVIRONMENT = "production"
 THRESHOLD = "100000"
-ENTRIES_OPEN = "false"
-SIWE_DOMAIN = "squeekrunner.app"
-SIWE_URI = "https://squeekrunner.app/whitelist/"
+APPLICATIONS_OPEN = "false"
+SITE_URL = "https://squeekrunner.app"
 ALLOWED_ORIGINS = "https://squeekrunner.app,https://www.squeekrunner.app"
-ENTRY_DEADLINE = ""
-SNAPSHOT_AT = ""
+APPLICATION_DEADLINE = ""
+# Secrets (wrangler secret put): TURNSTILE_SECRET, ADMIN_TOKEN, IP_HASH_SALT, ALCHEMY_KEY
 
 [[d1_databases]]
 binding = "DB"

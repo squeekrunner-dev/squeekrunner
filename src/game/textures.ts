@@ -25,7 +25,7 @@ export const TEXTURES = {
 
   // Collectibles & Effects
   nut: 'golden-nut',
-  coin: 'raffle-coin',
+  coin: 'whitelist-coin',
   shield: 'shield-bubble',
   ground: 'ground',
   bgFar: 'bg-far',
@@ -322,7 +322,7 @@ export function createTextures(scene: Phaser.Scene): void {
   g.generateTexture(TEXTURES.nut, 36, 38);
 
   // -------------------------------------------------------------
-  // 3b. RAFFLE COIN (40x40) — circle radius 18 centred at (20, 20)
+  // 3b. WHITELIST COIN (40x40) — circle radius 18 centred at (20, 20)
   // -------------------------------------------------------------
   g.clear();
   g.fillStyle(0x81cce4, 0.22).fillCircle(20, 20, 20); // cool glow, distinct from the warm nut

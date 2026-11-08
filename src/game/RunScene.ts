@@ -66,7 +66,7 @@ export class RunScene extends Phaser.Scene {
   private runBlock: RunBlock | null = null;
   private lastMode = '';
   private dustIn = 0;
-  /** Server session of a raffle-eligible run; null for offline/unranked runs. */
+  /** Server session of a ranked run; null for offline/unranked runs. */
   private ranked: RankedRun | null = null;
   private starting = false;
   private abort = new AbortController();
@@ -304,14 +304,14 @@ export class RunScene extends Phaser.Scene {
     const { api, source, turnstileSiteKey } = this.context;
     if (!api || !(source instanceof ServerSource) || !turnstileSiteKey) { this.begin(); return; }
     this.starting = true;
-    this.notice('VERIFYING · STARTING A RAFFLE-ELIGIBLE RUN…');
+    this.notice('VERIFYING · STARTING A RANKED RUN…');
     startRanked(api, source, turnstileSiteKey, this.abort.signal)
       .then(ranked => {
         this.ranked = ranked;
         this.driver = new RunDriver(ranked.session.seed, 'live');
         this.notice('RANKED RUN · VERIFIED BY THE SERVER');
       })
-      .catch(() => { if (!this.abort.signal.aborted) this.notice('OFFLINE RUN · NOT RAFFLE-ELIGIBLE'); })
+      .catch(() => { if (!this.abort.signal.aborted) this.notice('OFFLINE RUN · DOES NOT QUALIFY'); })
       .finally(() => {
         this.starting = false;
         if (!this.abort.signal.aborted && this.state === 'ready') this.begin();
@@ -401,14 +401,14 @@ export class RunScene extends Phaser.Scene {
         sound.playNewBlock();
         this.notice('⚡ NEW SQUEEK BLOCK! GOLDEN NUT INCOMING!');
       } else if (event === 'coinSpawn') {
-        this.notice('RAFFLE COIN AHEAD · DOUBLE JUMP!');
+        this.notice('WHITELIST COIN AHEAD · DOUBLE JUMP!');
       } else if (event === 'coin') {
         sound.playCollectNut();
         this.emitDust(this.player.x, this.player.y - 60, 16);
-        this.notice(`RAFFLE COIN ${s.coins.collected} / ${CONFIG.coins.count}`);
+        this.notice(`WHITELIST COIN ${s.coins.collected} / ${CONFIG.coins.count}`);
       } else if (event === 'coinMissed') {
         sound.playShieldHit();
-        this.notice('COIN MISSED · THE RAFFLE NEEDS ALL 10');
+        this.notice('COIN MISSED · THE WHITELIST NEEDS ALL 10');
       } else if (event === 'gameOver') this.endRun();
     }
     this.coinText.setText(`${s.coins.collected} / ${CONFIG.coins.count}`)

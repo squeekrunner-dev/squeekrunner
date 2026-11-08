@@ -18,7 +18,7 @@ class Statement {
 }
 export function fakeD1(): D1Database & { raw: DatabaseSync } {
   const db = new DatabaseSync(':memory:');
-  for (const m of ['0001_initial.sql', '0002_coins.sql', '0003_map.sql']) db.exec(readFileSync(fileURLToPath(new URL(`../migrations/${m}`, import.meta.url).href), 'utf8'));
+  for (const m of ['0001_initial.sql', '0002_coins.sql', '0003_map.sql', '0004_applications.sql']) db.exec(readFileSync(fileURLToPath(new URL(`../migrations/${m}`, import.meta.url).href), 'utf8'));
   const facade = {
     raw: db,
     prepare: (sql: string) => new Statement(db, sql),
@@ -45,29 +45,55 @@ function fakeCollector(env: Env, rt: Runtime): DurableObjectNamespace {
 export const ORIGIN = 'http://127.0.0.1:5179';
 export interface Harness {
   env: Env; db: DatabaseSync; clock: { now: number }; rt: Runtime; siteverify: { success: boolean; calls: number };
+  /** Fake X oEmbed: 'ok' returns a post by `author` with `text`; otherwise an HTTP status or a network failure. */
+  x: { mode: 'ok' | 404 | 429 | 'down'; author: string; text: string; calls: number };
+  /** Requests made to Alchemy / Squeekchain (URL list) for the signal tests. */
+  outbound: string[];
   call(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<Response>;
   addPoint(point: Partial<TimelinePoint> & { at: number }): void;
 }
 export function harness(overrides: Partial<Env> = {}): Harness {
   const db = fakeD1();
   const env = {
-    DB: db, ENVIRONMENT: 'development', THRESHOLD: '', ENTRIES_OPEN: 'false',
-    SIWE_DOMAIN: '127.0.0.1:5179', SIWE_URI: `${ORIGIN}/whitelist/`, ALLOWED_ORIGINS: ORIGIN,
+    DB: db, ENVIRONMENT: 'development', THRESHOLD: '', APPLICATIONS_OPEN: 'false',
+    SITE_URL: ORIGIN, ALLOWED_ORIGINS: ORIGIN,
     TURNSTILE_SECRET: '1x0000000000000000000000000000000AA', ADMIN_TOKEN: 'a'.repeat(40), IP_HASH_SALT: 's'.repeat(40),
-    ENTRY_DEADLINE: '', SNAPSHOT_AT: '', ...overrides,
+    APPLICATION_DEADLINE: '', ...overrides,
   } as Env;
   const clock = { now: 1_800_000_000_000 };
   const siteverify = { success: true, calls: 0 };
+  const x: Harness['x'] = { mode: 'ok', author: 'runner', text: '', calls: 0 };
+  const outbound: string[] = [];
   const rt: Runtime = {
     now: () => clock.now,
-    fetcher: (async (input: RequestInfo | URL) => {
-      if (String(input).includes('turnstile')) { siteverify.calls++; return Response.json({ success: siteverify.success }); }
+    fetcher: (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('turnstile')) { siteverify.calls++; return Response.json({ success: siteverify.success }); }
+      if (url.startsWith('https://publish.twitter.com/oembed')) {
+        x.calls++;
+        if (x.mode === 'down') throw new Error('network');
+        if (x.mode !== 'ok') return new Response('{}', { status: x.mode });
+        return Response.json({ author_url: `https://twitter.com/${x.author}`, html: `<blockquote><p>${x.text}</p></blockquote>` });
+      }
+      if (url.includes('.g.alchemy.com/v2/')) {
+        outbound.push(url);
+        const calls = JSON.parse(String((init as RequestInit).body)) as { id: number; method: string }[];
+        return Response.json(calls.map(c => ({ jsonrpc: '2.0', id: c.id, result:
+          c.method === 'eth_getTransactionCount' ? '0x2a' : c.method === 'eth_getBalance' ? '0xde0b6b3a7640000' : c.method === 'eth_getCode' ? (url.includes('mainnet') ? '0xef0100' + 'ab'.repeat(20) : '0x') :
+          c.method === 'eth_call' ? '0x' + (5n * 10n ** 18n).toString(16).padStart(64, '0') :
+          { transfers: [{ metadata: { blockTimestamp: url.includes('mainnet') ? '2021-05-01T00:00:00.000Z' : '2024-01-01T00:00:00.000Z' } }] } })));
+      }
+      if (url.startsWith('https://api.squeekchain.com/v1/accounts/')) {
+        outbound.push(url);
+        return url.includes('/activity') ? Response.json({ total: '12' }) :
+          Response.json({ tokens: [{ custody: 'wallet' }, { custody: 'staking' }], power: { sqkPower: '0' }, stake: { principalBaseUnits: '0' }, rewards: { claimableBaseUnits: '7', lifetimePaidBaseUnits: '0' } });
+      }
       throw new Error(`unexpected fetch ${String(input)}`);
     }) as typeof fetch,
   };
   env.COLLECTOR = fakeCollector(env, rt);
   return {
-    env, db: db.raw, clock, rt, siteverify,
+    env, db: db.raw, clock, rt, siteverify, x, outbound,
     call: (method, path, body, headers = {}) => handle(new Request(`http://api.test${path}`, {
       method, body: body === undefined ? undefined : JSON.stringify(body),
       headers: { Origin: ORIGIN, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },

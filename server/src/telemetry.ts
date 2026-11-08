@@ -27,7 +27,6 @@ export async function collect(env: Env, rt: Runtime): Promise<void> {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM telemetry WHERE at < ?').bind(now - RETENTION),
     env.DB.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(now - 60000),
-    env.DB.prepare('DELETE FROM nonces WHERE expires_at < ? AND nonce NOT IN (SELECT nonce FROM entries)').bind(now),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ? AND id NOT IN (SELECT session_id FROM runs)').bind(now - RETENTION),
   ]);
 }

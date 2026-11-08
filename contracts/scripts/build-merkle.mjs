@@ -35,7 +35,7 @@ export function buildAllowlist(records) {
     const count = Number(allowance);
     if (count < 1 || count > 900) throw new Error(`Allowance must be 1–900 for ${address}`);
     totalAllowance += count;
-    if (totalAllowance > 900) throw new Error('Combined raffle/Twitter allowance exceeds 900');
+    if (totalAllowance > 900) throw new Error('Combined whitelist/X allowance exceeds 900');
     return [address, String(count)];
   }).sort(([a], [b]) => a.toLowerCase().localeCompare(b.toLowerCase(), 'en'));
   const tree = StandardMerkleTree.of(values, ['address', 'uint256']);

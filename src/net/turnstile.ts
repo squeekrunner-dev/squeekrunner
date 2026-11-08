@@ -17,14 +17,15 @@ function load(): Promise<void> {
 }
 
 /** Only rendered when API mode is configured. No wallet UI is introduced here. */
-export async function challenge(sitekey: string, action: 'session' | 'entry', signal: AbortSignal): Promise<string> {
+export async function challenge(sitekey: string, action: 'session' | 'application', signal: AbortSignal,
+  prompt = 'Verify to start a ranked run', cancelLabel = 'Play offline instead'): Promise<string> {
   if (!sitekey) throw new Error('Challenge is not configured');
   return new Promise<string>((resolve, reject) => {
     const panel = document.createElement('div');
     panel.style.cssText = 'position:fixed;z-index:1000;left:50%;top:30%;transform:translateX(-50%);padding:20px;background:#fff;color:#131b27;border:2px solid #46673d;border-radius:12px';
-    const title = document.createElement('p'); title.textContent = 'Verify to start a raffle-eligible run';
+    const title = document.createElement('p'); title.textContent = prompt;
     const widget = document.createElement('div');
-    const cancel = document.createElement('button'); cancel.textContent = 'Play offline instead';
+    const cancel = document.createElement('button'); cancel.textContent = cancelLabel;
     panel.append(title, widget, cancel); document.body.append(panel);
     let id: string | undefined, settled = false;
     const finish = (token?: string): void => {

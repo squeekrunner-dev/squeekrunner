@@ -1,12 +1,12 @@
-import { SIM_VERSION } from '../../src/sim/core';
+import { CHUNK_TICKS, SIM_VERSION } from '../../src/sim/core';
 import { CONFIG } from '../../src/config';
 import { MAX_REPLAY_BYTES } from '../../src/sim/replay';
 import { TelemetryCollector, timeline } from './telemetry';
 import { authoritativeRun, checkRun, type SessionRow } from './verification';
-import { enter, SIWE_STATEMENT } from './entry';
 import { chunkSeeds, MAX_CHUNKS, mapPage } from './map';
-import { CHUNK_TICKS } from '../../src/sim/core';
-import { ApiError, digest, entriesOpen, requiredCoins, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
+import { apply, codeFor, statusOf } from './application';
+import { admin } from './admin';
+import { ApiError, applicationsOpen, digest, requiredCoins, fail, fields, ipHash, randomToken, rateLimit, readJSON, runtime,
   textField, threshold, turnstile, type Env, type Runtime } from './security';
 export { TelemetryCollector };
 
@@ -26,17 +26,7 @@ async function stats(env: Env) {
 
 async function route(request: Request, env: Env, rt: Runtime): Promise<Response> {
   const url = new URL(request.url), path = url.pathname, now = rt.now();
-  if (path === '/v1/admin/export' && request.method === 'GET') {
-    if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 32) fail(503, 'configuration', 'Service unavailable');
-    const auth = request.headers.get('Authorization') ?? '';
-    const a = await digest(auth), b = await digest(`Bearer ${env.ADMIN_TOKEN}`);
-    let difference = 0; for (let i = 0; i < a.length; i++) difference |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    if (difference) fail(401, 'unauthorized', 'Authentication required');
-    const rows = await env.DB.prepare('SELECT address,1 AS allowance FROM entries ORDER BY address LIMIT 100001').all<{ address: string; allowance: number }>();
-    if (rows.results.length > 100000) fail(413, 'export_limit', 'Use a database export for this snapshot');
-    if (url.searchParams.get('format') === 'csv') return new Response('address,allowance\n' + rows.results.map(r => `${r.address},1`).join('\n') + '\n', { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="raffle-participants.csv"' } });
-    return Response.json(rows.results);
-  }
+  if (path.startsWith('/v1/admin/')) return admin(request, env, rt, path, url);
   const hash = await ipHash(request, env);
   await rateLimit(env, hash, 'api', 120, now);
   if (request.method === 'GET' && path === '/v1/telemetry') {
@@ -45,15 +35,11 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     return Response.json(await timeline(env, since));
   }
   if (request.method === 'GET' && path === '/v1/stats') return Response.json(await stats(env));
-  if (request.method === 'GET' && path === '/v1/raffle/status') {
-    const row = await env.DB.prepare('SELECT COUNT(*) AS count FROM entries').first<{ count: number }>();
-    return Response.json({ threshold: threshold(env), requiredCoins: requiredCoins(env, CONFIG.coins.count), entriesOpen: entriesOpen(env, now), entriesCount: row?.count ?? 0, snapshotAt: env.SNAPSHOT_AT || null, deadline: env.ENTRY_DEADLINE || null });
-  }
-  if (request.method === 'GET' && path === '/v1/nonce') {
-    await rateLimit(env, hash, 'nonce', 10, now);
-    const nonce = randomToken(), expiresAt = now + 5 * 60000;
-    await env.DB.prepare('INSERT INTO nonces(nonce,created_at,expires_at,ip_hash) VALUES(?,?,?,?)').bind(nonce, now, expiresAt, hash).run();
-    return Response.json({ nonce, issuedAt: new Date(now).toISOString(), expirationTime: new Date(expiresAt).toISOString(), domain: env.SIWE_DOMAIN, uri: env.SIWE_URI, chainId: 11155111, statement: SIWE_STATEMENT });
+  if (request.method === 'GET' && path === '/v1/whitelist/status') {
+    const rows = await env.DB.prepare('SELECT status, COUNT(*) AS count FROM applications GROUP BY status').all<{ status: string; count: number }>();
+    return Response.json({ threshold: threshold(env), requiredCoins: requiredCoins(env, CONFIG.coins.count), applicationsOpen: applicationsOpen(env, now),
+      applications: rows.results.reduce((sum, r) => sum + r.count, 0), approved: rows.results.find(r => r.status === 'approved')?.count ?? 0,
+      deadline: env.APPLICATION_DEADLINE || null });
   }
   if (request.method === 'POST' && path === '/v1/session') {
     await rateLimit(env, hash, 'session', 3, now);
@@ -88,17 +74,26 @@ async function route(request: Request, env: Env, rt: Runtime): Promise<Response>
     // Claim before expensive verification: a bad final score consumes the session too.
     const page = await timeline(env, session.started_at, session.started_at + replay.endTick * 1000 / 60);
     const result = authoritativeRun(replay, session, page.points, await chunkSeeds(session.map_secret, Math.ceil(replay.endTick / CHUNK_TICKS)));
-    // Raffle rule: reach the threshold AND collect every raffle coin.
+    // Qualifying rule: reach the threshold AND collect every coin.
     const minimum = threshold(env), eligible = minimum !== null && result.score >= minimum && result.coins >= requiredCoins(env, CONFIG.coins.count);
     const runToken = randomToken(), runId = randomToken();
-    await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,coins,created_at,ip_hash,eligible,token_hash,token_expires)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, result.coins, now, hash, eligible ? 1 : 0, await digest(runToken), now + 24 * 3600000).run();
+    await env.DB.prepare(`INSERT INTO runs(id,session_id,score,distance,end_tick,coins,created_at,ip_hash,eligible,token_hash,token_expires,signals)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).bind(runId, id, result.score, result.distance, result.endTick, result.coins, now, hash, eligible ? 1 : 0,
+      await digest(runToken), now + 24 * 3600000, JSON.stringify(result.signals)).run();
     const { signals: _signals, ...reply } = result;
     return Response.json({ ...reply, eligible, runToken, runId });
   }
-  if (request.method === 'POST' && path === '/v1/entry') {
-    await rateLimit(env, hash, 'entry', 5, now);
-    return Response.json(await enter(await readJSON(request, 8192), env, hash, rt));
+  if (request.method === 'GET' && path === '/v1/application') {
+    await rateLimit(env, hash, 'lookup', 20, now);
+    return Response.json(await statusOf(url.searchParams.get('code'), env));
+  }
+  if (request.method === 'POST' && path === '/v1/application/code') {
+    await rateLimit(env, hash, 'code', 20, now);
+    return Response.json(await codeFor(await readJSON(request, 1024), env, rt));
+  }
+  if (request.method === 'POST' && path === '/v1/application') {
+    await rateLimit(env, hash, 'apply', 5, now);
+    return Response.json(await apply(await readJSON(request, 4096), env, hash, rt));
   }
   fail(404, 'not_found', 'Endpoint not found');
 }

@@ -1,7 +1,12 @@
 import type { ReplayV1 } from '../sim/replay';
 import type { MapPage, RunReply, SessionReply, TimelinePage } from './timeline';
 
-export interface NonceReply { nonce: string; issuedAt: string; expirationTime: string; domain: string; uri: string; chainId: number; statement: string }
+export interface WhitelistStatusReply { threshold: number | null; requiredCoins: number; applicationsOpen: boolean; applications: number; approved: number; deadline: string | null }
+export interface CodeReply { code: string; score: number; coins: number; applied: boolean; status: ApplicationStatus | null }
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
+export interface ApplicationReply { code: string; status: ApplicationStatus; xStatus: 'verified' | 'unchecked'; address: string; xHandle: string }
+export interface ApplicationLookup { code: string; status: ApplicationStatus; xStatus: string; createdAt: number }
+export interface ApplicationForm { runToken: string; address: string; xHandle: string; postUrl: string; turnstileToken: string }
 export class NetworkError extends Error {
   constructor(message: string, readonly status = 0, readonly code = 'network', readonly score?: number) { super(message); }
 }
@@ -30,16 +35,14 @@ export class ApiClient {
   map(sessionId: string, from: number, signal?: AbortSignal): Promise<MapPage> { return this.request('/v1/map', { sessionId, from }, signal); }
   run(sessionId: string, replay: ReplayV1, signal?: AbortSignal): Promise<RunReply> { return this.request('/v1/run', { sessionId, replay }, signal); }
   telemetry(since?: number, signal?: AbortSignal): Promise<TimelinePage> { return this.request(`/v1/telemetry${since === undefined ? '' : `?since=${since}`}`, undefined, signal); }
-  nonce(signal?: AbortSignal): Promise<NonceReply> { return this.request('/v1/nonce', undefined, signal); }
-  entry(runToken: string, siweMessage: string, signature: string, turnstileToken: string, signal?: AbortSignal): Promise<{ address: string; entered: true }> {
-    return this.request('/v1/entry', { runToken, siweMessage, signature, turnstileToken }, signal);
-  }
-  raffleStatus(signal?: AbortSignal): Promise<RaffleStatusReply> { return this.request('/v1/raffle/status', undefined, signal); }
+  whitelistStatus(signal?: AbortSignal): Promise<WhitelistStatusReply> { return this.request('/v1/whitelist/status', undefined, signal); }
+  applicationCode(runToken: string, signal?: AbortSignal): Promise<CodeReply> { return this.request('/v1/application/code', { runToken }, signal); }
+  apply(form: ApplicationForm, signal?: AbortSignal): Promise<ApplicationReply> { return this.request('/v1/application', form, signal); }
+  application(code: string, signal?: AbortSignal): Promise<ApplicationLookup> { return this.request(`/v1/application?code=${encodeURIComponent(code)}`, undefined, signal); }
 }
-export interface RaffleStatusReply { threshold: number | null; entriesOpen: boolean; entriesCount: number; snapshotAt: string | null; deadline: string | null }
 
-/** The best eligible run token survives navigation to /whitelist/ (and new tabs) for its 24 h lifetime. */
-export const RUN_TOKEN_KEY = 'squeekrunner.raffle-run.v1';
+/** The best qualifying run token survives navigation to /whitelist/ (and new tabs) for its 24 h lifetime. */
+export const RUN_TOKEN_KEY = 'squeekrunner.qualifying-run.v1';
 export interface StoredRun { runToken: string; runId: string; score: number; savedAt: number }
 const RUN_TTL_MS = 23 * 3600000;
 

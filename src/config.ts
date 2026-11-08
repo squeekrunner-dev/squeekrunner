@@ -46,7 +46,7 @@ export const CONFIG = {
     noticeMs: 2600,
   },
   /**
-   * Raffle coins (sim squeek-2): exactly `count` coins, one per equal segment of the first
+   * Whitelist coins (sim squeek-3): exactly `count` coins, one per equal segment of the first
    * 10,000 m (= 100,000 distance points). Coin centre sits `heightAboveGround` px above the track:
    * a single jump tops out near 110 px (hitbox top ≈ 154 px), a well-timed double jump near
    * 194 px (top ≈ 238 px), so only the double jump can collect them.
