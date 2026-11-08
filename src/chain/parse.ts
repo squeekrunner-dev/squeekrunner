@@ -6,9 +6,10 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function timestamp(value: unknown): number | null {
-  if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT.*Z$/.test(value)) return null;
+  if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?Z$/.test(value)) return null;
   const result = Date.parse(value);
-  return Number.isFinite(result) ? result : null;
+  // Date.parse normalizes impossible dates (e.g. February 30) and 24:00.
+  return Number.isFinite(result) && new Date(result).toISOString().slice(0, 19) === value.slice(0, 19) ? result : null;
 }
 
 function height(value: unknown): bigint | null {
@@ -28,7 +29,7 @@ export function parseStatus(value: unknown, now = Date.now()): ChainSnapshot | n
   if (value.measurement !== null) {
     const m = value.measurement;
     if (!isRecord(m) || (m.freshness !== 'online' && m.freshness !== 'stale') ||
-        !['IDLE', 'ACTIVE', 'COUNTER_FAULT'].includes(String(m.coreStatus)) ||
+        (m.coreStatus !== 'IDLE' && m.coreStatus !== 'ACTIVE' && m.coreStatus !== 'COUNTER_FAULT') ||
         typeof m.rpmMilli !== 'number' || !Number.isSafeInteger(m.rpmMilli) || m.rpmMilli < 0 ||
         typeof m.staleAfterSeconds !== 'number' || !Number.isSafeInteger(m.staleAfterSeconds) ||
         m.staleAfterSeconds <= 0) return null;
@@ -38,7 +39,7 @@ export function parseStatus(value: unknown, now = Date.now()): ChainSnapshot | n
     measurement = {
       rpm: m.rpmMilli / 1000,
       freshness: m.freshness,
-      coreStatus: m.coreStatus as Measurement['coreStatus'],
+      coreStatus: m.coreStatus,
       observedAt, receivedAt,
       staleAfterMs: Math.min(m.staleAfterSeconds * 1000, CONFIG.telemetry.maxMeasurementAgeMs),
     };
@@ -64,6 +65,8 @@ export function telemetryView(snapshot: ChainSnapshot | null, now = Date.now(), 
   const noData = (reason: string): TelemetryView => ({ mode: 'NO DATA', rpm: 0, reason, snapshot });
   if (error) return noData(error);
   if (!snapshot) return noData('Connecting to the wheel');
+  if (!Number.isFinite(now) || !Number.isFinite(snapshot.fetchedAt) ||
+      snapshot.fetchedAt - now > CONFIG.telemetry.futureToleranceMs) return noData('Local clock mismatch');
   if (now - snapshot.fetchedAt > CONFIG.telemetry.maxReadAgeMs) return noData('No recent successful read');
   if (!snapshot.builderAvailable) return noData('Block data unavailable');
   const m = snapshot.measurement;

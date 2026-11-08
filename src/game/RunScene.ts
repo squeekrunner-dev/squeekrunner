@@ -157,8 +157,9 @@ export class RunScene extends Phaser.Scene {
     this.intro.setVisible(false);
     this.physics.resume();
     this.detector = new BlockDetector();
-    const current = this.context.source.read().snapshot;
-    if (current) this.onSnapshot(current);
+    const current = this.context.source.read();
+    // An expired cached response must not seed a new run's block rewards.
+    if (current.mode !== 'NO DATA' && current.snapshot) this.onSnapshot(current.snapshot);
   }
 
   private action(): void {
@@ -171,6 +172,8 @@ export class RunScene extends Phaser.Scene {
     if (this.state === 'playing') {
       this.state = 'paused'; this.physics.pause(); this.pauseOverlay.setVisible(true);
     } else if (this.state === 'paused' && !document.hidden) {
+      // The next response may contain growth that happened while hidden.
+      this.detector.rebaseNext();
       this.state = 'playing'; this.physics.resume(); this.pauseOverlay.setVisible(false);
     }
   }
@@ -189,7 +192,12 @@ export class RunScene extends Phaser.Scene {
   }
 
   private onSnapshot(snapshot: ChainSnapshot): void {
-    const bonus = this.detector.observe(snapshot.installationId, snapshot.confirmedHeight);
+    const { bonus, reset } = this.detector.observe(snapshot.installationId, snapshot.confirmedHeight);
+    if (reset) {
+      this.nuts.clear(true, true);
+      this.noticeUntil = 0;
+      this.notification.setVisible(false);
+    }
     if (this.state !== 'playing') return;
     if (!this.runBlock && snapshot.confirmedHeight !== null) {
       this.runBlock = { installationId: snapshot.installationId, height: snapshot.confirmedHeight };
@@ -271,8 +279,11 @@ export class RunScene extends Phaser.Scene {
     this.rpmText.setText(view.mode === 'NO DATA' ? '—' : view.rpm.toFixed(1));
     this.heightText.setText(`#${compactHeight(view.snapshot?.confirmedHeight ?? null)}`);
     const projected = view.snapshot?.projectedHeight;
-    this.provisionalText.setText(projected !== null && projected !== undefined && projected !== view.snapshot?.confirmedHeight
-      ? `provisional #${compactHeight(projected)}` : view.mode === 'NO DATA' && view.snapshot ? 'last known confirmed height' : 'SEPOLIA · SETTLED');
+    this.provisionalText.setText(view.snapshot?.confirmedHeight === null || !view.snapshot
+      ? 'awaiting confirmed height'
+      : view.mode === 'NO DATA' ? 'last known confirmed height'
+        : projected !== null && projected !== undefined && projected !== view.snapshot.confirmedHeight
+          ? `provisional #${compactHeight(projected)}` : this.context.source.kind === 'demo' ? 'DEMO · SIMULATED' : 'SEPOLIA · SETTLED');
     this.detailText.setText(view.reason);
     if (this.lastMode !== view.mode) {
       const accessibleStatus = document.getElementById('status');

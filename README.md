@@ -55,6 +55,8 @@ never overlapped. Requests timeout after 8 seconds. Errors use exponential backo
 (up to 60 seconds); a longer `Retry-After` is honored, including after tab visibility
 changes. Polling pauses while the document is hidden. A successful HTTP read expires
 after 12 seconds, and device timestamps/freshness are checked independently.
+Stopping the source cancels both polling and request deadlines. Destroying the game
+removes its page lifecycle listeners; restoring a cached page resumes an existing game.
 
 The parser validates the fields the game consumes and rejects invalid schema versions,
 missing fields, unknown enums, bad timestamps, negative/fractional milli-RPM and invalid
@@ -80,10 +82,15 @@ Only increases of **`builder.anchor.blockHeight`** produce a golden nut and the
 `Squeek block #N!` notice. The first valid height establishes a baseline without a
 bonus. A jump of many blocks produces **one** bonus; an installation change or height
 regression resets the baseline. Heights are `bigint`, never floating point.
+Resets also remove an uncollected nut from the previous chain/baseline.
 `builder.projected.blockHeight` is only a visibly **provisional** HUD hint.
+In NO DATA mode, a retained confirmed height is labeled as last known; provisional
+hints are hidden. A missing height is explicitly labeled as awaiting confirmation.
 Confirmed settlement is batched and can be quiet for long periods; demo makes the
 mechanic easy to demonstrate. At most one uncollected block nut is present at a time.
 Menu, pause and game-over periods don't accumulate rewards for the next run.
+The first response after resuming a pause establishes a baseline without a bonus;
+expired cached data cannot seed a new run. Collected points/shields are not rolled back.
 
 Best scores persist in localStorage, globally and per `(installationId, starting block)`.
 If the start height is unknown, the first confirmed height seen during play is pinned.
@@ -107,6 +114,7 @@ scoreboard, **not** an authenticated online or onchain leaderboard.
 Unit tests cover malformed/stale/faulted/missing data, baseline/+1/+N/regression/installation
 resets, heights beyond safe integers, provisional-only changes, speed/clamping/smoothing,
 record persistence and storage failures, polling/backoff/Retry-After/visibility/timeout,
+source restarts, cancelled responses, subscription disposal, page-cache lifecycle,
 and the simulated source. They also parse the independently captured real API response.
 
 ## Scope and references

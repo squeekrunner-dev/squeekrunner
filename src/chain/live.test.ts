@@ -5,12 +5,13 @@ import { sampleStatus, SAMPLE_TIME } from './fixtures';
 
 function visibilityControl() {
   let hidden = false;
-  let callback: (() => void) | undefined;
+  const callbacks = new Set<() => void>();
   const port: VisibilityPort = {
     hidden: () => hidden,
-    subscribe(listener) { callback = listener; return () => { callback = undefined; }; },
+    subscribe(listener) { callbacks.add(listener); return () => { callbacks.delete(listener); }; },
   };
-  return { port, set(value: boolean) { hidden = value; callback?.(); } };
+  return { port, subscriberCount: () => callbacks.size,
+    set(value: boolean) { hidden = value; for (const callback of callbacks) callback(); } };
 }
 const okay = (): Response => Response.json(sampleStatus());
 
@@ -131,11 +132,14 @@ describe('live source scheduling and failure handling', () => {
 
   it('does not accumulate scene subscribers or source timers across restarts', async () => {
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => okay());
-    const { source } = setup(fetcher);
+    const { source, visibility } = setup(fetcher);
     const previousScene = vi.fn();
     for (let i = 0; i < 20; i++) {
       const unsubscribe = source.subscribe(previousScene);
-      source.start(); source.start(); unsubscribe(); source.stop();
+      source.start(); source.start();
+      expect(visibility.subscriberCount()).toBe(1);
+      unsubscribe(); source.stop();
+      expect(visibility.subscriberCount()).toBe(0);
       expect(vi.getTimerCount()).toBe(0);
     }
     const currentScene = vi.fn(); const unsubscribe = source.subscribe(currentScene);
@@ -146,5 +150,22 @@ describe('live source scheduling and failure handling', () => {
     expect(vi.getTimerCount()).toBe(1);
     unsubscribe(); await vi.advanceTimersByTimeAsync(CONFIG.telemetry.pollMs);
     expect(currentScene).toHaveBeenCalledTimes(1);
+  });
+
+  it('an obsolete response cannot clear the restarted request deadline or publish a snapshot', async () => {
+    const resolveResponses: Array<(response: Response) => void> = [];
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(() => new Promise(resolve => { resolveResponses.push(resolve); }));
+    const { source } = setup(fetcher); const listener = vi.fn(); source.subscribe(listener);
+    source.start(); await vi.advanceTimersByTimeAsync(0);
+    source.stop(); source.start(); await vi.advanceTimersByTimeAsync(0);
+    resolveResponses[0]!(okay()); await vi.advanceTimersByTimeAsync(0);
+    expect(listener).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+    await vi.advanceTimersByTimeAsync(CONFIG.telemetry.timeoutMs);
+    expect(fetcher.mock.calls[1]?.[1]?.signal?.aborted).toBe(true);
+    resolveResponses[1]!(okay()); await vi.advanceTimersByTimeAsync(0);
+    expect(listener).not.toHaveBeenCalled();
+    expect(source.read()).toMatchObject({ mode: 'NO DATA', reason: 'Request timed out; retrying' });
+    source.stop(); expect(vi.getTimerCount()).toBe(0);
   });
 });

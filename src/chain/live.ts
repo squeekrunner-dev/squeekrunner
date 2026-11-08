@@ -107,6 +107,7 @@ export class LiveSource implements TelemetrySource {
       retry = retryAfterMs(response.headers.get('Retry-After'), this.clock());
       if (!response.ok) throw new Error(response.status === 429 ? 'Rate limited; waiting to retry' : `HTTP ${response.status}; retrying`);
       const body: unknown = await response.json();
+      if (controller.signal.aborted) throw new Error('Request cancelled');
       const snapshot = parseStatus(body, this.clock());
       if (!snapshot) throw new Error('Invalid telemetry; retrying');
       if (generation !== this.generation) return;

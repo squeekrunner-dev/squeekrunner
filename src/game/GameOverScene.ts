@@ -26,7 +26,12 @@ export class GameOverScene extends Phaser.Scene {
     this.add.image(140, CONFIG.groundY, TEXTURES.hamster).setOrigin(0.5, 1);
     label(this, 480, 466, 'SPACE / ↑ / TAP TO RESTART', 19, '#c4ef6e', true).setOrigin(0.5);
     label(this, 480, 501, result.demo ? 'DEMO · Simulated wheel. Separate local records.' : 'A fresh run. The same real wheel. No wallet needed.', 16, '#8b9ba6').setOrigin(0.5);
-    const restart = (): void => { this.scene.start('Run', { immediate: true }); };
+    let restarting = false;
+    const restart = (): void => {
+      if (restarting) return;
+      restarting = true;
+      this.scene.start('Run', { immediate: true });
+    };
     const key = (event: KeyboardEvent): void => {
       if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp')) restart();
     };

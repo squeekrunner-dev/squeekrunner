@@ -78,4 +78,20 @@ describe('status wire contract and data modes', () => {
     body.measurement.staleAfterSeconds = 1;
     expect(telemetryView(parseStatus(body, SAMPLE_TIME + 2000), SAMPLE_TIME + 2000).mode).toBe('NO DATA');
   });
+
+  it.each(['2026-02-30T12:00:00Z', '2026-01-01T24:00:00Z', '2026-01-01T12:00Z'])('rejects a non-contract timestamp %s', receivedAt => {
+    const body = sampleStatus(); body.measurement.receivedAt = receivedAt;
+    expect(parseStatus(body, SAMPLE_TIME)).toBeNull();
+  });
+
+  it('rejects non-string enums instead of coercing arrays into known values', () => {
+    const body = sampleStatus();
+    expect(parseStatus({ ...body, measurement: { ...body.measurement, coreStatus: ['ACTIVE'] } }, SAMPLE_TIME)).toBeNull();
+  });
+
+  it('expires cached data when the local clock jumps backwards', () => {
+    const parsed = parseStatus(sampleStatus(), SAMPLE_TIME);
+    expect(telemetryView(parsed, SAMPLE_TIME - 60000)).toMatchObject({ mode: 'NO DATA', rpm: 0 });
+    expect(telemetryView(parsed, NaN).mode).toBe('NO DATA');
+  });
 });
