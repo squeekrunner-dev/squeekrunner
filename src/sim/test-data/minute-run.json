@@ -1,0 +1,214 @@
+{
+  "v": 1,
+  "simVersion": "squeek-1",
+  "seed": 98765,
+  "tickHz": 60,
+  "inputs": [
+    253,
+    359,
+    472,
+    640,
+    743,
+    856,
+    993,
+    1118,
+    1225,
+    1335,
+    1495,
+    1597,
+    1682,
+    1778,
+    1932,
+    2044,
+    2139,
+    2228,
+    2348,
+    2463,
+    2550,
+    2650,
+    2747,
+    2872,
+    2970,
+    3051,
+    3125,
+    3222,
+    3342,
+    3420,
+    3498,
+    3565
+  ],
+  "telemetry": [
+    {
+      "tick": 0,
+      "rpmMilli": null
+    },
+    {
+      "tick": 90,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 180,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 270,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 360,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 450,
+      "rpmMilli": 0
+    },
+    {
+      "tick": 540,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 630,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 720,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 810,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 900,
+      "rpmMilli": null
+    },
+    {
+      "tick": 990,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 1080,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 1170,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 1260,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 1350,
+      "rpmMilli": 0
+    },
+    {
+      "tick": 1440,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 1530,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 1620,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 1710,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 1800,
+      "rpmMilli": null
+    },
+    {
+      "tick": 1890,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 1980,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 2070,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 2160,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 2250,
+      "rpmMilli": 0
+    },
+    {
+      "tick": 2340,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 2430,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 2520,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 2610,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 2700,
+      "rpmMilli": null
+    },
+    {
+      "tick": 2790,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 2880,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 2970,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 3060,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 3150,
+      "rpmMilli": 0
+    },
+    {
+      "tick": 3240,
+      "rpmMilli": 18000
+    },
+    {
+      "tick": 3330,
+      "rpmMilli": 36000
+    },
+    {
+      "tick": 3420,
+      "rpmMilli": 54000
+    },
+    {
+      "tick": 3510,
+      "rpmMilli": 72000
+    },
+    {
+      "tick": 3600,
+      "rpmMilli": null
+    }
+  ],
+  "nuts": [
+    0,
+    1000,
+    2400
+  ],
+  "endTick": 3678,
+  "clientScore": 13820,
+  "mode": "live"
+}

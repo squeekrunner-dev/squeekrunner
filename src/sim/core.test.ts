@@ -78,6 +78,13 @@ describe('fixed-step rules', () => {
     expect(step(s)).not.toContain('collect');
     expect(s.bonus).toBe(0);
   });
+  it('expires the shield at its exact tick boundary', () => {
+    for (const tick of [719, 720]) {
+      const s = createSim(0); s.tick = tick; s.spawnAt = 10000; s.shieldUntil = 720;
+      obstacle(s); step(s);
+      expect(s.gameOver).toBe(tick === 720);
+    }
+  });
   it('clears an old nut on reset and replaces it on another block', () => {
     const s = createSim(0);
     step(s, { nut: true }); const first = s.nut?.id;

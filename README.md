@@ -7,7 +7,7 @@ Double jump over crates, travel farther, and catch golden nuts dropped by new
 ## Play
 
 The site has three static pages: `/` is the landing page with live wheel telemetry,
-`/play/` is the game, and `/whitepaper/` is SqueekRunner's own whitepaper (in Russian).
+`/play/` is the game, and `/whitepaper/` is SqueekRunner's own whitepaper (in English).
 The landing loads no Phaser bundle; the whitepaper is readable without JavaScript.
 
 - **Space / Up arrow / click / tap:** start, then jump. Press again in the air for a double jump.
@@ -75,13 +75,47 @@ All balance values live in [`src/config.ts`](src/config.ts):
 
 - Baseline speed rises from 290 to 400 px/s over 1,800 game metres.
 - RPM multiplier is linear: **1× at 0 RPM → 2.7× at 98.316 RPM**, clamped above that.
-- Target world speed = baseline(distance) × RPM multiplier. Exponential smoothing has a
-  1.4-second time constant; changing telemetry cannot abruptly change the world's speed.
+- Target world speed = baseline(distance) × RPM multiplier. Fixed-step smoothing approximates
+  a 1.4-second time constant; changing telemetry cannot abruptly change the world's speed.
 - Obstacles start after 2.4 seconds, with intervals decreasing from 1.9 to 1.15 seconds
   over 1,400 metres, plus 0–0.5 seconds of variation. Time-based spacing preserves reaction
   time as speed rises. Crates are 30–56 px wide and 38–68 px high.
 - Double jump: gravity 1,800 px/s², initial jump −630 px/s, air jump −550 px/s,
   120 ms input buffer and 90 ms coyote time.
+
+### Deterministic simulation and replays
+
+Gameplay runs at **60 ticks/second**, with integer milli-pixel positions/velocities and
+Mulberry32 randomness from a uint32 seed. Phaser draws the latest state and supplies effects;
+it no longer runs Arcade gameplay physics. Inputs take effect on the next simulation tick,
+so timing is quantized to 16.67 ms. Obstacle gaps round up to ticks; smoothing uses the fixed
+coefficient `11834 / 1000000`. Balance and original texture hitboxes are preserved.
+Pausing freezes simulation time. Frame stalls above 50 ms discard excess wall time; runs
+finish on collision or at a 30-minute simulation limit. This may affect comparisons to old
+local scores, which remain stored as before.
+
+Each finished run is retained in `GameContext.lastReplay`. Open `/play/?debug=1` and press
+**D on the Game Over screen** to download its compact JSON (`?demo=1&debug=1` also records,
+but demo replays are ineligible for verification). Seeds currently come from
+`crypto.getRandomValues`; a future session service can inject `GameContext.seedProvider`.
+No replay is uploaded anywhere.
+
+```sh
+npm run verify-replay -- src/sim/test-data/minute-run.json
+```
+
+The CLI prints `{score,distance,endTick,ok,reason}` and exits nonzero on rejection. Its small
+Node loader uses the existing TypeScript dependency to execute exactly the same source as
+the game; no generated simulation copy is maintained. Server consumers can import
+`verifyReplay` from `src/sim/replay.ts` directly. See [the replay contract](src/sim/README.md)
+for field limits, tick ordering, versioning, arithmetic, and T008 integration requirements.
+Four golden fixtures pin final state hashes; the 61.3-second example is **1,539 bytes** as
+compact JSON. Size depends on input and telemetry changes, not rendered frames.
+
+Verification proves consistency with the supplied streams, **not their authenticity**.
+T008 must bind the seed to a server session and independently establish RPM, confirmed-block
+events and chain resets. Client-supplied telemetry, nuts or a `live` label are not trusted
+eligibility evidence. This remains a client-only game with local records.
 
 ### Confirmed blocks and records
 
@@ -118,7 +152,9 @@ scoreboard, **not** an authenticated online or onchain leaderboard.
   flow, and balance table verified against CONFIG by a unit test.
 - `public/site/favicon.svg`: original site mark, separate from game asset paths.
 - `src/logic/`: speed/spacing and resilient records, independent of Phaser.
-- `src/game/`: Boot → Run → GameOver, input, collisions, collectibles and HUD.
+- `src/sim/`: pure fixed-step physics, seeded spawns, collision/bonus rules, replay validation
+  and verification, plus golden fixtures; no browser or Phaser dependency.
+- `src/game/`: Boot → Run → GameOver, frame accumulator, input recording, art, effects and HUD.
 - `src/game/textures.ts`: all texture keys and generated Graphics textures. Replace the
   generation in Boot with assets under the same keys to swap the artwork.
 - `src/chain/test-data/status-recorded.json`: public HTTP response captured on

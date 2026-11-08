@@ -4,9 +4,10 @@ import { MAX_REPLAY_BYTES, parseReplayJSON, ReplayRecorder, simulateReplay, vali
 import idle from './test-data/idle.json';
 import dropout from './test-data/rpm-dropout.json';
 import nuts from './test-data/nuts-and-resets.json';
+import minute from './test-data/minute-run.json';
 import expected from './test-data/expected.json';
 
-const fixtures = { idle, 'rpm-dropout': dropout, 'nuts-and-resets': nuts };
+const fixtures = { idle, 'rpm-dropout': dropout, 'nuts-and-resets': nuts, 'minute-run': minute };
 describe('replay contract', () => {
   for (const name of Object.keys(fixtures) as (keyof typeof fixtures)[]) {
     it(`reproduces golden ${name}, including full final state, 50 times`, () => {

@@ -34,7 +34,7 @@ export function validateReplay(value: unknown): Validation {
   let previousTick = -1;
   let previousRpm: unknown = undefined;
   for (const sample of samples) {
-    if (!object(sample) || Object.keys(sample).length !== 2 || !Object.prototype.hasOwnProperty.call(sample, 'rpmMilli') ||
+    if (!object(sample) || Object.keys(sample).length !== 2 || Object.keys(sample).some(k => k !== 'tick' && k !== 'rpmMilli') ||
         !integer(sample.tick, endTick - 1) || sample.tick <= previousTick ||
         (previousTick === -1 && sample.tick !== 0) ||
         (sample.rpmMilli !== null && !integer(sample.rpmMilli, MAX_RPM_MILLI)) ||
