@@ -1,50 +1,213 @@
 import Phaser from 'phaser';
 import { CONFIG } from '../config';
 import { onSceneExit } from '../logic/lifecycle';
+import { sound } from '../audio/sound';
 import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
-import { backdrop, label, pill } from './ui';
+import { backdrop, createMuteButton, label, pill } from './ui';
 
 export class GameOverScene extends Phaser.Scene {
-  constructor(private readonly context: GameContext) { super('GameOver'); }
+  private orbitingStars: Phaser.GameObjects.Image[] = [];
+  private muteBtn!: { container: Phaser.GameObjects.Container; setMuted: (muted: boolean) => void };
+
+  constructor(private readonly context: GameContext) {
+    super('GameOver');
+  }
 
   create(result: RunResult): void {
     backdrop(this);
-    this.add.tileSprite(0, CONFIG.groundY, CONFIG.width, 36, TEXTURES.ground).setOrigin(0);
-    label(this, 28, 18, 'SQUEEK / RUNNER', 17, '#c4ef6e', true);
-    if (result.demo) pill(this, 830, 17, 'DEMO', COLORS.gold);
-    label(this, 480, 68, result.newBest ? 'A NEW PERSONAL BEST' : 'ONE MORE RUN?', 16, '#c4ef6e', true).setOrigin(0.5);
-    label(this, 480, 114, 'SMALL PAWS. BIG TRY.', 43).setOrigin(0.5).setFontStyle('bold');
-    this.add.rectangle(480, 238, 650, 175, COLORS.background, 0.96).setStrokeStyle(1, 0x405248);
-    label(this, 270, 170, 'YOUR SCORE', 14, '#8b9ba6', true).setOrigin(0.5);
-    label(this, 270, 218, result.score.toLocaleString(), 50, '#ffcf75').setOrigin(0.5).setFontStyle('bold');
-    label(this, 270, 275, `${result.distance} m travelled`, 17, '#8b9ba6').setOrigin(0.5);
-    label(this, 550, 172, `BEST EVER    ${result.best.toLocaleString()}`, 21);
-    label(this, 550, 212, `BLOCK BEST   ${result.runBlock ? result.blockBest.toLocaleString() : '—'}`, 21);
-    label(this, 480, 307, result.runBlock ? `Run pinned to block #${result.runBlock.height}` : 'No confirmed block was available for this run', 15, '#8b9ba6', true).setOrigin(0.5);
-    const button = this.add.rectangle(480, 371, 294, 50, COLORS.lime).setInteractive({ useHandCursor: true });
-    label(this, 480, 371, 'RUN AGAIN  →', 23, '#131b27').setOrigin(0.5).setFontStyle('bold');
-    this.add.image(140, CONFIG.groundY, TEXTURES.hamster).setOrigin(0.5, 1);
-    label(this, 480, 466, 'SPACE / ↑ / TAP TO RESTART', 19, '#c4ef6e', true).setOrigin(0.5);
-    label(this, 480, 501, result.demo ? 'DEMO · Simulated wheel. Separate local records.' : 'A fresh run. The same real wheel. No wallet needed.', 16, '#8b9ba6').setOrigin(0.5);
+
+    // Parallax background & ground preview (layers 1..3)
+    this.add.tileSprite(0, 80, CONFIG.width, 280, TEXTURES.bgFar).setOrigin(0).setDepth(1);
+    this.add.tileSprite(0, 236, CONFIG.width, 180, TEXTURES.bgMid).setOrigin(0).setDepth(2);
+    this.add.tileSprite(0, CONFIG.groundY, CONFIG.width, 36, TEXTURES.ground).setOrigin(0).setDepth(3);
+
+    // Brand and Demo pill (depth 10)
+    label(this, 28, 16, 'SQUEEK / RUNNER', 16, '#c4ef6e', true).setFontStyle('bold').setDepth(10);
+    if (result.demo) {
+      pill(this, 830, 14, 'DEMO', COLORS.gold).setDepth(10);
+    }
+
+    // Mute button (depth 25)
+    this.muteBtn = createMuteButton(this, 735, 28, sound.isMuted(), () => {
+      const isMuted = sound.toggleMute();
+      this.muteBtn.setMuted(isMuted);
+    });
+
+    // Top Header: Kicker (y = 50) and Title (y = 80)
+    const kickerText = result.newBest ? '★ NEW ALL-TIME RECORD! ★' : 'ONE MORE RUN?';
+    label(this, 480, 50, kickerText, 15, result.newBest ? '#ffcf75' : '#c4ef6e', true)
+      .setOrigin(0.5)
+      .setFontStyle('bold')
+      .setDepth(10);
+
+    label(this, 480, 80, 'SMALL PAWS. BIG TRY.', 32)
+      .setOrigin(0.5)
+      .setFontStyle('bold')
+      .setDepth(10);
+
+    // Central Card Container: y = 196 (from y = 118 to 274, height = 156, width = 600)
+    this.add.rectangle(480, 196, 600, 156, COLORS.background, 0.96)
+      .setStrokeStyle(2, result.newBest ? COLORS.gold : 0x3d5446)
+      .setDepth(10);
+
+    // Left Section of Card: Score
+    label(this, 310, 138, 'YOUR SCORE', 12, '#8b9ba6', true).setOrigin(0.5).setDepth(12);
+
+    const scoreVal = label(this, 310, 184, '0', 44, '#ffcf75')
+      .setOrigin(0.5)
+      .setFontStyle('bold')
+      .setDepth(12);
+
+    this.tweens.addCounter({
+      from: 0,
+      to: result.score,
+      duration: 650,
+      ease: 'Cubic.easeOut',
+      onUpdate: tween => {
+        const value = Math.floor(tween.getValue() ?? 0);
+        scoreVal.setText(value.toLocaleString());
+      },
+    });
+
+    label(this, 310, 236, `${result.distance} m travelled`, 15, '#b6c2bc').setOrigin(0.5).setDepth(12);
+
+    // Vertical Divider Line in Card
+    const divider = this.add.graphics().setDepth(11);
+    divider.lineStyle(1, 0x2e424e, 0.8).lineBetween(445, 135, 445, 258);
+
+    // Right Section of Card: Records
+    label(this, 475, 142, 'BEST EVER', 12, '#8b9ba6', true).setDepth(12);
+    label(this, 745, 142, result.best.toLocaleString(), 20, '#f4f1df').setOrigin(1, 0.2).setDepth(12);
+
+    label(this, 475, 182, 'BLOCK BEST', 12, '#8b9ba6', true).setDepth(12);
+    label(this, 745, 182, result.runBlock ? result.blockBest.toLocaleString() : '—', 20, '#f4f1df').setOrigin(1, 0.2).setDepth(12);
+
+    label(this, 475, 222, 'BLOCK', 12, '#8b9ba6', true).setDepth(12);
+    label(
+      this,
+      745,
+      222,
+      result.runBlock ? `#${result.runBlock.height}` : 'unpinned',
+      16,
+      '#ffcf75',
+      true,
+    ).setOrigin(1, 0.1).setDepth(12);
+
+    // Pinning description subtitle below card (y = 294)
+    label(
+      this,
+      480,
+      294,
+      result.runBlock ? `Run pinned to block #${result.runBlock.height}` : 'No confirmed block was available for this run',
+      13,
+      '#8b9ba6',
+      true,
+    ).setOrigin(0.5).setDepth(12);
+
+    // Hamster sitting on track at x = 140, on top of ground (groundY = 416)
+    this.add.ellipse(140, CONFIG.groundY - 1, 60, 11, 0x07140e, 0.55).setDepth(11);
+    this.add.image(140, CONFIG.groundY, TEXTURES.hamsterHit)
+      .setOrigin(0.5, 1)
+      .setScale(1.25)
+      .setDepth(12);
+
+    // Orbiting dizzy stars above hamster's head
+    this.orbitingStars = [];
+    for (let i = 0; i < 3; i++) {
+      const star = this.add.image(140, CONFIG.groundY - 65, TEXTURES.star)
+        .setScale(0.9)
+        .setDepth(13);
+      this.orbitingStars.push(star);
+    }
+
+    // Celebration golden particle burst if newBest
+    if (result.newBest) {
+      for (let i = 0; i < 28; i++) {
+        const p = this.add.image(310, 184, TEXTURES.dust).setScale(1.2).setAlpha(0.9).setDepth(14);
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 85;
+        this.tweens.add({
+          targets: p,
+          x: 310 + Math.cos(angle) * dist,
+          y: 184 + Math.sin(angle) * dist,
+          alpha: 0,
+          scale: 0.2,
+          duration: 600 + Math.random() * 400,
+          onComplete: () => p.destroy(),
+        });
+      }
+    }
+
+    // Play button: center (480, 348), width 280, height 48, depth 15
+    const button = this.add.rectangle(480, 348, 280, 48, COLORS.lime)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(15);
+    label(this, 480, 348, 'RUN AGAIN  →', 22, '#131b27')
+      .setOrigin(0.5)
+      .setFontStyle('bold')
+      .setDepth(16);
+
+    // Bottom hints
+    label(this, 480, 442, 'SPACE / ↑ / TAP TO RESTART', 18, '#c4ef6e', true)
+      .setOrigin(0.5)
+      .setDepth(12);
+    label(
+      this,
+      480,
+      478,
+      result.demo
+        ? 'DEMO · Simulated wheel. Separate local records.'
+        : 'A fresh run. The same real wheel. No wallet needed.',
+      14,
+      '#8b9ba6',
+    ).setOrigin(0.5).setDepth(12);
+
     let restarting = false;
     const restart = (): void => {
       if (restarting) return;
       restarting = true;
+      sound.playUiClick();
       this.scene.start('Run', { immediate: true });
     };
+
     const key = (event: KeyboardEvent): void => {
+      sound.unlock();
       if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp')) restart();
+      if (!event.repeat && event.code === 'KeyM') {
+        const isMuted = sound.toggleMute();
+        this.muteBtn.setMuted(isMuted);
+      }
     };
-    this.input.once('pointerdown', restart);
+
+    const pointer = (): void => {
+      sound.unlock();
+      restart();
+    };
+    this.input.on('pointerdown', pointer);
     this.input.keyboard?.on('keydown', key);
-    button.on('pointerover', () => button.setFillStyle(0xd6ffa2));
+
+    button.on('pointerover', () => button.setFillStyle(0xd8ffa0));
     button.on('pointerout', () => button.setFillStyle(COLORS.lime));
     onSceneExit(this.events, () => {
-      this.input.off('pointerdown', restart);
+      this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', key);
     });
+
     const status = document.getElementById('status');
-    if (status) status.textContent = `Game over. Score ${result.score}. Best ${this.context.records.best}. Press Space to restart.`;
+    if (status) {
+      status.textContent = `Game over. Score ${result.score}. Best ${this.context.records.best}. Press Space to restart.`;
+    }
+  }
+
+  update(): void {
+    const elapsed = this.time.now;
+    // Animate dizzy stars circling around hamster head
+    this.orbitingStars.forEach((star, idx) => {
+      const angle = elapsed / 400 + (idx * (Math.PI * 2)) / 3;
+      star.x = 140 + Math.cos(angle) * 22;
+      star.y = CONFIG.groundY - 65 + Math.sin(angle) * 9;
+      star.rotation += 0.05;
+    });
   }
 }
