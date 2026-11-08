@@ -272,24 +272,28 @@ export class RunScene extends Phaser.Scene {
   }
 
   private createIntro(): void {
-    const bg = this.add.rectangle(480, 267, 620, 275, COLORS.background, 0.95)
+    const practice = this.context.source.kind === 'demo';
+    const bg = this.add.rectangle(480, 258, 660, 290, COLORS.background, 0.95)
       .setStrokeStyle(2, 0x3e5649);
-    const kicker = label(this, 480, 160, 'A REAL WHEEL. YOUR RUN.', 16, '#c4ef6e', true).setOrigin(0.5);
-    const title = label(this, 480, 212, 'SMALL PAWS.\nBIG MOMENTUM.', 38)
-      .setOrigin(0.5)
-      .setAlign('center')
-      .setFontStyle('bold');
-    const hint = label(this, 480, 280, `${CONFIG.doubleJumps.start} double jumps per run. Golden nuts: a shield and +${CONFIG.doubleJumps.perNut} double jumps.`, 17, '#b6c2bc').setOrigin(0.5);
+    const kicker = label(this, 480, 132, practice ? 'PRACTICE · SIMULATED WHEEL' : 'A REAL WHEEL. YOUR RUN.', 15, '#c4ef6e', true).setOrigin(0.5);
+    const title = label(this, 480, 166, 'SMALL PAWS. BIG MOMENTUM.', 30).setOrigin(0.5).setFontStyle('bold');
+    const heading = label(this, 480, 204, practice ? 'DOES NOT COUNT · WHITELIST RULES FOR RANKED RUNS' : 'WHITELIST RULES',
+      13, practice ? '#ffcf75' : '#ffcf75', true).setOrigin(0.5);
+    const rules = [
+      `•  Score ${(100000).toLocaleString('en-US')}+ points in a ranked run, verified by the server`,
+      `•  Catch all ${CONFIG.coins.count} coins: double-jump height, all before ${(100000).toLocaleString('en-US')} points`,
+      `•  ${CONFIG.doubleJumps.start} double jumps per run, then single jumps only`,
+      `•  Golden nut: a shield until your next hit + ${CONFIG.doubleJumps.perNut} double jumps`,
+    ].map((text, i) => label(this, 246, 226 + i * 22, text, 15, '#d8e0d9').setOrigin(0, 0));
 
-    const button = this.add.rectangle(480, 332, 294, 48, COLORS.lime).setInteractive({ useHandCursor: true });
-    const call = label(this, 480, 332, 'START RUN  →', 22, '#131b27').setOrigin(0.5).setFontStyle('bold');
-    const controls = label(this, 480, 377, 'SPACE / ↑ / TAP   ·   TAP IN AIR FOR DOUBLE JUMP', 13, '#8b9ba6', true).setOrigin(0.5);
+    const button = this.add.rectangle(480, 340, 294, 48, COLORS.lime).setInteractive({ useHandCursor: true });
+    const call = label(this, 480, 340, 'START RUN  →', 22, '#131b27').setOrigin(0.5).setFontStyle('bold');
+    const controls = label(this, 480, 381, 'SPACE / ↑ / TAP   ·   TAP IN AIR FOR DOUBLE JUMP', 13, '#8b9ba6', true).setOrigin(0.5);
 
     button.on('pointerover', () => button.setFillStyle(0xd8ffa0));
     button.on('pointerout', () => button.setFillStyle(COLORS.lime));
 
-
-    this.intro = this.add.container(0, 0, [bg, kicker, title, hint, button, call, controls]).setDepth(22);
+    this.intro = this.add.container(0, 0, [bg, kicker, title, heading, ...rules, button, call, controls]).setDepth(22);
   }
 
   private begin(): void {

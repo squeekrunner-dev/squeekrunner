@@ -126,7 +126,7 @@ No paid mints. Zero gas to enter. Planned roadmap ahead.
 How to get on the allowlist:
 
 1. Play SqueekRunner ranked mode (<SITE_URL>/play/)
-2. Score 100,000+ points & catch 10/10 coins in first 10,000 m
+2. Score 100,000+ points & catch 10/10 coins (all before 100k)
 3. Paste your Sepolia address (no wallet connection) & post on X
 4. Team reviews applications manually (not a raffle)
 
@@ -227,7 +227,7 @@ QUALIFYING CRITERIA ANNOUNCED!
 To apply for the SqueekRunner Hamsters whitelist (not a raffle), runners must achieve:
 
 🎯 100,000+ POINTS
-🪙 10 / 10 COINS (in first 10,000 m)
+🪙 10 / 10 COINS (all before 100k)
 
 In a server-verified ranked run.
 

@@ -37,7 +37,7 @@ This is an application process with manual review, not a raffle.
 - **100 NFTs (10%):** Core team and community treasury reserve.
 
 ### Q10: How do I qualify for the whitelist?
-**A:** Play in ranked mode on `<SITE_URL>/play/`, achieve a server-verified score of **100,000+ points**, and collect all **10 / 10 coins** in the first 10,000 metres. Once qualified, click "Apply for the whitelist" to submit your application on `<SITE_URL>/whitelist/` within 24 hours.
+**A:** Play in ranked mode on `<SITE_URL>/play/`, achieve a server-verified score of **100,000+ points**, and collect all **10 / 10 coins** (all of them appear before 100,000 points). Once qualified, click "Apply for the whitelist" to submit your application on `<SITE_URL>/whitelist/` within 24 hours.
 
 ### Q11: Do I need to connect a wallet or sign a message?
 **A:** No. You do not connect your wallet and you never sign cryptographic messages. You simply paste your Sepolia address manually into the application form and link your verification post on X.

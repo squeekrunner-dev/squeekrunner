@@ -165,7 +165,7 @@ export function render(container: HTMLElement, controller: ApplicationController
         p('Practise now: the qualifying rule is already live. Applications open at launch; dates will be announced on X.'),
         link('../play/', 'Play SqueekRunner ↗')); break;
       case 'no-run': content = box('First, a qualifying run',
-        p(`Score ${view.status.threshold?.toLocaleString('en-US') ?? 'the threshold'}+ points in a ranked run and catch all ${view.status.requiredCoins} coins. Coins hang at double-jump height in the first 10,000 m. Then come back here within 24 hours, from the same browser.`),
+        p(`Score ${view.status.threshold?.toLocaleString('en-US') ?? 'the threshold'}+ points in a ranked run and catch all ${view.status.requiredCoins} coins. Coins hang at double-jump height and all appear before 100,000 points. Then come back here within 24 hours, from the same browser.`),
         link('../play/', 'Play to qualify ↗')); break;
       case 'applied': {
         const unchecked = view.reply?.xStatus === 'unchecked';
