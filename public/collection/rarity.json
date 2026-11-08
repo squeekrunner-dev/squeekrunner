@@ -1,0 +1,314 @@
+{
+  "collection": "SqueekRunner Hamsters",
+  "totalSupply": 1000,
+  "standardSupply": 990,
+  "legendarySupply": 10,
+  "seed": "0x51EED9000",
+  "generatedAt": "2026-11-08T06:59:42.651Z",
+  "legendaryTokens": [
+    {
+      "id": 1,
+      "name": "SqueekRunner Prime — The First Runner",
+      "title": "SqueekRunner Prime"
+    },
+    {
+      "id": 77,
+      "name": "The 98.3 RPM Sprinter",
+      "title": "Overclocked Sprinter"
+    },
+    {
+      "id": 100,
+      "name": "King Squeek XIV",
+      "title": "The Sovereign Hamster"
+    },
+    {
+      "id": 250,
+      "name": "CyberSqueek 2077",
+      "title": "Neon Runner"
+    },
+    {
+      "id": 420,
+      "name": "AstroHamster Zero-G",
+      "title": "Space Wheel Explorer"
+    },
+    {
+      "id": 500,
+      "name": "Grand Mechanic WHEELY",
+      "title": "Master Engineer"
+    },
+    {
+      "id": 666,
+      "name": "Shadow Ninja Squeek",
+      "title": "Midnight Shinobi"
+    },
+    {
+      "id": 777,
+      "name": "The 24K Golden Runner",
+      "title": "Solid Gold Athlete"
+    },
+    {
+      "id": 888,
+      "name": "Forest Druid Squeek",
+      "title": "Guardian of the Acorn"
+    },
+    {
+      "id": 1000,
+      "name": "Diamond Paws Hodler",
+      "title": "Unbreakable Champion"
+    }
+  ],
+  "traitDistribution": {
+    "background": {
+      "Sawdust Track": {
+        "count": 154,
+        "percentage": "15.56%"
+      },
+      "Wheel Night Blue": {
+        "count": 132,
+        "percentage": "13.33%"
+      },
+      "Sunny Meadow": {
+        "count": 112,
+        "percentage": "11.31%"
+      },
+      "Sepolia Violet": {
+        "count": 102,
+        "percentage": "10.30%"
+      },
+      "Sunset Sprint": {
+        "count": 115,
+        "percentage": "11.62%"
+      },
+      "Minty Run": {
+        "count": 105,
+        "percentage": "10.61%"
+      },
+      "Crimson Rush": {
+        "count": 96,
+        "percentage": "9.70%"
+      },
+      "Golden Glow": {
+        "count": 94,
+        "percentage": "9.49%"
+      },
+      "Cyber Grid": {
+        "count": 80,
+        "percentage": "8.08%"
+      }
+    },
+    "specialAura": {
+      "None": {
+        "count": 733,
+        "percentage": "74.04%"
+      },
+      "Golden Stardust": {
+        "count": 82,
+        "percentage": "8.28%"
+      },
+      "Sawdust Cyclone": {
+        "count": 58,
+        "percentage": "5.86%"
+      },
+      "WHEELY9000 Wheel": {
+        "count": 44,
+        "percentage": "4.44%"
+      },
+      "Speed Lightning": {
+        "count": 48,
+        "percentage": "4.85%"
+      },
+      "PoW Matrix": {
+        "count": 25,
+        "percentage": "2.53%"
+      }
+    },
+    "furColor": {
+      "Classic Golden Brown": {
+        "count": 218,
+        "percentage": "22.02%"
+      },
+      "Caramel Cream": {
+        "count": 157,
+        "percentage": "15.86%"
+      },
+      "Toasted Biscuit": {
+        "count": 152,
+        "percentage": "15.35%"
+      },
+      "Wild Sable": {
+        "count": 119,
+        "percentage": "12.02%"
+      },
+      "Honey Peach": {
+        "count": 103,
+        "percentage": "10.40%"
+      },
+      "Silver Ash": {
+        "count": 67,
+        "percentage": "6.77%"
+      },
+      "Chocolate Truffle": {
+        "count": 87,
+        "percentage": "8.79%"
+      },
+      "Midnight Shadow": {
+        "count": 41,
+        "percentage": "4.14%"
+      },
+      "Snow Fluff": {
+        "count": 46,
+        "percentage": "4.65%"
+      }
+    },
+    "eyes": {
+      "Big Sparkle": {
+        "count": 290,
+        "percentage": "29.29%"
+      },
+      "Focused Runner": {
+        "count": 228,
+        "percentage": "23.03%"
+      },
+      "Happy Wink": {
+        "count": 177,
+        "percentage": "17.88%"
+      },
+      "Chill Sleepy": {
+        "count": 143,
+        "percentage": "14.44%"
+      },
+      "Starry Eyed": {
+        "count": 96,
+        "percentage": "9.70%"
+      },
+      "Speed Gaze": {
+        "count": 56,
+        "percentage": "5.66%"
+      }
+    },
+    "mouth": {
+      "Buck Teeth Grin": {
+        "count": 346,
+        "percentage": "34.95%"
+      },
+      "Joyful Open Smile": {
+        "count": 251,
+        "percentage": "25.35%"
+      },
+      "Determined Grit": {
+        "count": 187,
+        "percentage": "18.89%"
+      },
+      "Whistling Ooh": {
+        "count": 111,
+        "percentage": "11.21%"
+      },
+      "Stuffed Cheeks": {
+        "count": 95,
+        "percentage": "9.60%"
+      }
+    },
+    "headwear": {
+      "None": {
+        "count": 284,
+        "percentage": "28.69%"
+      },
+      "Retro Sweatband": {
+        "count": 128,
+        "percentage": "12.93%"
+      },
+      "Backward Running Cap": {
+        "count": 134,
+        "percentage": "13.54%"
+      },
+      "Tiny Acorn Beret": {
+        "count": 106,
+        "percentage": "10.71%"
+      },
+      "Warm Winter Beanie": {
+        "count": 82,
+        "percentage": "8.28%"
+      },
+      "Pilot Goggles": {
+        "count": 86,
+        "percentage": "8.69%"
+      },
+      "Sunflower Bloom": {
+        "count": 57,
+        "percentage": "5.76%"
+      },
+      "Squeek Ninja Headband": {
+        "count": 42,
+        "percentage": "4.24%"
+      },
+      "Miner Helmet": {
+        "count": 41,
+        "percentage": "4.14%"
+      },
+      "Golden Crown": {
+        "count": 30,
+        "percentage": "3.03%"
+      }
+    },
+    "accessory": {
+      "None": {
+        "count": 312,
+        "percentage": "31.52%"
+      },
+      "Runner Bib #42": {
+        "count": 176,
+        "percentage": "17.78%"
+      },
+      "Cozy Knit Scarf": {
+        "count": 143,
+        "percentage": "14.44%"
+      },
+      "Heart Pin": {
+        "count": 107,
+        "percentage": "10.81%"
+      },
+      "Dapper Bowtie": {
+        "count": 90,
+        "percentage": "9.09%"
+      },
+      "Mechanic Tool Belt": {
+        "count": 62,
+        "percentage": "6.26%"
+      },
+      "Golden Chain & Nut Medallion": {
+        "count": 58,
+        "percentage": "5.86%"
+      },
+      "Red Running Cape": {
+        "count": 42,
+        "percentage": "4.24%"
+      }
+    },
+    "heldItem": {
+      "Golden Squeek Nut": {
+        "count": 286,
+        "percentage": "28.89%"
+      },
+      "Giant Sunflower Seed": {
+        "count": 232,
+        "percentage": "23.43%"
+      },
+      "Fresh Energy Carrot": {
+        "count": 181,
+        "percentage": "18.28%"
+      },
+      "Tiny Brass Wrench": {
+        "count": 136,
+        "percentage": "13.74%"
+      },
+      "Stop Watch": {
+        "count": 94,
+        "percentage": "9.49%"
+      },
+      "Squeek Block #1999": {
+        "count": 61,
+        "percentage": "6.16%"
+      }
+    }
+  }
+}

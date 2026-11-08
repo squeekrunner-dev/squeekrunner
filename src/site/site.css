@@ -273,3 +273,88 @@ th:first-child { width: 48%; }
   .allocation-bar { font-size: .72rem; }
 }
 
+/* Collection Gallery, Modal, Legendaries, and Trait Rarity */
+.collection-roster { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 28px; }
+.hamster-card { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px; cursor: pointer; text-align: left; font-family: inherit; color: inherit; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.hamster-card:hover, .hamster-card:focus-visible { transform: translateY(-4px); border-color: var(--accent-ink); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+.card-media { position: relative; border-radius: 8px; overflow: hidden; background: var(--paper); }
+.card-media img { width: 100%; height: auto; display: block; aspect-ratio: 1; }
+.card-badge { position: absolute; top: 8px; right: 8px; padding: 3px 8px; border-radius: 12px; font-size: .7rem; font-weight: 700; }
+.badge-legendary { background: var(--accent); color: #131b27; }
+.card-meta { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; }
+.token-id { font: 700 .85rem Consolas, monospace; color: var(--accent-ink); }
+.token-name { font-size: .92rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hamster-modal { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
+.hamster-modal.is-open { display: flex; }
+.modal-dialog { background: var(--surface); border: 2px solid var(--line); border-radius: 16px; max-width: 760px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; padding: 32px; box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+.modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: 1px solid var(--line); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
+.modal-close:hover { color: var(--ink); border-color: var(--ink); }
+.modal-body { display: grid; grid-template-columns: 1fr 1.3fr; gap: 28px; align-items: start; }
+.modal-visual { position: relative; border-radius: 12px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); }
+.modal-visual img { width: 100%; height: auto; display: block; }
+.token-badge { display: inline-block; font-size: .75rem; font-weight: 700; padding: 4px 10px; border-radius: 14px; margin-top: 10px; }
+.badge-standard { background: var(--line); color: var(--ink); }
+.modal-title { font-size: 1.45rem; margin-bottom: 8px; }
+.modal-desc { font-size: .9rem; color: var(--muted); margin-bottom: 20px; }
+.traits-heading { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+.traits-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.trait-pill { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.trait-category { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.trait-val { display: block; font-size: .88rem; color: var(--ink); }
+.legendary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.legendary-card { display: grid; grid-template-columns: 240px 1fr; gap: 24px; border: 2px solid var(--accent-ink); background: var(--surface); border-radius: 14px; padding: 24px; align-items: center; }
+.leg-media { border-radius: 10px; overflow: hidden; background: var(--paper); position: relative; }
+.leg-media img { width: 100%; height: auto; display: block; }
+.leg-tag { font: 700 .75rem Consolas, monospace; color: var(--accent-ink); margin-bottom: 4px; }
+.leg-content h3 { font-size: 1.3rem; margin-bottom: 10px; }
+.leg-desc { font-size: .9rem; color: var(--muted); margin-bottom: 16px; }
+.leg-traits { list-style: none; padding: 0; margin: 0; font-size: .85rem; }
+.leg-traits li { display: flex; justify-content: space-between; padding-block: 5px; border-bottom: 1px solid var(--line); }
+.mystery-section { margin-top: 48px; }
+.mystery-heading { font-size: 1.25rem; margin-bottom: 8px; }
+.mystery-intro { font-size: .95rem; color: var(--muted); margin-bottom: 20px; }
+.mystery-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.mystery-card { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.mystery-id { font: 700 .9rem Consolas, monospace; color: var(--accent-ink); }
+.mystery-role { font-size: .8rem; color: var(--muted); }
+.mystery-badge { font-size: .72rem; font-weight: 700; color: var(--idle); margin-top: 4px; }
+.rarity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.rarity-card { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 24px; }
+.rarity-card h3 { font-size: 1.15rem; margin-bottom: 18px; }
+.rarity-bars { list-style: none; padding: 0; margin: 0; }
+.rarity-bars li { display: grid; grid-template-columns: 140px 1fr 50px; gap: 12px; align-items: center; margin-bottom: 8px; font-size: .82rem; }
+.bar-label { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { height: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent-ink); border-radius: 4px; }
+.bar-val { font: 700 .75rem Consolas, monospace; color: var(--muted); text-align: right; }
+.how-get-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.how-get-step { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 28px; display: flex; flex-direction: column; }
+.step-badge { font: 700 .75rem Consolas, monospace; color: var(--accent-ink); text-transform: uppercase; margin-bottom: 12px; }
+.how-get-step h3 { font-size: 1.2rem; margin-bottom: 12px; }
+.how-get-step p { font-size: .9rem; color: var(--muted); flex-grow: 1; margin-bottom: 20px; }
+.disclaimer-boxes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.disclaimer-card { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 22px; }
+.disclaimer-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.disclaimer-card p { font-size: .85rem; color: var(--muted); margin-bottom: 0; }
+@media (max-width: 1050px) {
+  .collection-roster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .legendary-card { grid-template-columns: 1fr; }
+  .mystery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .how-get-grid { grid-template-columns: 1fr; }
+  .disclaimer-boxes { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .collection-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .legendary-grid { grid-template-columns: 1fr; }
+  .mystery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rarity-grid { grid-template-columns: 1fr; }
+  .modal-body { grid-template-columns: 1fr; }
+  .traits-container { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  .collection-roster { grid-template-columns: 1fr; }
+  .mystery-grid { grid-template-columns: 1fr; }
+  .rarity-bars li { grid-template-columns: 110px 1fr 45px; }
+}
+
+

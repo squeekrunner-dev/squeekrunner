@@ -1,0 +1,954 @@
+[
+  {
+    "id": 1,
+    "name": "SqueekRunner Hamster #1 — SqueekRunner Prime — The First Runner",
+    "description": "Legendary 1/1 #001: The founding champion of SqueekRunner. The first paws to step onto the endless track and master the golden nut.",
+    "isLegendary": true,
+    "image": "./images/1.svg",
+    "attributes": [
+      {
+        "trait_type": "Edition",
+        "value": "1 of 1 Legendary"
+      },
+      {
+        "trait_type": "Character",
+        "value": "SqueekRunner Prime"
+      },
+      {
+        "trait_type": "Role",
+        "value": "The First Runner"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Founding Champion"
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "name": "SqueekRunner Hamster #77 — The 98.3 RPM Sprinter",
+    "description": "Legendary 1/1 #002: Reached the absolute maximum calibrated speed limit of 98.316 RPM. Flames trail in his wake.",
+    "isLegendary": true,
+    "image": "./images/77.svg",
+    "attributes": [
+      {
+        "trait_type": "Edition",
+        "value": "1 of 1 Legendary"
+      },
+      {
+        "trait_type": "Character",
+        "value": "Overclocked Sprinter"
+      },
+      {
+        "trait_type": "Speed Record",
+        "value": "98.316 RPM"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Speed Champion"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "SqueekRunner Hamster #2",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/2.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Cyber Grid"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Caramel Cream"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Happy Wink"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Buck Teeth Grin"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Retro Sweatband"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Dapper Bowtie"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Giant Sunflower Seed"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "SqueekRunner Hamster #3",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/3.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Minty Run"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Toasted Biscuit"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Chill Sleepy"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Buck Teeth Grin"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Heart Pin"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Tiny Brass Wrench"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "SqueekRunner Hamster #4",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/4.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Crimson Rush"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Wild Sable"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Big Sparkle"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Warm Winter Beanie"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "None"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Fresh Energy Carrot"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "SqueekRunner Hamster #5",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/5.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sawdust Track"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Classic Golden Brown"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Buck Teeth Grin"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Pilot Goggles"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Golden Chain & Nut Medallion"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Stop Watch"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "SqueekRunner Hamster #6",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/6.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Wheel Night Blue"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "Speed Lightning"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Classic Golden Brown"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Chill Sleepy"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "None"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Fresh Energy Carrot"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "SqueekRunner Hamster #7",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/7.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Wheel Night Blue"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Classic Golden Brown"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Heart Pin"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Giant Sunflower Seed"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "SqueekRunner Hamster #8",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/8.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sunny Meadow"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Silver Ash"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Buck Teeth Grin"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Cozy Knit Scarf"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Fresh Energy Carrot"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "SqueekRunner Hamster #9",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/9.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sepolia Violet"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Silver Ash"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Happy Wink"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Backward Running Cap"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Heart Pin"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "SqueekRunner Hamster #10",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/10.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sepolia Violet"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Toasted Biscuit"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Starry Eyed"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Buck Teeth Grin"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Pilot Goggles"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Golden Chain & Nut Medallion"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "SqueekRunner Hamster #11",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/11.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sepolia Violet"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "Sawdust Cyclone"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Honey Peach"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Happy Wink"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Determined Grit"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Warm Winter Beanie"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Dapper Bowtie"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "SqueekRunner Hamster #12",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/12.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Minty Run"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Caramel Cream"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Happy Wink"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Whistling Ooh"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Tiny Acorn Beret"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "None"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Stop Watch"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "SqueekRunner Hamster #13",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/13.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Crimson Rush"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Classic Golden Brown"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Whistling Ooh"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Miner Helmet"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "None"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Stop Watch"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "SqueekRunner Hamster #14",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/14.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sunny Meadow"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Toasted Biscuit"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Speed Gaze"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Determined Grit"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Retro Sweatband"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "None"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Giant Sunflower Seed"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "SqueekRunner Hamster #15",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/15.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Golden Glow"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Caramel Cream"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Tiny Acorn Beret"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Runner Bib #42"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "SqueekRunner Hamster #16",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/16.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sunny Meadow"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Midnight Shadow"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Starry Eyed"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Cozy Knit Scarf"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "SqueekRunner Hamster #17",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/17.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sawdust Track"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Chocolate Truffle"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Big Sparkle"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Red Running Cape"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Fresh Energy Carrot"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "name": "SqueekRunner Hamster #18",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/18.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sunny Meadow"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Classic Golden Brown"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Chill Sleepy"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Stuffed Cheeks"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Runner Bib #42"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Tiny Brass Wrench"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "name": "SqueekRunner Hamster #19",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/19.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Wheel Night Blue"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Silver Ash"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Big Sparkle"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Buck Teeth Grin"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Tiny Acorn Beret"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Cozy Knit Scarf"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Fresh Energy Carrot"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "SqueekRunner Hamster #20",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/20.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Minty Run"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Snow Fluff"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Warm Winter Beanie"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Runner Bib #42"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": "SqueekRunner Hamster #21",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/21.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sepolia Violet"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Toasted Biscuit"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Big Sparkle"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Joyful Open Smile"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Golden Crown"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Runner Bib #42"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Giant Sunflower Seed"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": "SqueekRunner Hamster #22",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/22.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Wheel Night Blue"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Classic Golden Brown"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Focused Runner"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Whistling Ooh"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "None"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "Dapper Bowtie"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Giant Sunflower Seed"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "SqueekRunner Hamster #23",
+    "description": "A unique generative hamster athlete from the SqueekRunner collection. Born to run, dodge crates, and chase golden nuts.",
+    "isLegendary": false,
+    "image": "./images/23.svg",
+    "attributes": [
+      {
+        "trait_type": "Background",
+        "value": "Sunset Sprint"
+      },
+      {
+        "trait_type": "Special Aura",
+        "value": "None"
+      },
+      {
+        "trait_type": "Fur Color",
+        "value": "Wild Sable"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Chill Sleepy"
+      },
+      {
+        "trait_type": "Mouth",
+        "value": "Determined Grit"
+      },
+      {
+        "trait_type": "Headwear",
+        "value": "Golden Crown"
+      },
+      {
+        "trait_type": "Accessory",
+        "value": "None"
+      },
+      {
+        "trait_type": "Held Item",
+        "value": "Golden Squeek Nut"
+      }
+    ]
+  }
+]
