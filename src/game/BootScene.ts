@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { createTextures, TEXTURES } from './textures';
 import type { GameContext } from './context';
+import { sound } from '../audio/sound';
 
 export class BootScene extends Phaser.Scene {
   constructor(private readonly context: GameContext) {
@@ -9,6 +10,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     createTextures(this);
+    this.game.events.once(Phaser.Core.Events.DESTROY, () => sound.dispose());
 
     // Register hamster running animation (4-frame cycle)
     this.anims.create({

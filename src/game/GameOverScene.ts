@@ -180,21 +180,17 @@ export class GameOverScene extends Phaser.Scene {
       }
     };
 
-    this.input.once('pointerdown', () => {
+    const pointer = (): void => {
       sound.unlock();
       restart();
-    });
+    };
+    this.input.on('pointerdown', pointer);
     this.input.keyboard?.on('keydown', key);
 
     button.on('pointerover', () => button.setFillStyle(0xd8ffa0));
     button.on('pointerout', () => button.setFillStyle(COLORS.lime));
-    button.on('pointerdown', (e: Phaser.Input.Pointer) => {
-      e.event.stopPropagation();
-      restart();
-    });
-
     onSceneExit(this.events, () => {
-      this.input.off('pointerdown', restart);
+      this.input.off('pointerdown', pointer);
       this.input.keyboard?.off('keydown', key);
     });
 

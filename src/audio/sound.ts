@@ -24,6 +24,7 @@ export class SoundManager {
   private masterGain: GainNode | null = null;
   private muted = false;
   private noiseBuffer: AudioBuffer | null = null;
+  private unlocked = false;
   private readonly storageProvider: () => StoragePort | null;
 
   constructor(storageProvider: () => StoragePort | null = defaultStorage) {
@@ -52,6 +53,7 @@ export class SoundManager {
   }
 
   private ensureContext(): AudioContext | null {
+    if (!this.unlocked) return null;
     if (typeof window === 'undefined') return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -62,6 +64,7 @@ export class SoundManager {
         this.masterGain.gain.setValueAtTime(this.muted ? 0 : 0.22, this.ctx.currentTime);
         this.masterGain.connect(this.ctx.destination);
       } catch {
+        this.dispose();
         return null;
       }
     }
@@ -73,7 +76,18 @@ export class SoundManager {
 
   /** Call on user gestures (click, tap, keydown) to unlock browser audio. */
   unlock(): void {
+    this.unlocked = true;
     this.ensureContext();
+  }
+
+  /** One shared context across scenes; release it when its game is destroyed. */
+  dispose(): void {
+    const ctx = this.ctx;
+    this.ctx = null;
+    this.masterGain = null;
+    this.noiseBuffer = null;
+    this.unlocked = false;
+    if (ctx && ctx.state !== 'closed') void ctx.close().catch(() => {});
   }
 
   isMuted(): boolean {
@@ -126,6 +140,7 @@ export class SoundManager {
     osc.connect(gain);
     gain.connect(this.masterGain);
 
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     osc.start(now);
     osc.stop(now + 0.14);
   }
@@ -150,6 +165,7 @@ export class SoundManager {
     osc.connect(gain);
     gain.connect(this.masterGain);
 
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     osc.start(now);
     osc.stop(now + 0.15);
   }
@@ -178,6 +194,7 @@ export class SoundManager {
       osc.connect(gain);
       gain.connect(this.masterGain!);
 
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
       osc.start(noteTime);
       osc.stop(noteTime + 0.18);
     });
@@ -210,6 +227,7 @@ export class SoundManager {
     filter.connect(gain);
     gain.connect(this.masterGain);
 
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     osc.start(now);
     osc.stop(now + 0.24);
   }
@@ -237,6 +255,7 @@ export class SoundManager {
     noiseFilter.connect(noiseGain);
     noiseGain.connect(this.masterGain);
 
+    noise.onended = () => { noise.disconnect(); noiseFilter.disconnect(); noiseGain.disconnect(); };
     noise.start(now);
     noise.stop(now + 0.24);
 
@@ -253,6 +272,7 @@ export class SoundManager {
     osc.connect(oscGain);
     oscGain.connect(this.masterGain);
 
+    osc.onended = () => { osc.disconnect(); oscGain.disconnect(); };
     osc.start(now);
     osc.stop(now + 0.3);
   }
@@ -280,6 +300,7 @@ export class SoundManager {
       osc.connect(gain);
       gain.connect(this.masterGain!);
 
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
       osc.start(noteTime);
       osc.stop(noteTime + 0.28);
     });
@@ -305,6 +326,7 @@ export class SoundManager {
     osc.connect(gain);
     gain.connect(this.masterGain);
 
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     osc.start(now);
     osc.stop(now + 0.06);
   }

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { CONFIG } from '../config';
 import { COLORS } from './textures';
+import { sound } from '../audio/sound';
 
 export const FONT = '"Trebuchet MS", Arial, sans-serif';
 export const MONO = 'Consolas, "Courier New", monospace';
@@ -81,7 +82,11 @@ export function createMuteButton(
     .setOrigin(0.5)
     .setFontStyle('bold');
 
-  bg.on('pointerdown', () => onToggle());
+  bg.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+    event.stopPropagation();
+    sound.unlock();
+    onToggle();
+  });
   bg.on('pointerover', () => bg.setFillStyle(0x283e4f));
   bg.on('pointerout', () => bg.setFillStyle(0x1d2e3b));
 

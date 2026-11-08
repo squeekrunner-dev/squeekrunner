@@ -284,7 +284,7 @@ export class RunScene extends Phaser.Scene {
 
     button.on('pointerover', () => button.setFillStyle(0xd8ffa0));
     button.on('pointerout', () => button.setFillStyle(COLORS.lime));
-    button.on('pointerdown', () => this.action());
+
 
     this.intro = this.add.container(0, 0, [bg, kicker, title, hint, button, call, controls]).setDepth(22);
   }
@@ -357,6 +357,7 @@ export class RunScene extends Phaser.Scene {
     if (reset) {
       this.nuts.clear(true, true);
       this.noticeUntil = 0;
+      this.tweens.killTweensOf(this.noticeContainer);
       this.noticeContainer.setAlpha(0);
     }
     if (this.state !== 'playing') return;
@@ -440,7 +441,7 @@ export class RunScene extends Phaser.Scene {
       newBest,
       demo: this.context.source.kind === 'demo',
     };
-    this.time.delayedCall(450, () => this.scene.start('GameOver', result));
+    this.time.delayedCall(350, () => this.scene.start('GameOver', result));
   }
 
   private score(): number {
@@ -578,13 +579,6 @@ export class RunScene extends Phaser.Scene {
       }
     }
 
-    // Gentle bobbing and scale pulse for golden nuts
-    for (const child of this.nuts.getChildren()) {
-      const nut = child as Phaser.Physics.Arcade.Sprite;
-      nut.y = CONFIG.groundY - CONFIG.bonus.floatHeight + Math.sin((this.elapsed + nut.x * 2) / 160) * 6;
-      nut.setScale(1 + Math.sin(this.elapsed / 130) * 0.08);
-    }
-
     // Player grounded / jump animation logic
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     this.player.setX(CONFIG.playerX).setVelocityX(0);
@@ -659,7 +653,8 @@ export class RunScene extends Phaser.Scene {
       166 * Math.max(0.06, (this.speed / baseSpeed(this.distance) - 1) / (CONFIG.speed.maximumMultiplier - 1));
 
     // Notice fadeout
-    if (this.noticeUntil <= this.elapsed && this.noticeContainer.alpha > 0) {
+    if (this.noticeUntil > 0 && this.noticeUntil <= this.elapsed) {
+      this.noticeUntil = 0;
       this.tweens.add({
         targets: this.noticeContainer,
         alpha: 0,

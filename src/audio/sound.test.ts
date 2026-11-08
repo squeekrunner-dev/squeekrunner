@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { SoundManager, type StoragePort } from './sound';
 
 function createMemoryStorage(): StoragePort {
@@ -12,6 +12,7 @@ function createMemoryStorage(): StoragePort {
 }
 
 describe('SoundManager', () => {
+  afterEach(() => vi.unstubAllGlobals());
   let storage: StoragePort;
   let sound: SoundManager;
 
@@ -51,5 +52,28 @@ describe('SoundManager', () => {
       sound.playNewBlock();
       sound.playUiClick();
     }).not.toThrow();
+  });
+
+  it('does not construct audio before a gesture and closes its shared context on disposal', () => {
+    const close = vi.fn(async () => {});
+    const createGain = () => ({ gain: { setValueAtTime: vi.fn() }, connect: vi.fn() });
+    const construct = vi.fn();
+    class Context {
+      state = 'running'; currentTime = 0; destination = {};
+      createGain = createGain; close = close;
+      constructor() { construct(); }
+    }
+    vi.stubGlobal('window', { AudioContext: Context });
+    sound.playNewBlock(); sound.playJump(); expect(construct).not.toHaveBeenCalled();
+    sound.unlock(); sound.unlock(); expect(construct).toHaveBeenCalledTimes(1);
+    sound.dispose(); sound.dispose(); expect(close).toHaveBeenCalledTimes(1);
+    sound.playNewBlock(); expect(construct).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps mute usable when storage and audio initialization fail', () => {
+    const manager = new SoundManager(() => { throw new Error('Storage denied'); });
+    vi.stubGlobal('window', { AudioContext: class { constructor() { throw new Error('Audio denied'); } } });
+    expect(() => { manager.unlock(); manager.playJump(); manager.toggleMute(); manager.dispose(); }).not.toThrow();
+    expect(manager.isMuted()).toBe(true);
   });
 });
