@@ -56,13 +56,13 @@ This is an application with manual review, not a raffle.
 **A:** We enforce strictly 1 application per address and X account. Level maps and coins are delivered in progressive chunks from the server during the run so layout cannot be precalculated offline. Additionally, our engine checks 60 Hz replay physics, real-time elapsed duration, input rhythm variance, IP hash clusters, and on-chain wallet history. Obvious bot farms will be rejected.
 
 ### Q14: Do SqueekRunner Hamsters NFTs have monetary value?
-**A:** Today, SqueekRunner Hamsters are free testnet collectibles created solely for gaming fun and experimentation, carrying zero monetary value on Sepolia. In the future, a migration to Ethereum mainnet, the $HMSTR coin, and The Wheel utility are planned — see our What's Next roadmap.
+**A:** Today, SqueekRunner Hamsters are free testnet collectibles created solely for gaming fun and experimentation, carrying zero monetary value on Sepolia. In the future, a migration to Squeekchain mainnet (once it launches), the $HMSTR coin, and The Wheel utility are planned — see our What's Next roadmap.
 
 ### Q15: Is SqueekRunner an official Squeekchain project?
 **A:** No. SqueekRunner is an independent community project created by builders participating in the Squeekchain Genesis Code Lane. It is not created, owned, operated, or endorsed by the Squeekchain core team.
 
 ### Q16: What happens after the mint?
-**A:** Following the free testnet mint on Sepolia, the collection is planned to migrate to Ethereum mainnet (mechanism and schedule to be announced later). We are also planning the launch of $HMSTR, The Wheel locking shifts, and expanding utility for hamster holders.
+**A:** Following the free testnet mint on Sepolia, the collection is planned to move to mainnet together with the Squeekchain mainnet launch (mechanism and schedule to be announced later). We are also planning the launch of $HMSTR, The Wheel locking shifts, and expanding utility for hamster holders.
 
 ### Q17: What is $HMSTR?
 **A:** $HMSTR is the planned coin of SqueekRunner. SqueekRunner Hamster NFT holders will receive an allocation from the total supply of $HMSTR. Tokenomics will be announced later. The team takes no trading fees and no royalties for itself — they flow back to the community treasury and the hamsters on the wheel.
