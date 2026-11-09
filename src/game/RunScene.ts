@@ -178,7 +178,8 @@ export class RunScene extends Phaser.Scene {
       this.coinSprite = null;
     });
 
-    if (data.immediate) this.begin();
+    // "Run again" must go through start(): it asks the server for a new ranked session (plain begin() would be offline).
+    if (data.immediate) this.start();
   }
 
   private toggleMute(): void {
