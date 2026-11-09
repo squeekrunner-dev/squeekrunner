@@ -161,7 +161,7 @@ export class SoundManager {
     osc.frequency.setValueAtTime(240, now);
     osc.frequency.exponentialRampToValueAtTime(560, now + 0.11);
 
-    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.setValueAtTime(0.455, now); // +30% (owner request)
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
 
     osc.connect(gain);
@@ -186,7 +186,7 @@ export class SoundManager {
     osc.frequency.setValueAtTime(480, now);
     osc.frequency.exponentialRampToValueAtTime(920, now + 0.12);
 
-    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.setValueAtTime(0.364, now); // +30% (owner request)
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
 
     osc.connect(gain);
@@ -275,7 +275,7 @@ export class SoundManager {
     noiseFilter.frequency.exponentialRampToValueAtTime(200, now + 0.2);
 
     const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.5, now);
+    noiseGain.gain.setValueAtTime(0.65, now); // +30% (owner request)
     noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
 
     noise.connect(noiseFilter);
@@ -293,7 +293,7 @@ export class SoundManager {
     osc.frequency.setValueAtTime(160, now);
     osc.frequency.exponentialRampToValueAtTime(38, now + 0.25);
 
-    oscGain.gain.setValueAtTime(0.6, now);
+    oscGain.gain.setValueAtTime(0.78, now); // +30% (owner request)
     oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
 
     osc.connect(oscGain);
