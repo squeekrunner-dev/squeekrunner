@@ -33,6 +33,11 @@ export const TEXTURES = {
   dust: 'dust',
   speedLine: 'speed-line',
   star: 'star',
+  glowGold: 'fx-glow-gold',
+  glowBlue: 'fx-glow-blue',
+  sparkGold: 'fx-spark-gold',
+  sparkBlue: 'fx-spark-blue',
+  vignette: 'fx-vignette',
 } as const;
 
 export const COLORS = {
@@ -453,6 +458,36 @@ export function createTextures(scene: Phaser.Scene): void {
   ], true);
   g.fillStyle(0xffffff).fillCircle(8, 8, 2);
   g.generateTexture(TEXTURES.star, 16, 16);
+
+  // Canvas-compatible colored textures: tint/post-processing would require WebGL.
+  for (const [key, color] of [[TEXTURES.sparkGold, COLORS.gold], [TEXTURES.sparkBlue, COLORS.blue]] as const) {
+    g.clear();
+    g.fillStyle(color).fillRect(2, 0, 2, 6).fillRect(0, 2, 6, 2);
+    g.generateTexture(key, 6, 6);
+  }
+  for (const [key, rgb] of [[TEXTURES.glowGold, '255,198,90'], [TEXTURES.glowBlue, '100,203,255']] as const) {
+    const texture = scene.textures.createCanvas(key, 128, 128)!;
+    const ctx = texture.getContext();
+    const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gradient.addColorStop(0, `rgba(${rgb},0.55)`);
+    gradient.addColorStop(0.35, `rgba(${rgb},0.28)`);
+    gradient.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 128, 128);
+    texture.refresh();
+  }
+  const vignette = scene.textures.createCanvas(TEXTURES.vignette, 256, 144)!;
+  const ctx = vignette.getContext();
+  ctx.save();
+  ctx.scale(1, 144 / 256);
+  const gradient = ctx.createRadialGradient(128, 128, 55, 128, 128, 170);
+  gradient.addColorStop(0, 'rgba(230,149,55,0)');
+  gradient.addColorStop(0.55, 'rgba(230,149,55,0.12)');
+  gradient.addColorStop(1, 'rgba(230,149,55,1)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.restore();
+  vignette.refresh();
 
   g.destroy();
 }

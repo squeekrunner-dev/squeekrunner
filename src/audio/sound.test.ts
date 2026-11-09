@@ -25,6 +25,28 @@ describe('SoundManager', () => {
     expect(sound.isMuted()).toBe(false);
   });
 
+  it('shares mute with optional haptics and preserves the navigator receiver', () => {
+    const vibrate = vi.fn(function (this: unknown) { expect(this).toBe(device); return true; });
+    const device = { vibrate };
+    vi.stubGlobal('navigator', device);
+    sound.vibrate(15);
+    sound.toggleMute();
+    sound.vibrate(45);
+    expect(vibrate).toHaveBeenCalledExactlyOnceWith(15);
+    sound.toggleMute();
+    sound.vibrate(22);
+    expect(vibrate).toHaveBeenLastCalledWith(22);
+  });
+
+  it('ignores missing or denied vibration APIs', () => {
+    vi.stubGlobal('navigator', undefined);
+    expect(() => sound.vibrate(15)).not.toThrow();
+    vi.stubGlobal('navigator', {});
+    expect(() => sound.vibrate(15)).not.toThrow();
+    vi.stubGlobal('navigator', { vibrate: () => { throw new Error('Denied'); } });
+    expect(() => sound.vibrate(15)).not.toThrow();
+  });
+
   it('toggles mute state and saves to storage', () => {
     expect(sound.toggleMute()).toBe(true);
     expect(sound.isMuted()).toBe(true);

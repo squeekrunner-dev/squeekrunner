@@ -14,13 +14,10 @@ import { backdrop, compactHeight, createMuteButton, label, pill } from './ui';
 import { ServerSource } from '../net/source';
 import { centerCamera, MAX_PAD, sideFades } from './viewport';
 import { startRanked, submitRanked, type RankedRun } from '../net/ranked';
+import { RunFx } from './fx/RunFx';
+import { speedIntensity } from './fx/profile';
 
 type RunState = 'ready' | 'playing' | 'paused' | 'ended';
-
-interface SpeedLine {
-  sprite: Phaser.GameObjects.Image;
-  speedFactor: number;
-}
 
 export class RunScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Sprite;
@@ -53,8 +50,7 @@ export class RunScene extends Phaser.Scene {
   private noticeCardText!: Phaser.GameObjects.Text;
   private muteBtn!: { container: Phaser.GameObjects.Container; setMuted: (muted: boolean) => void };
 
-  private speedLines: SpeedLine[] = [];
-  private dustPool: Phaser.GameObjects.Image[] = [];
+  private fx!: RunFx;
 
   private state: RunState = 'ready';
   private detector = new BlockDetector();
@@ -67,7 +63,6 @@ export class RunScene extends Phaser.Scene {
   private noticeUntil = 0;
   private runBlock: RunBlock | null = null;
   private lastMode = '';
-  private dustIn = 0;
   /** Server session of a ranked run; null for offline/unranked runs. */
   private ranked: RankedRun | null = null;
   private starting = false;
@@ -80,7 +75,7 @@ export class RunScene extends Phaser.Scene {
   create(data: { immediate?: boolean } = {}): void {
     this.state = 'ready';
     this.distance = this.elapsed = 0;
-    this.noticeUntil = this.dustIn = 0;
+    this.noticeUntil = 0;
     this.hasShield = false; this.airJumps = CONFIG.doubleJumps.start;
     this.speed = CONFIG.speed.base;
     // Offline seed; a ranked run replaces the driver with the server-issued seed on start.
@@ -122,19 +117,7 @@ export class RunScene extends Phaser.Scene {
       .setDepth(6)
       .setVisible(false);
 
-    // Speed lines pool (12 pooled images)
-    this.speedLines = [];
-    for (let i = 0; i < 12; i++) {
-      const line = this.add.image(-100, -100, TEXTURES.speedLine).setDepth(7).setAlpha(0).setVisible(false);
-      this.speedLines.push({ sprite: line, speedFactor: 1.2 + (i % 4) * 0.35 });
-    }
-
-    // Dust particles pool (24 pooled images)
-    this.dustPool = [];
-    for (let i = 0; i < 24; i++) {
-      const d = this.add.image(-50, -50, TEXTURES.dust).setDepth(4).setVisible(false);
-      this.dustPool.push(d);
-    }
+    this.fx = new RunFx(this, this.wheelGlow);
 
     this.createHud();
     this.createNoticeCard();
@@ -347,6 +330,7 @@ export class RunScene extends Phaser.Scene {
     if (this.ranked && this.state === 'playing') return;
     if (this.state === 'playing') {
       this.state = 'paused';
+      this.fx.stopMotion();
       this.driver.pause();
       this.player.anims.pause();
       this.pauseOverlay.setVisible(true);
@@ -397,31 +381,39 @@ export class RunScene extends Phaser.Scene {
     this.player.setPosition(CONFIG.playerX, s.player.y / UNIT);
     for (const event of events) {
       if (event === 'jump' || event === 'airJump') {
-        if (event === 'jump') sound.playJump(); else sound.playDoubleJump();
-        this.emitDust(this.player.x - 10, this.player.y - 4, 8);
+        if (event === 'jump') sound.playJump();
+        else { sound.playDoubleJump(); this.fx.airJump(); }
+        this.fx.dust(this.player.x - 10, this.player.y - 4, 8);
       } else if (event === 'collect') {
         sound.playCollectNut();
-        this.emitDust(this.player.x, this.player.y - 28, 18);
+        this.fx.collect(this.player.x, this.player.y - 28, false);
+        sound.vibrate(CONFIG.fx.haptics.collectMs);
         this.notice(`GOLDEN NUT  +${CONFIG.bonus.points}  ·  SHIELD  ·  +${CONFIG.doubleJumps.perNut} DOUBLE JUMPS`);
       } else if (event === 'shieldHit') {
         sound.playShieldHit();
-        this.cameras.main.shake(120, 0.005);
-        this.emitDust(this.player.x + 28, this.player.y - 20, 14);
+        sound.vibrate(CONFIG.fx.haptics.shieldMs);
+        if (!this.fx.reduced) this.cameras.main.shake(CONFIG.fx.shake.shieldMs, CONFIG.fx.shake.shieldIntensity);
+        this.fx.dust(this.player.x + 28, this.player.y - 20, 14);
         this.notice('SHIELD DEFLECTED IMPACT!');
-      } else if (event === 'nut' && this.ranked) {
-        sound.playNewBlock();
-        this.notice('⚡ NEW SQUEEK BLOCK! GOLDEN NUT INCOMING!');
+      } else if (event === 'nut') {
+        this.fx.newBlock();
+        if (this.ranked) {
+          sound.playNewBlock();
+          this.notice('⚡ NEW SQUEEK BLOCK! GOLDEN NUT INCOMING!');
+        }
       } else if (event === 'coinSpawn') {
         this.notice('WHITELIST COIN AHEAD · DOUBLE JUMP!');
       } else if (event === 'coin') {
         sound.playCollectNut();
-        this.emitDust(this.player.x, this.player.y - 60, 16);
+        this.fx.collect(this.player.x, this.player.y - 60, true);
+        sound.vibrate(CONFIG.fx.haptics.coinMs);
         this.notice(`WHITELIST COIN ${s.coins.collected} / ${CONFIG.coins.count}`);
       } else if (event === 'coinMissed') {
         sound.playShieldHit();
         this.notice('COIN MISSED · THE WHITELIST NEEDS ALL 10');
       } else if (event === 'gameOver') this.endRun();
     }
+    this.fx.observeScore(s.score);
     this.coinText.setText(`${s.coins.collected} / ${CONFIG.coins.count}`)
       .setColor(s.coins.missed ? '#ec8a79' : '#ffcf75');
   }
@@ -464,6 +456,7 @@ export class RunScene extends Phaser.Scene {
       this.coinSprite ??= this.add.image(0, COIN_Y / UNIT, TEXTURES.coin).setDepth(4);
       this.coinSprite.x = (coinX(s, s.coins.active) - shift) / UNIT;
     } else { this.coinSprite?.destroy(); this.coinSprite = null; }
+    this.fx.collectibles(this.nutSprite, this.coinSprite);
   }
 
   private endRun(): void {
@@ -481,7 +474,9 @@ export class RunScene extends Phaser.Scene {
     this.player.setAngle(22);
     this.player.setTint(COLORS.danger);
     sound.playHit();
-    this.cameras.main.shake(220, 0.009);
+    this.fx.stopMotion();
+    if (this.driver.sim.endReason === 'collision') sound.vibrate(CONFIG.fx.haptics.hitMs);
+    if (!this.fx.reduced) this.cameras.main.shake(CONFIG.fx.shake.hitMs, CONFIG.fx.shake.hitIntensity);
 
     const score = this.score();
     const newBest = score > this.context.records.best;
@@ -517,33 +512,6 @@ export class RunScene extends Phaser.Scene {
       duration: 180,
       ease: 'Back.easeOut',
     });
-  }
-
-  private emitDust(x: number, y: number, count: number): void {
-    let emitted = 0;
-    for (const d of this.dustPool) {
-      if (emitted >= count) break;
-      if (!d.visible) {
-        d.setPosition(x, y)
-          .setScale(0.5 + Math.random() * 0.9)
-          .setAlpha(0.75)
-          .setVisible(true);
-
-        const targetX = x - 20 - Math.random() * 40;
-        const targetY = y - Math.random() * 25;
-        this.tweens.add({
-          targets: d,
-          x: targetX,
-          y: targetY,
-          alpha: 0,
-          duration: 280 + Math.random() * 160,
-          onComplete: () => {
-            d.setVisible(false);
-          },
-        });
-        emitted++;
-      }
-    }
   }
 
   update(_time: number, delta: number): void {
@@ -584,7 +552,10 @@ export class RunScene extends Phaser.Scene {
       this.lastMode = view.mode;
     }
 
-    if (this.state !== 'playing') return;
+    if (this.state !== 'playing') {
+      if (this.state === 'ended') this.fx.update(dt, 0, this.speed, this.player, false, false);
+      return;
+    }
 
     if (this.ranked) this.driver.advanceRanked(this.ranked.timeline.targetTick(), this.ranked.timeline, events => this.onTick(events));
     else this.driver.advance(delta, rpmSample(view), events => this.onTick(events));
@@ -595,29 +566,6 @@ export class RunScene extends Phaser.Scene {
 
     // Spinning hamster wheel
     this.wheel.rotation += ((view.rpm / 60) * Math.PI * 2 * dt);
-
-    // Speed effects (Speed Lines when RPM is elevated in LIVE mode)
-    const isHighRpm = view.mode === 'LIVE' && view.rpm > 18;
-    const speedIntensity = isHighRpm ? Phaser.Math.Clamp((view.rpm - 18) / 75, 0, 1) : 0;
-    const activeLinesCount = Math.floor(speedIntensity * this.speedLines.length);
-
-    this.speedLines.forEach((line, idx) => {
-      if (idx < activeLinesCount) {
-        if (!line.sprite.visible) {
-          line.sprite.setPosition(CONFIG.width + Math.random() * 200, 115 + Math.random() * 270)
-            .setAlpha(0.15 + speedIntensity * 0.45)
-            .setScale(1 + speedIntensity * 0.8, 1)
-            .setVisible(true);
-        } else {
-          line.sprite.x -= (this.speed * line.speedFactor + 200) * dt;
-          if (line.sprite.x < -80) {
-            line.sprite.setPosition(CONFIG.width + Math.random() * 120, 115 + Math.random() * 270);
-          }
-        }
-      } else {
-        line.sprite.setVisible(false);
-      }
-    });
 
     // Player grounded / jump animation logic
     const player = this.driver.sim.player;
@@ -632,13 +580,6 @@ export class RunScene extends Phaser.Scene {
       this.player.anims.timeScale = speedRamp;
       this.player.setAngle(Math.sin(this.elapsed / 50) * 2.5);
 
-      // Paws dust frequency
-      this.dustIn -= dt;
-      if (this.dustIn <= 0) {
-        const dustCount = speedIntensity > 0.4 ? 2 : 1;
-        this.emitDust(this.player.x - 24, CONFIG.groundY - 3, dustCount);
-        this.dustIn = speedIntensity > 0.4 ? 0.07 : 0.12;
-      }
     } else {
       // In air: show jump or fall sprite
       this.player.anims.stop();
@@ -650,6 +591,9 @@ export class RunScene extends Phaser.Scene {
         this.player.setAngle(5);
       }
     }
+
+    this.fx.update(dt, speedIntensity(this.speed, baseSpeed(this.distance)), this.speed, this.player, grounded, true);
+    this.fx.collectibles(this.nutSprite, this.coinSprite);
 
     this.shadow.setScale(Math.max(0.3, 1 - (CONFIG.groundY - this.player.y) / 300));
 

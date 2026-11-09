@@ -107,6 +107,12 @@ export class SoundManager {
     return this.muted;
   }
 
+  /** Short optional haptics share the M preference; unsupported/blocked devices are harmless. */
+  vibrate(milliseconds: number): void {
+    if (this.muted || typeof navigator === 'undefined') return;
+    try { navigator.vibrate?.(milliseconds); } catch { /* Browser policy can deny vibration. */ }
+  }
+
   private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
     if (!this.noiseBuffer || this.noiseBuffer.sampleRate !== ctx.sampleRate) {
       const bufferSize = ctx.sampleRate * 0.3; // 300ms of noise

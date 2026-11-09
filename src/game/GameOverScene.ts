@@ -6,6 +6,7 @@ import type { GameContext, RunResult } from './context';
 import { COLORS, TEXTURES } from './textures';
 import { backdrop, createMuteButton, label, pill } from './ui';
 import { centerCamera, MAX_PAD, sideFades } from './viewport';
+import { celebrateQualification } from './fx/celebrate';
 
 export class GameOverScene extends Phaser.Scene {
   private orbitingStars: Phaser.GameObjects.Image[] = [];
@@ -284,16 +285,7 @@ export class GameOverScene extends Phaser.Scene {
     cta.on('pointerover', () => cta.setFillStyle(0xffe2a3));
     cta.on('pointerout', () => cta.setFillStyle(COLORS.gold));
     cta.on('pointerdown', (_p: unknown, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); apply(); });
-    // Celebration: a burst of golden sparks around the button.
-    for (let i = 0; i < 36; i++) {
-      const spark = this.add.image(x + (Math.random() - 0.5) * w, y, i % 3 ? TEXTURES.dust : TEXTURES.star)
-        .setScale(i % 3 ? 1.3 : 0.7).setDepth(17).setTint(COLORS.gold);
-      const angle = Math.random() * Math.PI * 2, distance = 50 + Math.random() * 120;
-      this.tweens.add({
-        targets: spark, x: spark.x + Math.cos(angle) * distance, y: y + Math.sin(angle) * distance * 0.6,
-        alpha: 0, scale: 0.2, angle: 180, duration: 700 + Math.random() * 600, ease: 'Cubic.easeOut', onComplete: () => spark.destroy(),
-      });
-    }
+    celebrateQualification(this);
     sound.playCollectNut();
   }
 
