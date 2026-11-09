@@ -72,7 +72,7 @@ export class RunFx {
     this.comet = scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.5).setVisible(false);
     this.feathers = this.pool(28, TEXTURES.feather, 5.6);
     this.flames = this.pool(CONFIG.fx.unstoppable.comet.fire.pool, TEXTURES.flameHot, 4.95); // behind the hamster
-    for (const flame of this.flames) flame.image.setBlendMode(Phaser.BlendModes.ADD);
+    for (const flame of this.flames) flame.image.setBlendMode('ADD'); // string form keeps Phaser a type-only import
     this.milestone = label(scene, CONFIG.width / 2, CONFIG.fx.milestones.y, '', CONFIG.fx.milestones.fontSize, '#ffdf96', true)
       .setOrigin(0.5).setDepth(19).setFontStyle('bold').setStroke('#131b27', 5).setVisible(false);
   }

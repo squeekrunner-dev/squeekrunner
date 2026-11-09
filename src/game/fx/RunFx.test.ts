@@ -21,6 +21,7 @@ class Visual {
   setOrigin(): this { return this; }
   setFontStyle(): this { return this; }
   setStroke(): this { return this; }
+  setBlendMode(): this { return this; }
 }
 
 function harness() {
@@ -107,4 +108,19 @@ describe('RunFx presentation lifecycle', () => {
     expect(h.visible(TEXTURES.glowBlue)).toHaveLength(0);
     expect(h.visible(TEXTURES.glowGold)).toHaveLength(0);
   });
+
+  it('unstoppable: comet fire, wings and ghosts stay within their pools and clear after it ends', () => {
+    const h = harness(), created = h.objects.length;
+    h.fx.setUnstoppable(true);
+    for (let i = 0; i < 240; i++) h.step(1, true);
+    expect(h.visible(TEXTURES.flameHot).length + h.visible(TEXTURES.flameMid).length + h.visible(TEXTURES.flameCool).length)
+      .toBeGreaterThan(10);
+    expect(h.visible(TEXTURES.wing)).toHaveLength(1);
+    expect(h.objects).toHaveLength(created);
+    h.fx.setUnstoppable(false);
+    for (let i = 0; i < 120; i++) h.step(1, true);
+    expect(h.visible(TEXTURES.flameHot).length + h.visible(TEXTURES.flameMid).length + h.visible(TEXTURES.flameCool).length).toBe(0);
+    expect(h.visible(TEXTURES.wing)).toHaveLength(0);
+  });
 });
+
