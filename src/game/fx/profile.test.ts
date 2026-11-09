@@ -24,7 +24,7 @@ describe('presentation speed and milestones', () => {
     }
     const peak = dustProfile(1), slow = dustProfile(0);
     expect(peak.count / peak.interval).toBeGreaterThan(10 * slow.count / slow.interval);
-    expect(Math.ceil(peak.count / peak.interval * CONFIG.fx.dust.life) + 22).toBeLessThanOrEqual(CONFIG.fx.dust.pool);
+    expect(Math.ceil(peak.count / peak.interval * (CONFIG.fx.dust.life + CONFIG.fx.dust.lifeBoost)) + 22).toBeLessThanOrEqual(CONFIG.fx.dust.pool);
   });
 
   it('detects threshold crossings including catch-up, without repeats', () => {

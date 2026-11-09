@@ -12,6 +12,9 @@ interface Particle {
   vy: number;
   gravity: number;
   alpha: number;
+  /** Starting scale and how much it grows by the end of life (dust puffs expand as they fade). */
+  scale?: number;
+  grow?: number;
 }
 
 /** Bounded, presentation-only pools. No simulation object or RNG is passed to this class. */
@@ -67,12 +70,14 @@ export class RunFx {
       if (count <= 0) break;
       if (p.life > 0) continue;
       count--;
-      p.duration = p.life = fx.life * (0.65 + Math.random() * 0.35);
+      // Faster wheel: puffs live longer, fly farther back and spread higher, so the trail stretches out.
+      p.duration = p.life = (fx.life + intensity * fx.lifeBoost) * (0.65 + Math.random() * 0.35);
       p.vx = -(fx.spread + intensity * fx.spreadBoost) * (0.5 + Math.random());
-      p.vy = -Math.random() * fx.rise / p.life;
+      p.vy = -Math.random() * (fx.rise + intensity * fx.riseBoost) / p.life;
       p.alpha = 0.7;
-      p.image.setPosition(x, y).setScale(fx.scale + Math.random() * fx.scaleRandom + intensity * fx.scaleBoost)
-        .setAlpha(p.alpha).setVisible(true);
+      p.scale = fx.scale + Math.random() * fx.scaleRandom + intensity * fx.scaleBoost;
+      p.grow = fx.grow * intensity;
+      p.image.setPosition(x, y).setScale(p.scale).setAlpha(p.alpha).setVisible(true);
     }
   }
 
@@ -133,6 +138,7 @@ export class RunFx {
         p.image.y += p.vy * dt;
         p.vy += p.gravity * dt;
         p.image.setAlpha(p.alpha * p.life / p.duration).setVisible(p.life > 0);
+        if (p.grow) p.image.setScale(p.scale! * (1 + p.grow * (1 - p.life / p.duration)));
       }
     }
     if (playing && grounded) {

@@ -2,8 +2,9 @@
 export const CONFIG = {
   /** Presentation only. Never consumed by the deterministic simulation. */
   fx: {
-    dust: { pool: 96, intervalSlow: 0.12, intervalFast: 0.035, countSlow: 1, countFast: 5,
-      life: 0.48, scale: 0.55, scaleRandom: 0.65, scaleBoost: 0.45, spread: 65, spreadBoost: 55, rise: 28 },
+    dust: { pool: 220, intervalSlow: 0.12, intervalFast: 0.035, countSlow: 1, countFast: 5,
+      life: 0.48, lifeBoost: 0.85, scale: 0.55, scaleRandom: 0.65, scaleBoost: 0.45, grow: 0.9,
+      spread: 65, spreadBoost: 170, rise: 28, riseBoost: 34 },
     wind: { pool: 18, threshold: 0.5, alpha: 0.32, reducedFactor: 0.22, speedFactor: 1.5, extraSpeed: 200 },
     vignette: { alpha: 0.22, reducedFactor: 0.6 },
     shake: { threshold: 0.9, intensity: 0.00045, durationMs: 90, interval: 0.24,

@@ -55,7 +55,8 @@ describe('RunFx presentation lifecycle', () => {
     expect(h.objects).toHaveLength(created);
     expect(h.visible(TEXTURES.dust)).toHaveLength(CONFIG.fx.dust.pool);
     expect(h.visible(TEXTURES.sparkBlue).length + h.visible(TEXTURES.sparkGold).length).toBe(CONFIG.fx.sparks.pool);
-    for (let i = 0; i < 60; i++) h.step(0, false, 1 / 60, false);
+    // Peak-speed dust lives up to life + lifeBoost (~1.33 s); wait 1.5 s.
+    for (let i = 0; i < 90; i++) h.step(0, false, 1 / 60, false);
     expect(h.visible(TEXTURES.dust)).toHaveLength(0);
     expect(h.visible(TEXTURES.sparkBlue).length + h.visible(TEXTURES.sparkGold).length).toBe(0);
   });
