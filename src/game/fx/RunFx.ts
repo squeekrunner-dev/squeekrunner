@@ -48,10 +48,11 @@ export class RunFx {
   private readonly wingNear: Phaser.GameObjects.Image;
   private readonly comet: Phaser.GameObjects.Image;
   private readonly feathers: Particle[];
+  private readonly flames: Particle[];
+  private fireRemainder = 0;
   /** 0..1 wing/comet presence, eased toward the unstoppable state. */
   private wingT = 0;
   private cometT = 0;
-  private cometIn = 0;
 
   constructor(private readonly scene: Phaser.Scene, private readonly wheelGlow: Phaser.GameObjects.Graphics) {
     this.dustPool = this.pool(CONFIG.fx.dust.pool, TEXTURES.dust, 4);
@@ -70,6 +71,8 @@ export class RunFx {
     this.wingNear = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(5.1).setVisible(false);
     this.comet = scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.5).setVisible(false);
     this.feathers = this.pool(28, TEXTURES.feather, 5.6);
+    this.flames = this.pool(CONFIG.fx.unstoppable.comet.fire.pool, TEXTURES.flameHot, 4.95); // behind the hamster
+    for (const flame of this.flames) flame.image.setBlendMode(Phaser.BlendModes.ADD);
     this.milestone = label(scene, CONFIG.width / 2, CONFIG.fx.milestones.y, '', CONFIG.fx.milestones.fontSize, '#ffdf96', true)
       .setOrigin(0.5).setDepth(19).setFontStyle('bold').setStroke('#131b27', 5).setVisible(false);
   }
@@ -187,7 +190,7 @@ export class RunFx {
     const fx = CONFIG.fx, reduced = this.reduced, camera = this.scene.cameras.main;
     this.clock += dt;
     if (reduced && camera.shakeEffect.isRunning) camera.shakeEffect.reset();
-    for (const pool of [this.dustPool, this.sparks, this.ghosts, this.feathers]) {
+    for (const pool of [this.dustPool, this.sparks, this.ghosts, this.feathers, this.flames]) {
       for (const p of pool) {
         if (p.life <= 0) continue;
         p.life = Math.max(0, p.life - dt);
@@ -260,28 +263,35 @@ export class RunFx {
         .setAlpha(Math.min(1, wcfg.glowAlpha * t + this.flashWings * 0.5));
     }
 
-    // Comet bow shock in front of the face, like entering the atmosphere: flickering arc + sparks streaming back.
-    const ccfg = u.comet;
+    // Comet-head fire in front of the face: puffs are born on a bow around the snout, stream backward along
+    // the body, swell, then cool from white-yellow to orange to red and fade (additive blending = glowing fire).
+    const ccfg = u.comet, fire = ccfg.fire;
     this.cometT = on ? Math.min(1, this.cometT + dt / ccfg.fade) : Math.max(0, this.cometT - dt / ccfg.fade);
-    this.comet.setVisible(this.cometT > 0 && playing);
-    if (this.comet.visible) {
-      const flicker = reduced ? 0 : (Math.random() - 0.5) * 2 * ccfg.flicker;
-      const od = 1 + this.overdrive * 0.35;
-      this.comet.setPosition(player.x + ccfg.offsetX - 2 * (1 - this.cometT), player.y - ccfg.offsetY)
-        .setScale(ccfg.scale * (0.85 + 0.15 * this.cometT) * od * (1 + flicker * 0.4), ccfg.scale * (0.9 + 0.1 * this.cometT) * od)
-        .setAlpha(Math.min(1, ccfg.alpha * this.cometT * (1 + flicker)));
-      this.cometIn -= dt;
-      if (on && this.cometIn <= 0 && !reduced) {
-        const spark = this.sparks.find(p => p.life <= 0);
-        if (spark) {
-          const edge = (Math.random() - 0.5) * 80; // spread of sparks along the (now small) arc
-          spark.duration = spark.life = 0.35 + Math.random() * 0.25;
-          spark.vx = -(speed * 0.6 + 120 + Math.random() * 120); spark.vy = edge * 0.2; spark.gravity = 0; spark.alpha = 1;
-          spark.image.setTexture(TEXTURES.sparkGold).setPosition(player.x + ccfg.offsetX + 12, player.y - ccfg.offsetY + edge * 0.18)
-            .setScale(0.5 + Math.random() * 0.6).setAlpha(1).setVisible(true);
-        }
-        this.cometIn = ccfg.sparkInterval;
+    this.comet.setVisible(false);
+    const noseX = player.x + 14, noseY = player.y - ccfg.offsetY;
+    if (playing && this.cometT > 0) {
+      this.fireRemainder += fire.rate * this.cometT * (1 + this.overdrive * 0.5) * (reduced ? 0.35 : 1) * dt;
+      let count = Math.floor(this.fireRemainder);
+      this.fireRemainder -= count;
+      for (const p of this.flames) {
+        if (count <= 0) break;
+        if (p.life > 0) continue;
+        const angle = (Math.random() - 0.5) * fire.spreadDeg * Math.PI / 180; // around "forward" (0 rad)
+        const r = fire.radius * (0.85 + Math.random() * 0.3);
+        p.duration = p.life = fire.life * (0.6 + Math.random() * 0.6);
+        p.vx = -(fire.back + speed * 0.35) * (0.7 + Math.random() * 0.6);
+        p.vy = Math.sin(angle) * 60 - 18 - Math.random() * 20;          // flare outward and lick upward
+        p.gravity = -30; p.alpha = fire.alpha;
+        p.scale = fire.size * (0.7 + Math.random() * 0.6) * (1 + this.overdrive * 0.4); p.grow = fire.grow;
+        p.image.setTexture(TEXTURES.flameHot).setPosition(noseX + Math.cos(angle) * r, noseY + Math.sin(angle) * r * 1.15)
+          .setScale(p.scale).setAlpha(p.alpha).setVisible(true);
+        count--;
       }
+    } else this.fireRemainder = 0;
+    for (const p of this.flames) {
+      if (p.life <= 0) continue;
+      const age = 1 - p.life / p.duration;
+      p.image.setTexture(age < 0.28 ? TEXTURES.flameHot : age < 0.62 ? TEXTURES.flameMid : TEXTURES.flameCool);
     }
 
     if (playing && !reduced && (on || (!grounded && this.trailLeft > 0))) {

@@ -42,6 +42,9 @@ export const TEXTURES = {
   wingBack: 'fx-wing-back',
   glowWhite: 'fx-glow-white',
   cometArc: 'fx-comet-arc',
+  flameHot: 'fx-flame-hot',
+  flameMid: 'fx-flame-mid',
+  flameCool: 'fx-flame-cool',
   feather: 'fx-feather',
 } as const;
 
@@ -511,6 +514,20 @@ function drawUnstoppableTextures(scene: Phaser.Scene): void {
   f.fillStyle = 'rgba(255,255,255,0.95)';
   f.beginPath(); f.ellipse(6, 3, 6, 2.6, 0, 0, Math.PI * 2); f.fill();
   feather.refresh();
+
+  // Flame puffs (32x32): soft blobs, hottest first. Particles step through them as they cool.
+  for (const [key, inner, outer] of [
+    [TEXTURES.flameHot, 'rgba(255,250,215,1)', 'rgba(255,215,90,0)'],
+    [TEXTURES.flameMid, 'rgba(255,170,40,0.95)', 'rgba(255,110,20,0)'],
+    [TEXTURES.flameCool, 'rgba(235,70,25,0.8)', 'rgba(140,30,20,0)'],
+  ] as const) {
+    const flame = scene.textures.createCanvas(key, 32, 32)!;
+    const c = flame.getContext();
+    const grad = c.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, inner); grad.addColorStop(0.45, inner.replace(/[\d.]+\)$/, '0.6)')); grad.addColorStop(1, outer);
+    c.fillStyle = grad; c.fillRect(0, 0, 32, 32);
+    flame.refresh();
+  }
 
   // Comet bow-shock arc (64x112): an orange crescent bulging forward (to the right) with a hot core.
   const arc = scene.textures.createCanvas(TEXTURES.cometArc, 64, 112)!;
