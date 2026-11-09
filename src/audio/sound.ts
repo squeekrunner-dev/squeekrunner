@@ -133,11 +133,13 @@ export class SoundManager {
   setMusicRpm(rpm: number): void { this.music?.setRpm(rpm); }
 
   /** UNSTOPPABLE flying-comet loop (roar + whoosh + rumble + crackle). Follows M like everything else. */
-  startComet(): void {
+  startComet(quick = false): void {
     const ctx = this.ensureContext();
     if (!ctx || !this.masterGain) return;
-    try { (this.comet ??= new CometSound(ctx, this.masterGain)).start(); } catch { /* Audio is optional. */ }
+    try { (this.comet ??= new CometSound(ctx, this.masterGain)).start(quick); } catch { /* Audio is optional. */ }
   }
+
+  get cometPlaying(): boolean { return !!this.comet?.playing; }
 
   stopComet(fadeSeconds?: number): void { this.comet?.stop(fadeSeconds); }
 

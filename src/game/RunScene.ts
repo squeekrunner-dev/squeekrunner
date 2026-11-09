@@ -409,7 +409,7 @@ export class RunScene extends Phaser.Scene {
         this.notice('SHIELD DEFLECTED IMPACT!');
       } else if (event === 'unstoppable') {
         this.fx.setUnstoppable(true);
-        sound.startComet();
+        if (!sound.cometPlaying) sound.startComet(true); // not pre-rolled (practice/offline): fast attack
         sound.playNewBlock();
         sound.vibrate(CONFIG.fx.haptics.shieldMs);
         this.notice("🔥 UNSTOPPABLE! 80+ RPM · CRATES CAN'T STOP YOU · KEEP CATCHING COINS");
@@ -628,6 +628,15 @@ export class RunScene extends Phaser.Scene {
     this.fxRpm += (rpm - this.fxRpm) * Math.min(1, dt / CONFIG.fx.drive.smoothingSeconds);
     const drive = rpmDrive(this.fxRpm);
     this.fx.overdrive = drive.overdrive;
+    // Ranked runs know the wheel ~5 s ahead: pre-roll the comet sound ~1 s before UNSTOPPABLE starts,
+    // and cancel it if the wheel never gets there. Read-only look-ahead; the simulation is untouched.
+    if (this.ranked && this.state === 'playing') {
+      const ahead = this.ranked.timeline.peekRpmMilli(this.driver.sim.tick, 1000) ?? 0;
+      if (!this.driver.sim.unstoppable) {
+        if (ahead >= CONFIG.unstoppable.onRpmMilli && !sound.cometPlaying) sound.startComet();
+        else if (ahead < CONFIG.unstoppable.offRpmMilli && sound.cometPlaying) sound.stopComet();
+      }
+    }
     this.fx.update(dt, drive.intensity, this.speed, this.player, grounded, true);
     this.fx.collectibles(this.nutSprite, this.coinSprite);
 

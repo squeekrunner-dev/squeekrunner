@@ -115,6 +115,14 @@ export class RankedTimeline {
   targetTick(): number { return Math.floor(this.exactTick()); }
   /** Fractional server-time tick, for smooth rendering between simulation ticks. */
   exactTick(): number { return Math.max(0, (this.source.serverNow() - this.session.startedAt) * 60 / 1000); }
+  /** Read-only look-ahead for presentation (e.g. start the comet sound early): the RPM the timeline will
+   *  carry `aheadMs` after `tick`, or null. Never feeds the simulation. */
+  peekRpmMilli(tick: number, aheadMs: number): number | null {
+    const at = this.session.startedAt + tick * 1000 / 60 + aheadMs;
+    let found: TimelinePoint | null = null;
+    for (const point of [...this.points, ...this.source.points]) if (point.at <= at && (!found || point.at > found.at)) found = point;
+    return found && at < found.validUntil ? found.rpmMilli : null;
+  }
   input(tick: number): TickInput {
     const last = this.points[this.points.length - 1]?.at ?? -1;
     for (const point of this.source.points) if (point.at > last) this.points.push(point);
