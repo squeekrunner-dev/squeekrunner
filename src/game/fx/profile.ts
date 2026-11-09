@@ -8,6 +8,12 @@ export function speedIntensity(speed: number, base: number): number {
     ? clamp((speed / base - 1) / (CONFIG.speed.maximumMultiplier - 1)) : 0;
 }
 
+/** Presentation drive from the real wheel RPM: intensity 0..1 reaches 1 at fullRpm; overdrive 0..1 from fullRpm to overdriveRpm. */
+export function rpmDrive(rpm: number): { intensity: number; overdrive: number } {
+  const { fullRpm, overdriveRpm } = CONFIG.fx.drive, r = Number.isFinite(rpm) ? Math.max(0, rpm) : 0;
+  return { intensity: clamp(r / fullRpm), overdrive: clamp((r - fullRpm) / (overdriveRpm - fullRpm)) };
+}
+
 export function dustProfile(intensity: number): { interval: number; count: number } {
   const t = clamp(intensity), fx = CONFIG.fx.dust;
   return {

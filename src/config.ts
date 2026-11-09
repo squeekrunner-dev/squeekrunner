@@ -2,12 +2,16 @@
 export const CONFIG = {
   /** Presentation only. Never consumed by the deterministic simulation. */
   fx: {
-    dust: { pool: 220, intervalSlow: 0.12, intervalFast: 0.035, countSlow: 1, countFast: 5,
+    /** Effects follow the real wheel RPM (not world speed). Full strength at fullRpm (typical hard run);
+     *  between fullRpm and overdriveRpm everything ramps far beyond normal (rare peaks, ~never seen). */
+    drive: { fullRpm: 75, overdriveRpm: 90, smoothingSeconds: 0.8 },
+    overdrive: { dust: 1.6, dustReach: 0.7, wind: 0.8, vignette: 1.4, glow: 0.9, glowSize: 0.45, shake: 7, shakeInterval: 0.5 },
+    dust: { pool: 320, intervalSlow: 0.12, intervalFast: 0.035, countSlow: 1, countFast: 5,
       life: 0.48, lifeBoost: 0.85, scale: 0.55, scaleRandom: 0.65, scaleBoost: 0.45, grow: 0.9,
       spread: 65, spreadBoost: 170, rise: 28, riseBoost: 34 },
     wind: { pool: 18, threshold: 0.5, alpha: 0.32, reducedFactor: 0.22, speedFactor: 1.5, extraSpeed: 200 },
     vignette: { alpha: 0.22, reducedFactor: 0.6 },
-    shake: { threshold: 0.9, intensity: 0.00045, durationMs: 90, interval: 0.24,
+    shake: { threshold: 0.95, intensity: 0.00045, durationMs: 90, interval: 0.24,
       shieldMs: 120, shieldIntensity: 0.005, hitMs: 220, hitIntensity: 0.009 },
     glow: { nutSize: 100, coinSize: 112, alpha: 0.65, pulseAlpha: 0.12, pulseScale: 0.08, periodMs: 1600 },
     block: { duration: 0.55, flashAlpha: 0.1, hubScale: 2.2, reducedFactor: 0.4 },

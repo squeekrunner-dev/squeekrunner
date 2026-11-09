@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../../config';
-import { crossedMilestones, dustProfile, speedIntensity } from './profile';
+import { crossedMilestones, dustProfile, rpmDrive, speedIntensity } from './profile';
 
 describe('presentation speed and milestones', () => {
   it('tracks world speed at both distance bases and clamps outliers', () => {
@@ -32,5 +32,18 @@ describe('presentation speed and milestones', () => {
     expect(crossedMilestones(25000, 25001)).toEqual([]);
     expect(crossedMilestones(24900, 100150)).toEqual([25000, 50000, 100000]);
     expect(crossedMilestones(100150, 100200)).toEqual([]);
+  });
+});
+
+describe('rpmDrive', () => {
+  it('reaches full strength at fullRpm and ramps overdrive up to overdriveRpm', () => {
+    const { fullRpm, overdriveRpm } = CONFIG.fx.drive;
+    expect(rpmDrive(0)).toEqual({ intensity: 0, overdrive: 0 });
+    expect(rpmDrive(fullRpm / 2).intensity).toBeCloseTo(0.5);
+    expect(rpmDrive(fullRpm)).toEqual({ intensity: 1, overdrive: 0 });
+    expect(rpmDrive((fullRpm + overdriveRpm) / 2).overdrive).toBeCloseTo(0.5);
+    expect(rpmDrive(overdriveRpm)).toEqual({ intensity: 1, overdrive: 1 });
+    expect(rpmDrive(400)).toEqual({ intensity: 1, overdrive: 1 });
+    expect(rpmDrive(Number.NaN)).toEqual({ intensity: 0, overdrive: 0 });
   });
 });

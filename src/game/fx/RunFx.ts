@@ -39,6 +39,8 @@ export class RunFx {
   private milestoneLeft = 0;
   private pendingMilestones: number[] = [];
   private clock = 0;
+  /** 0..1 beyond full strength (fullRpm → overdriveRpm). Set by the scene each frame. */
+  overdrive = 0;
 
   constructor(private readonly scene: Phaser.Scene, private readonly wheelGlow: Phaser.GameObjects.Graphics) {
     this.dustPool = this.pool(CONFIG.fx.dust.pool, TEXTURES.dust, 4);
@@ -114,8 +116,9 @@ export class RunFx {
     const pulse = this.reduced ? 0 : Math.sin(this.clock * 1000 / fx.periodMs * Math.PI * 2);
     for (const [sprite, glow, size] of [[nut, this.nutGlow, fx.nutSize], [coin, this.coinGlow, fx.coinSize]] as const) {
       glow.setVisible(!!sprite);
-      if (sprite) glow.setPosition(sprite.x, sprite.y).setDisplaySize(size * (1 + pulse * fx.pulseScale), size * (1 + pulse * fx.pulseScale))
-        .setAlpha(fx.alpha + pulse * fx.pulseAlpha);
+      const od = this.overdrive * (this.reduced ? 0.4 : 1), big = size * (1 + pulse * fx.pulseScale) * (1 + od * CONFIG.fx.overdrive.glowSize);
+      if (sprite) glow.setPosition(sprite.x, sprite.y).setDisplaySize(big, big)
+        .setAlpha(Math.min(1, (fx.alpha + pulse * fx.pulseAlpha) * (1 + od * CONFIG.fx.overdrive.glow)));
     }
   }
 
@@ -144,11 +147,11 @@ export class RunFx {
     if (playing && grounded) {
       this.dustIn -= dt;
       if (this.dustIn <= 0) {
-        const profile = dustProfile(intensity);
-        this.dustRemainder += profile.count;
+        const profile = dustProfile(intensity), od = this.overdrive;
+        this.dustRemainder += profile.count * (1 + od * fx.overdrive.dust);
         const count = Math.floor(this.dustRemainder);
         this.dustRemainder -= count;
-        this.dust(player.x - 24, CONFIG.groundY - 3, count, intensity);
+        this.dust(player.x - 24, CONFIG.groundY - 3, count, intensity + od * fx.overdrive.dustReach);
         this.dustIn += profile.interval;
       }
     } else this.dustIn = 0;
@@ -160,16 +163,17 @@ export class RunFx {
       if (!line.visible || line.x < camera.scrollX - 100) {
         line.setPosition(camera.scrollX + camera.width + Math.random() * 180, 118 + Math.random() * 260);
       }
-      line.setVisible(true).setAlpha(fx.wind.alpha * wind * (reduced ? fx.wind.reducedFactor : 1))
+      line.setVisible(true).setAlpha(Math.min(1, fx.wind.alpha * wind * (1 + this.overdrive * fx.overdrive.wind)) * (reduced ? fx.wind.reducedFactor : 1))
         .setScale(0.8 + wind, 0.7);
       line.x -= (speed * (fx.wind.speedFactor + index % 4 * 0.2) + fx.wind.extraSpeed) * dt;
     });
     this.vignette.setPosition(camera.scrollX, 0).setDisplaySize(camera.width, CONFIG.height)
-      .setAlpha(wind * fx.vignette.alpha * (reduced ? fx.vignette.reducedFactor : 1));
+      .setAlpha(Math.min(1, wind * fx.vignette.alpha * (1 + this.overdrive * fx.overdrive.vignette)) * (reduced ? fx.vignette.reducedFactor : 1));
     this.shakeIn -= dt;
     if (playing && !reduced && intensity > fx.shake.threshold && this.shakeIn <= 0 && !camera.shakeEffect.isRunning) {
-      camera.shake(fx.shake.durationMs, fx.shake.intensity * (intensity - fx.shake.threshold) / (1 - fx.shake.threshold), false);
-      this.shakeIn = fx.shake.interval;
+      const base = (intensity - fx.shake.threshold) / (1 - fx.shake.threshold), od = this.overdrive;
+      camera.shake(fx.shake.durationMs * (1 + od), fx.shake.intensity * (base + od * fx.overdrive.shake), false);
+      this.shakeIn = fx.shake.interval * (1 - od * fx.overdrive.shakeInterval);
     }
 
     if (playing && !grounded && !reduced && this.trailLeft > 0) {

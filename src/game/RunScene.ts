@@ -16,7 +16,7 @@ import { ServerSource } from '../net/source';
 import { centerCamera, MAX_PAD, sideFades } from './viewport';
 import { startRanked, submitRanked, type RankedRun } from '../net/ranked';
 import { RunFx } from './fx/RunFx';
-import { speedIntensity } from './fx/profile';
+import { rpmDrive } from './fx/profile';
 
 type RunState = 'ready' | 'playing' | 'paused' | 'ended';
 
@@ -67,6 +67,8 @@ export class RunScene extends Phaser.Scene {
   /** Server session of a ranked run; null for offline/unranked runs. */
   private ranked: RankedRun | null = null;
   private starting = false;
+  /** Smoothed real-wheel RPM driving presentation effects. */
+  private fxRpm = 0;
   private abort = new AbortController();
 
   constructor(private readonly context: GameContext) {
@@ -83,6 +85,7 @@ export class RunScene extends Phaser.Scene {
     this.driver = new RunDriver(crypto.getRandomValues(new Uint32Array(1))[0], this.context.source.kind);
     this.ranked = null;
     this.starting = false;
+    this.fxRpm = 0;
     this.abort = new AbortController();
     this.obstacleSprites = new Map();
     this.nutSprite = null;
@@ -600,7 +603,13 @@ export class RunScene extends Phaser.Scene {
       }
     }
 
-    this.fx.update(dt, speedIntensity(this.speed, baseSpeed(this.distance)), this.speed, this.player, grounded, true);
+    // Effects follow the real wheel (smoothed), not world speed: full at 75 RPM, overdrive toward 90 RPM.
+    const live = this.context.source.read();
+    const rpm = live.mode === 'NO DATA' ? 0 : live.rpm;
+    this.fxRpm += (rpm - this.fxRpm) * Math.min(1, dt / CONFIG.fx.drive.smoothingSeconds);
+    const drive = rpmDrive(this.fxRpm);
+    this.fx.overdrive = drive.overdrive;
+    this.fx.update(dt, drive.intensity, this.speed, this.player, grounded, true);
     this.fx.collectibles(this.nutSprite, this.coinSprite);
 
     this.shadow.setScale(Math.max(0.3, 1 - (CONFIG.groundY - this.player.y) / 300));
