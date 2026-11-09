@@ -16,7 +16,7 @@ export const MUSIC = {
   lookaheadMs: 25,
   scheduleAhead: 0.12,
   /** Track level before the shared master gain (sound effects stay on top). */
-  level: 0.7,
+  level: 0.55,
 } as const;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);

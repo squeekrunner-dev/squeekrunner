@@ -12,6 +12,8 @@ export interface StoragePort {
 }
 
 const STORAGE_KEY = 'squeekrunner.audio.muted';
+/** Overall game volume (music + effects). Was 0.22; raised by 20 points at the owner's request. */
+export const MASTER_VOLUME = 0.42;
 
 function defaultStorage(): StoragePort | null {
   try {
@@ -64,7 +66,7 @@ export class SoundManager {
       try {
         this.ctx = new AudioCtx();
         this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.setValueAtTime(this.muted ? 0 : 0.22, this.ctx.currentTime);
+        this.masterGain.gain.setValueAtTime(this.muted ? 0 : MASTER_VOLUME, this.ctx.currentTime);
         this.masterGain.connect(this.ctx.destination);
       } catch {
         this.dispose();
@@ -103,7 +105,7 @@ export class SoundManager {
     this.muted = muted;
     this.saveMutePreference(muted);
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(muted ? 0 : 0.22, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(muted ? 0 : MASTER_VOLUME, this.ctx.currentTime);
     }
   }
 
