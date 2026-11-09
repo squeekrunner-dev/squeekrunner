@@ -21,7 +21,9 @@ export const CONFIG = {
       /** Ghost trail: 3x longer and 3x denser than the double-jump trail. */
       ghostLife: 0.72, trailInterval: 0.012, ghostAlpha: 0.22,
       wings: { appear: 0.35, vanish: 0.45, flapHz: 3.2, flapDeg: 14, scale: 0.34, spreadDeg: 34, glowSize: 46, glowAlpha: 0.75, feathers: 10 },
-      comet: { offsetX: 25, offsetY: 28, scale: 0.34, alpha: 0.95, flicker: 0.18, fade: 0.25, sparkInterval: 0.06,
+      comet: { offsetX: 22, offsetY: 28, scale: 0.36, alpha: 0.95, flicker: 0.14, fade: 0.25, sparkInterval: 0.06,
+        /** Sonic-boom ripples: copies of the arc that expand forward and fade, one every `every` seconds. */
+        ripple: { count: 3, every: 0.16, life: 0.32, grow: 0.9, drift: 10, alpha: 0.55 },
         /** Animated comet-head fire: puffs born on a bow in front of the face stream back and cool down. */
         fire: { pool: 90, rate: 120, radius: 16, spreadDeg: 110, life: 0.34, back: 120, size: 0.42, grow: 0.7, alpha: 0.6 } } },
     trail: { pool: 72, duration: 0.3, interval: 0.05, life: 0.24, alpha: 0.25 },

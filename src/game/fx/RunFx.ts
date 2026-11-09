@@ -50,6 +50,8 @@ export class RunFx {
   private readonly feathers: Particle[];
   private readonly flames: Particle[];
   private fireRemainder = 0;
+  private readonly ripples: { image: Phaser.GameObjects.Image; life: number }[];
+  private rippleIn = 0;
   /** 0..1 wing/comet presence, eased toward the unstoppable state. */
   private wingT = 0;
   private cometT = 0;
@@ -70,6 +72,8 @@ export class RunFx {
     this.wingFar = scene.add.image(0, 0, TEXTURES.wingBack).setOrigin(0.85, 0.82).setDepth(4.7).setVisible(false);
     this.wingNear = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(5.1).setVisible(false);
     this.comet = scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.5).setVisible(false);
+    this.ripples = Array.from({ length: CONFIG.fx.unstoppable.comet.ripple.count }, () =>
+      ({ image: scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.45).setVisible(false), life: 0 }));
     this.feathers = this.pool(28, TEXTURES.feather, 5.6);
     this.flames = this.pool(CONFIG.fx.unstoppable.comet.fire.pool, TEXTURES.flameHot, 4.95); // behind the hamster
     for (const flame of this.flames) flame.image.setBlendMode('ADD'); // string form keeps Phaser a type-only import
@@ -183,7 +187,7 @@ export class RunFx {
     this.trailLeft = 0;
     for (const line of this.lines) line.setVisible(false);
     this.vignette.setAlpha(0);
-    for (const img of [this.aura, this.wingGlow, this.wingFar, this.wingNear, this.comet]) img.setVisible(false);
+    for (const img of [this.aura, this.wingGlow, this.wingFar, this.wingNear, this.comet, ...this.ripples.map(r => r.image)]) img.setVisible(false);
   }
 
   update(dt: number, intensity: number, speed: number, player: Phaser.GameObjects.Sprite, grounded: boolean, playing: boolean): void {
@@ -267,8 +271,32 @@ export class RunFx {
     // the body, swell, then cool from white-yellow to orange to red and fade (additive blending = glowing fire).
     const ccfg = u.comet, fire = ccfg.fire;
     this.cometT = on ? Math.min(1, this.cometT + dt / ccfg.fade) : Math.max(0, this.cometT - dt / ccfg.fade);
-    this.comet.setVisible(false);
     const noseX = player.x + 14, noseY = player.y - ccfg.offsetY;
+    // Supersonic bow shock just ahead of the fire: a shimmering orange crescent plus expanding ripples.
+    const arcX = player.x + ccfg.offsetX, arcY = noseY;
+    this.comet.setVisible(playing && this.cometT > 0);
+    if (this.comet.visible) {
+      const flicker = reduced ? 0 : (Math.random() - 0.5) * 2 * ccfg.flicker;
+      const breathe = reduced ? 0 : Math.sin(this.clock * 38) * 0.05;
+      const k = ccfg.scale * (1 + this.overdrive * 0.3);
+      this.comet.setPosition(arcX - 3 * (1 - this.cometT), arcY)
+        .setScale(k * (0.9 + 0.1 * this.cometT + breathe + flicker * 0.3), k * (0.95 + 0.05 * this.cometT - breathe * 0.5))
+        .setAlpha(Math.min(1, ccfg.alpha * this.cometT * (1 + flicker)));
+    }
+    const rp = ccfg.ripple;
+    this.rippleIn -= dt;
+    if (on && playing && !reduced && this.rippleIn <= 0) {
+      const free = this.ripples.find(r => r.life <= 0);
+      if (free) free.life = rp.life;
+      this.rippleIn = rp.every / (1 + this.overdrive * 0.6);
+    }
+    for (const r of this.ripples) {
+      if (r.life <= 0) { r.image.setVisible(false); continue; }
+      r.life = Math.max(0, r.life - dt);
+      const t = 1 - r.life / rp.life, k = ccfg.scale * (1 + t * rp.grow);
+      r.image.setVisible(playing).setPosition(arcX + t * rp.drift, arcY).setScale(k, k * (1 + t * 0.25))
+        .setAlpha(rp.alpha * (1 - t) * this.cometT);
+    }
     if (playing && this.cometT > 0) {
       this.fireRemainder += fire.rate * this.cometT * (1 + this.overdrive * 0.5) * (reduced ? 0.35 : 1) * dt;
       let count = Math.floor(this.fireRemainder);
