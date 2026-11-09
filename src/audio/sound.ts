@@ -12,8 +12,8 @@ export interface StoragePort {
 }
 
 const STORAGE_KEY = 'squeekrunner.audio.muted';
-/** Overall game volume (music + effects). Was 0.22; raised by 20 points at the owner's request. */
-export const MASTER_VOLUME = 0.42;
+/** Overall game volume (music + effects). Was 0.22; raised to 0.62 at the owner's request. */
+export const MASTER_VOLUME = 0.62;
 
 function defaultStorage(): StoragePort | null {
   try {
