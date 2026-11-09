@@ -74,6 +74,29 @@ describe('fixed-step rules', () => {
     s.tick = s.invulnerableUntil; obstacle(s);
     expect(step(s)).toContain('gameOver');
   });
+  it('squeek-5: at >= 80 RPM the hamster smashes crates without spending a shield (hysteresis to 78)', () => {
+    const { onRpmMilli, offRpmMilli } = CONFIG.unstoppable;
+    const s = createSim(0); s.spawnAt = Number.MAX_SAFE_INTEGER;
+    expect(step(s, { rpmMilli: onRpmMilli - 1 })).not.toContain('unstoppable');
+    expect(s.unstoppable).toBe(false);
+    expect(step(s, { rpmMilli: onRpmMilli })).toContain('unstoppable');
+    s.shield = true; obstacle(s);
+    const events = step(s);
+    expect(events).toContain('smash');
+    expect(events).not.toContain('shieldHit');
+    expect(s.gameOver).toBe(false);
+    expect(s.shield).toBe(true);                  // the shield is kept for later
+    expect(s.obstacles).toHaveLength(0);
+    expect(step(s, { rpmMilli: offRpmMilli })).not.toContain('unstoppableEnd'); // still on at 78.000
+    expect(s.unstoppable).toBe(true);
+    expect(step(s, { rpmMilli: offRpmMilli - 1 })).toContain('unstoppableEnd');
+    s.shield = false; obstacle(s);
+    expect(step(s)).toContain('gameOver');      // back to normal rules
+  });
+  it('squeek-5: no data or a stopped wheel never makes the hamster unstoppable', () => {
+    const s = createSim(0);
+    for (const rpmMilli of [null, 0, 79999]) { step(s, { rpmMilli }); expect(s.unstoppable).toBe(false); }
+  });
   it('does not treat a circle bounding-box corner as a nut collision', () => {
     const s = createSim(0);
     s.nut = { id: 1, x: 127000 }; // after movement: dx ~15px, dy 10px -> outside radius 16

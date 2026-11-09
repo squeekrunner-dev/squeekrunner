@@ -1,7 +1,7 @@
 import { CONFIG } from '../config';
 
 /** Changing rules, constants or operation order requires a new sim version. */
-export const SIM_VERSION = 'squeek-4';
+export const SIM_VERSION = 'squeek-5';
 export const TICK_HZ = 60;
 export const UNIT = 1000; // milli-pixels; velocities are milli-pixels / second
 export const MAX_TICKS = 30 * 60 * TICK_HZ;
@@ -28,6 +28,8 @@ export interface SimState {
   rpmMilli: number | null; speed: number; travel: number; score: number;
   /** Double jumps left; a shield is held until it absorbs one hit. */
   bonus: number; spawnAt: number; airJumps: number; shield: boolean; invulnerableUntil: number;
+  /** squeek-5: at very high wheel RPM the hamster smashes through crates (hysteresis on/off). */
+  unstoppable: boolean;
   gameOver: boolean; endReason: 'collision' | 'limit' | null;
 }
 export interface TickInput {
@@ -39,7 +41,8 @@ export interface TickInput {
   /** Chain installation/height reset: clear an outstanding nut before any new spawn. */
   resetNut?: boolean;
 }
-export type SimEvent = 'jump' | 'airJump' | 'nut' | 'collect' | 'shieldHit' | 'coinSpawn' | 'coin' | 'coinMissed' | 'gameOver';
+export type SimEvent = 'jump' | 'airJump' | 'nut' | 'collect' | 'shieldHit' | 'coinSpawn' | 'coin' | 'coinMissed' | 'gameOver'
+  | 'unstoppable' | 'unstoppableEnd' | 'smash';
 export interface Rect { left: number; top: number; right: number; bottom: number }
 
 export function createSim(seed: number): SimState {
@@ -50,7 +53,7 @@ export function createSim(seed: number): SimState {
     obstacles: [], nut: null, coins: { next: 0, pending: null, active: null, collected: 0, missed: 0 },
     rpmMilli: null, speed: CONFIG.speed.base * UNIT,
     travel: 0, score: 0, bonus: 0, spawnAt: Math.ceil(CONFIG.obstacles.firstDelaySeconds * TICK_HZ),
-    airJumps: CONFIG.doubleJumps.start, shield: false, invulnerableUntil: 0, gameOver: false, endReason: null,
+    airJumps: CONFIG.doubleJumps.start, shield: false, invulnerableUntil: 0, unstoppable: false, gameOver: false, endReason: null,
   };
 }
 
@@ -154,6 +157,9 @@ export function step(s: SimState, input: TickInput = {}): SimEvent[] {
     s.rng = seed; s.coinRng = (seed ^ 0x9e3779b9) >>> 0;
   }
   if (input.rpmMilli !== undefined) s.rpmMilli = input.rpmMilli;
+  const liveRpm = s.rpmMilli ?? 0;
+  if (!s.unstoppable && liveRpm >= CONFIG.unstoppable.onRpmMilli) { s.unstoppable = true; events.push('unstoppable'); }
+  else if (s.unstoppable && liveRpm < CONFIG.unstoppable.offRpmMilli) { s.unstoppable = false; events.push('unstoppableEnd'); }
   if (input.resetNut) s.nut = null;
   if (input.nut) { s.nut = { id: s.nextId++, x: (CONFIG.width + 24) * UNIT }; events.push('nut'); }
 
@@ -198,6 +204,8 @@ export function step(s: SimState, input: TickInput = {}): SimEvent[] {
   s.obstacles = s.obstacles.filter(o => {
     if (o.x < -80 * UNIT) return false;
     if (!s.gameOver && overlaps(rect, obstacleRect(o))) {
+      // Unstoppable smashes the crate without spending a shield.
+      if (s.unstoppable) { events.push('smash'); return false; }
       if (s.shield || s.invulnerableUntil > s.tick) {
         s.shield = false;
         s.invulnerableUntil = s.tick + Math.ceil(CONFIG.bonus.shieldInvulnerabilityMs * TICK_HZ / 1000);

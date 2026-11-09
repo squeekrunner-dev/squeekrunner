@@ -404,6 +404,18 @@ export class RunScene extends Phaser.Scene {
         if (!this.fx.reduced) this.cameras.main.shake(CONFIG.fx.shake.shieldMs, CONFIG.fx.shake.shieldIntensity);
         this.fx.dust(this.player.x + 28, this.player.y - 20, 14);
         this.notice('SHIELD DEFLECTED IMPACT!');
+      } else if (event === 'unstoppable') {
+        this.fx.setUnstoppable(true);
+        sound.playNewBlock();
+        sound.vibrate(CONFIG.fx.haptics.shieldMs);
+        this.notice("🔥 UNSTOPPABLE! 80+ RPM · CRATES CAN'T STOP YOU · KEEP CATCHING COINS");
+      } else if (event === 'unstoppableEnd') {
+        this.fx.setUnstoppable(false);
+      } else if (event === 'smash') {
+        sound.playShieldHit();
+        sound.vibrate(CONFIG.fx.haptics.shieldMs);
+        if (!this.fx.reduced) this.cameras.main.shake(CONFIG.fx.shake.shieldMs, CONFIG.fx.shake.shieldIntensity);
+        this.fx.smash(this.player.x + 30, this.player.y - 24);
       } else if (event === 'nut') {
         this.fx.newBlock();
         if (this.ranked) {
@@ -470,6 +482,7 @@ export class RunScene extends Phaser.Scene {
 
   private endRun(): void {
     document.body.classList.remove('is-playing');
+    this.fx.setUnstoppable(false);
     sound.stopMusic(0.6);
     this.ranked?.timeline.stop();
     if (this.driver.replay) this.context.lastReplay = this.driver.replay;

@@ -117,3 +117,11 @@ Server integration must:
 CLI: `npm run verify-replay -- src/sim/test-data/minute-run.json`. It shares the exact TS
 implementation via the existing TypeScript dependency and exits 0 only for accepted live
 replays. Golden fixture expected scores/ticks/hashes are in `test-data/expected.json`.
+
+## squeek-5 (2026-11-09): unstoppable
+
+- `unstoppable` turns on when the tick's RPM input is >= `CONFIG.unstoppable.onRpmMilli` (80000) and
+  off below `offRpmMilli` (78000); null/no data counts as 0. Evaluated right after the RPM input, before speed.
+- While unstoppable an overlapping obstacle is removed with event `smash`; the shield is not spent and the
+  run continues. Coins and nuts are unchanged (a missed coin still disqualifies).
+- Golden replays below 80 RPM keep identical scores and end ticks; only the state hash changed (new field).

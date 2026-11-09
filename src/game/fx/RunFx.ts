@@ -41,6 +41,8 @@ export class RunFx {
   private clock = 0;
   /** 0..1 beyond full strength (fullRpm → overdriveRpm). Set by the scene each frame. */
   overdrive = 0;
+  private unstoppable = false;
+  private readonly aura: Phaser.GameObjects.Image;
 
   constructor(private readonly scene: Phaser.Scene, private readonly wheelGlow: Phaser.GameObjects.Graphics) {
     this.dustPool = this.pool(CONFIG.fx.dust.pool, TEXTURES.dust, 4);
@@ -53,6 +55,7 @@ export class RunFx {
     this.flash = scene.add.rectangle(0, 0, 1, 1, 0xffe8b3).setOrigin(0).setDepth(10).setAlpha(0);
     this.nutGlow = scene.add.image(0, 0, TEXTURES.glowBlue).setDepth(3.8).setVisible(false);
     this.coinGlow = scene.add.image(0, 0, TEXTURES.glowGold).setDepth(3.8).setVisible(false);
+    this.aura = scene.add.image(0, 0, TEXTURES.glowGold).setDepth(3.9).setVisible(false);
     this.milestone = label(scene, CONFIG.width / 2, CONFIG.fx.milestones.y, '', CONFIG.fx.milestones.fontSize, '#ffdf96', true)
       .setOrigin(0.5).setDepth(19).setFontStyle('bold').setStroke('#131b27', 5).setVisible(false);
   }
@@ -83,9 +86,9 @@ export class RunFx {
     }
   }
 
-  collect(x: number, y: number, coin: boolean): void {
+  collect(x: number, y: number, coin: boolean, burst?: number): void {
     const fx = CONFIG.fx.sparks;
-    let count: number = coin ? fx.coinCount : fx.nutCount;
+    let count: number = burst ?? (coin ? fx.coinCount : fx.nutCount);
     if (this.reduced) count = Math.ceil(count / 2);
     for (const p of this.sparks) {
       if (count <= 0) break;
@@ -101,6 +104,19 @@ export class RunFx {
         .setPosition(x, y).setScale(0.6 + Math.random() * 0.7).setAlpha(1).setVisible(true);
       count--;
     }
+  }
+
+  /** ≥80 RPM (sim rule): glowing aura plus a continuous ghost trail until it ends. */
+  setUnstoppable(on: boolean): void {
+    this.unstoppable = on;
+    if (!on) this.aura.setVisible(false);
+    this.trailIn = 0;
+  }
+
+  /** A crate shattered by an unstoppable hamster. */
+  smash(x: number, y: number): void {
+    this.dust(x, y, 16, 1);
+    this.collect(x, y, true, CONFIG.fx.unstoppable.smashSparks);
   }
 
   airJump(): void { this.trailLeft = CONFIG.fx.trail.duration; this.trailIn = 0; }
@@ -176,7 +192,16 @@ export class RunFx {
       this.shakeIn = fx.shake.interval * (1 - od * fx.overdrive.shakeInterval);
     }
 
-    if (playing && !grounded && !reduced && this.trailLeft > 0) {
+    // Unstoppable: pulsing golden aura behind the hamster and a continuous ghost trail.
+    const u = fx.unstoppable, on = playing && this.unstoppable;
+    this.aura.setVisible(on);
+    if (on) {
+      const beat = reduced ? 0 : Math.sin(this.clock * 1000 / u.auraPeriodMs * Math.PI * 2);
+      const size = u.auraSize * (1 + beat * u.auraPulse) * (1 + this.overdrive * fx.overdrive.glowSize);
+      this.aura.setPosition(player.x, player.y - player.displayHeight / 2).setDisplaySize(size, size)
+        .setAlpha(Math.min(1, u.auraAlpha * (1 + beat * 0.15)));
+    }
+    if (playing && !reduced && (on || (!grounded && this.trailLeft > 0))) {
       this.trailIn -= dt;
       if (this.trailIn <= 0) {
         const ghost = this.ghosts.find(p => p.life <= 0);
@@ -187,7 +212,7 @@ export class RunFx {
           ghost.image.setTexture(player.texture.key, player.frame.name).setPosition(player.x, player.y)
             .setAngle(player.angle).setScale(player.scaleX, player.scaleY).setAlpha(ghost.alpha).setVisible(true);
         }
-        this.trailIn = fx.trail.interval;
+        this.trailIn = on ? u.trailInterval : fx.trail.interval;
       }
     }
     this.trailLeft = Math.max(0, this.trailLeft - dt);

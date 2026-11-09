@@ -17,7 +17,8 @@ export const CONFIG = {
     block: { duration: 0.55, flashAlpha: 0.1, hubScale: 2.2, reducedFactor: 0.4 },
     milestones: { scores: [25000, 50000, 100000], duration: 1.4, fade: 0.22, y: 204, fontSize: 32 },
     sparks: { pool: 64, nutCount: 24, coinCount: 32, life: 0.65, speed: 160, gravity: 140 },
-    trail: { pool: 6, duration: 0.3, interval: 0.05, life: 0.24, alpha: 0.25 },
+    unstoppable: { auraSize: 150, auraAlpha: 0.7, auraPulse: 0.18, auraPeriodMs: 420, trailInterval: 0.035, smashSparks: 18 },
+    trail: { pool: 10, duration: 0.3, interval: 0.05, life: 0.24, alpha: 0.25 },
     celebration: { count: 72, reducedCount: 20, durationMs: 1600, staggerMs: 450, spread: 180 },
     haptics: { collectMs: 15, coinMs: 22, shieldMs: 30, hitMs: 45 },
   },
@@ -61,6 +62,8 @@ export const CONFIG = {
   },
   /** Double jumps are a budget (sim squeek-4): a run starts with `start`; every golden nut adds `perNut`. */
   doubleJumps: { start: 15, perNut: 5 },
+  /** squeek-5 rule: at ≥ onRpmMilli live wheel RPM crates break on contact; ends below offRpmMilli. */
+  unstoppable: { onRpmMilli: 80000, offRpmMilli: 78000 },
   bonus: {
     points: 150,
     /** The shield lasts until it absorbs one hit; a second nut does not stack shields. */
