@@ -5,6 +5,7 @@
  */
 
 import { RunMusic } from './music';
+import { CometSound } from './comet';
 
 export interface StoragePort {
   getItem(key: string): string | null;
@@ -30,6 +31,7 @@ export class SoundManager {
   private noiseBuffer: AudioBuffer | null = null;
   private unlocked = false;
   private music: RunMusic | null = null;
+  private comet: CometSound | null = null;
   private readonly storageProvider: () => StoragePort | null;
 
   constructor(storageProvider: () => StoragePort | null = defaultStorage) {
@@ -89,6 +91,8 @@ export class SoundManager {
   dispose(): void {
     this.music?.stop(0.02);
     this.music = null;
+    this.comet?.stop(0.02);
+    this.comet = null;
     const ctx = this.ctx;
     this.ctx = null;
     this.masterGain = null;
@@ -127,6 +131,15 @@ export class SoundManager {
   stopMusic(fadeSeconds = 0.25): void { this.music?.stop(fadeSeconds); }
 
   setMusicRpm(rpm: number): void { this.music?.setRpm(rpm); }
+
+  /** UNSTOPPABLE flying-comet loop (roar + whoosh + rumble + crackle). Follows M like everything else. */
+  startComet(): void {
+    const ctx = this.ensureContext();
+    if (!ctx || !this.masterGain) return;
+    try { (this.comet ??= new CometSound(ctx, this.masterGain)).start(); } catch { /* Audio is optional. */ }
+  }
+
+  stopComet(fadeSeconds?: number): void { this.comet?.stop(fadeSeconds); }
 
   /** Short optional haptics share the M preference; unsupported/blocked devices are harmless. */
   vibrate(milliseconds: number): void {
