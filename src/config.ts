@@ -20,8 +20,8 @@ export const CONFIG = {
     unstoppable: { auraSize: 150, auraAlpha: 0.7, auraPulse: 0.18, auraPeriodMs: 420, smashSparks: 18,
       /** Ghost trail: 3x longer and 3x denser than the double-jump trail. */
       ghostLife: 0.72, trailInterval: 0.012, ghostAlpha: 0.22,
-      wings: { appear: 0.35, vanish: 0.45, flapHz: 3.2, flapDeg: 14, glowSize: 120, glowAlpha: 0.75, feathers: 14 },
-      comet: { offsetX: 34, offsetY: 30, alpha: 0.9, flicker: 0.18, fade: 0.25, sparkInterval: 0.06 } },
+      wings: { appear: 0.35, vanish: 0.45, flapHz: 3.2, flapDeg: 14, scale: 0.34, spreadDeg: 34, glowSize: 46, glowAlpha: 0.75, feathers: 10 },
+      comet: { offsetX: 25, offsetY: 28, scale: 0.34, alpha: 0.95, flicker: 0.18, fade: 0.25, sparkInterval: 0.06 } },
     trail: { pool: 72, duration: 0.3, interval: 0.05, life: 0.24, alpha: 0.25 },
     celebration: { count: 72, reducedCount: 20, durationMs: 1600, staggerMs: 450, spread: 180 },
     haptics: { collectMs: 15, coinMs: 22, shieldMs: 30, hitMs: 45 },

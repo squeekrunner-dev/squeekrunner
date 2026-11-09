@@ -66,8 +66,8 @@ export class RunFx {
     this.coinGlow = scene.add.image(0, 0, TEXTURES.glowGold).setDepth(3.8).setVisible(false);
     this.aura = scene.add.image(0, 0, TEXTURES.glowGold).setDepth(3.9).setVisible(false);
     this.wingGlow = scene.add.image(0, 0, TEXTURES.glowWhite).setDepth(4.6).setVisible(false);
-    this.wingFar = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(4.7).setVisible(false);
-    this.wingNear = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(4.8).setVisible(false);
+    this.wingFar = scene.add.image(0, 0, TEXTURES.wingBack).setOrigin(0.85, 0.82).setDepth(4.7).setVisible(false);
+    this.wingNear = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(5.1).setVisible(false);
     this.comet = scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.5).setVisible(false);
     this.feathers = this.pool(28, TEXTURES.feather, 5.6);
     this.milestone = label(scene, CONFIG.width / 2, CONFIG.fx.milestones.y, '', CONFIG.fx.milestones.fontSize, '#ffdf96', true)
@@ -242,19 +242,21 @@ export class RunFx {
     // Angel wings on the back: unfold (ease-out-back + white flash) and fold away (shrink + fade).
     const wcfg = u.wings;
     this.wingT = on ? Math.min(1, this.wingT + dt / wcfg.appear) : Math.max(0, this.wingT - dt / wcfg.vanish);
-    this.wingAnchor = { x: player.x - 10, y: player.y - 34 };
+    this.wingAnchor = { x: player.x - 10, y: player.y - 26 }; // on the upper back
     const wingsVisible = this.wingT > 0 && playing;
     for (const img of [this.wingGlow, this.wingFar, this.wingNear]) img.setVisible(wingsVisible);
     if (wingsVisible) {
       const t = this.wingT, back = 1.70158;
       const grow = on ? 1 + (back + 1) * Math.pow(t - 1, 3) + back * Math.pow(t - 1, 2) : t; // easeOutBack in, linear out
       const flap = reduced ? 0 : Math.sin(this.clock * Math.PI * 2 * wcfg.flapHz) * wcfg.flapDeg;
-      const { x, y } = this.wingAnchor;
-      this.wingFar.setPosition(x + 5, y - 3).setScale(0.82 * grow).setAngle(-8 + flap * 0.8).setAlpha(0.75 * t);
-      this.wingNear.setPosition(x, y).setScale(grow).setAngle(flap).setAlpha(t);
+      const { x, y } = this.wingAnchor, k = wcfg.scale * grow;
+      // Two clearly separate wings: the back one is set forward and spread wider, flapping slightly out of phase.
+      const flapBack = reduced ? 0 : Math.sin(this.clock * Math.PI * 2 * wcfg.flapHz - 0.5) * wcfg.flapDeg;
+      this.wingFar.setPosition(x + 9, y - 1).setScale(k * 0.88).setAngle(-wcfg.spreadDeg + flapBack).setAlpha(0.9 * t);
+      this.wingNear.setPosition(x - 3, y + 1).setScale(k).setAngle(12 + flap).setAlpha(t);
       this.flashWings = Math.max(0, this.flashWings - dt * 2.5);
       const glow = wcfg.glowSize * (0.9 + 0.1 * Math.sin(this.clock * 9)) * (1 + this.flashWings * 0.8) * Math.max(0.2, grow);
-      this.wingGlow.setPosition(x - 18, y - 18).setDisplaySize(glow, glow)
+      this.wingGlow.setPosition(x - 12, y - 14).setDisplaySize(glow, glow)
         .setAlpha(Math.min(1, wcfg.glowAlpha * t + this.flashWings * 0.5));
     }
 
@@ -265,17 +267,17 @@ export class RunFx {
     if (this.comet.visible) {
       const flicker = reduced ? 0 : (Math.random() - 0.5) * 2 * ccfg.flicker;
       const od = 1 + this.overdrive * 0.35;
-      this.comet.setPosition(player.x + ccfg.offsetX - 6 * (1 - this.cometT), player.y - ccfg.offsetY)
-        .setScale((0.85 + 0.15 * this.cometT) * od * (1 + flicker * 0.4), (0.9 + 0.1 * this.cometT) * od)
+      this.comet.setPosition(player.x + ccfg.offsetX - 2 * (1 - this.cometT), player.y - ccfg.offsetY)
+        .setScale(ccfg.scale * (0.85 + 0.15 * this.cometT) * od * (1 + flicker * 0.4), ccfg.scale * (0.9 + 0.1 * this.cometT) * od)
         .setAlpha(Math.min(1, ccfg.alpha * this.cometT * (1 + flicker)));
       this.cometIn -= dt;
       if (on && this.cometIn <= 0 && !reduced) {
         const spark = this.sparks.find(p => p.life <= 0);
         if (spark) {
-          const edge = (Math.random() - 0.5) * 80;
+          const edge = (Math.random() - 0.5) * 80; // spread of sparks along the (now small) arc
           spark.duration = spark.life = 0.35 + Math.random() * 0.25;
-          spark.vx = -(speed * 0.6 + 120 + Math.random() * 120); spark.vy = edge * 0.6; spark.gravity = 0; spark.alpha = 1;
-          spark.image.setTexture(TEXTURES.sparkGold).setPosition(player.x + ccfg.offsetX + 10, player.y - ccfg.offsetY + edge * 0.5)
+          spark.vx = -(speed * 0.6 + 120 + Math.random() * 120); spark.vy = edge * 0.2; spark.gravity = 0; spark.alpha = 1;
+          spark.image.setTexture(TEXTURES.sparkGold).setPosition(player.x + ccfg.offsetX + 12, player.y - ccfg.offsetY + edge * 0.18)
             .setScale(0.5 + Math.random() * 0.6).setAlpha(1).setVisible(true);
         }
         this.cometIn = ccfg.sparkInterval;

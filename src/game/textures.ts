@@ -39,6 +39,7 @@ export const TEXTURES = {
   sparkBlue: 'fx-spark-blue',
   vignette: 'fx-vignette',
   wing: 'fx-wing',
+  wingBack: 'fx-wing-back',
   glowWhite: 'fx-glow-white',
   cometArc: 'fx-comet-arc',
   feather: 'fx-feather',
@@ -499,33 +500,10 @@ export function createTextures(scene: Phaser.Scene): void {
 
 /** UNSTOPPABLE (80+ RPM) art: an angel wing, a white feather and a comet bow-shock arc. Canvas-only. */
 function drawUnstoppableTextures(scene: Phaser.Scene): void {
-  // Wing (96x80): feathers fan from the root at the bottom-right up and back (the hamster faces right).
-  const wing = scene.textures.createCanvas(TEXTURES.wing, 96, 80)!;
-  const w = wing.getContext();
-  const rootX = 82, rootY = 66;
-  const feathers = 7;
-  for (let i = feathers - 1; i >= 0; i--) {
-    const angle = (-158 + i * 13) * Math.PI / 180;   // fan from back-left to up
-    const length = 40 + (feathers - i) * 5;
-    w.save();
-    w.translate(rootX, rootY);
-    w.rotate(angle);
-    const g = w.createLinearGradient(0, 0, length, 0);
-    g.addColorStop(0, 'rgba(255,255,255,0.98)');
-    g.addColorStop(0.7, 'rgba(240,247,255,0.95)');
-    g.addColorStop(1, 'rgba(200,222,255,0.85)');
-    w.fillStyle = g;
-    w.strokeStyle = 'rgba(150,180,220,0.55)';
-    w.lineWidth = 1.2;
-    w.beginPath();
-    w.ellipse(length / 2, 0, length / 2, 7 - i * 0.35, 0, 0, Math.PI * 2);
-    w.fill(); w.stroke();
-    w.restore();
-  }
-  // Shoulder covert.
-  w.fillStyle = 'rgba(255,255,255,1)';
-  w.beginPath(); w.ellipse(rootX - 10, rootY - 10, 16, 11, -0.6, 0, Math.PI * 2); w.fill();
-  wing.refresh();
+  // Wings (96x80, front + back): curved feathered wings. Feathers follow a curve from the root (bottom-right)
+  // up and back, each tilted along it, so the silhouette bends like a real wing.
+  drawWing(scene, TEXTURES.wing, ['rgba(255,255,255,1)', 'rgba(236,245,255,0.97)', 'rgba(170,200,240,0.9)'], 'rgba(120,150,200,0.8)');
+  drawWing(scene, TEXTURES.wingBack, ['rgba(222,232,248,0.95)', 'rgba(196,212,236,0.92)', 'rgba(150,175,215,0.85)'], 'rgba(100,125,170,0.8)');
 
   // Feather (12x6) for appear/vanish bursts.
   const feather = scene.textures.createCanvas(TEXTURES.feather, 12, 6)!;
@@ -534,10 +512,10 @@ function drawUnstoppableTextures(scene: Phaser.Scene): void {
   f.beginPath(); f.ellipse(6, 3, 6, 2.6, 0, 0, Math.PI * 2); f.fill();
   feather.refresh();
 
-  // Comet bow-shock arc (64x112): a bright crescent bulging forward (to the right) with a hot core.
+  // Comet bow-shock arc (64x112): an orange crescent bulging forward (to the right) with a hot core.
   const arc = scene.textures.createCanvas(TEXTURES.cometArc, 64, 112)!;
   const a = arc.getContext();
-  const layers: [number, string][] = [[14, 'rgba(255,170,60,0.18)'], [9, 'rgba(255,214,120,0.4)'], [5, 'rgba(255,245,215,0.85)'], [2, 'rgba(255,255,255,1)']];
+  const layers: [number, string][] = [[14, 'rgba(255,90,10,0.22)'], [9, 'rgba(255,125,25,0.5)'], [5, 'rgba(255,155,45,0.92)'], [2, 'rgba(255,205,120,1)']];
   for (const [width, color] of layers) {
     a.strokeStyle = color; a.lineWidth = width; a.lineCap = 'round';
     a.beginPath();
@@ -545,4 +523,30 @@ function drawUnstoppableTextures(scene: Phaser.Scene): void {
     a.stroke();
   }
   arc.refresh();
+}
+
+function drawWing(scene: Phaser.Scene, key: string, stops: [string, string, string], edge: string): void {
+  // Classic cartoon angel wing that stays readable when small: a curved top edge rising from the root
+  // (bottom-right) to a tip (top-left), and a scalloped underside of three rounded feathers.
+  const texture = scene.textures.createCanvas(key, 96, 80)!;
+  const w = texture.getContext();
+  const outline = (): void => {
+    w.beginPath();
+    w.moveTo(84, 66);                                  // root (shoulder)
+    w.bezierCurveTo(80, 30, 56, 6, 10, 8);             // curved leading edge up to the tip
+    w.quadraticCurveTo(22, 22, 14, 32);                // first scallop
+    w.quadraticCurveTo(34, 40, 30, 50);                // second scallop
+    w.quadraticCurveTo(52, 56, 52, 66);                // third scallop
+    w.quadraticCurveTo(70, 74, 84, 66);                // back to the root
+    w.closePath();
+  };
+  const g = w.createLinearGradient(84, 66, 10, 8);
+  g.addColorStop(0, stops[0]); g.addColorStop(0.6, stops[1]); g.addColorStop(1, stops[2]);
+  outline(); w.fillStyle = g; w.fill();
+  w.lineWidth = 5; w.strokeStyle = edge; w.lineJoin = 'round'; outline(); w.stroke();
+  // Feather separations: two inner curves following the scallops.
+  w.lineWidth = 3.5; w.lineCap = 'round';
+  w.beginPath(); w.moveTo(70, 50); w.quadraticCurveTo(46, 30, 20, 26); w.stroke();
+  w.beginPath(); w.moveTo(76, 60); w.quadraticCurveTo(58, 46, 36, 44); w.stroke();
+  texture.refresh();
 }
