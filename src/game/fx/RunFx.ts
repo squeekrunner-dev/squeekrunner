@@ -43,6 +43,15 @@ export class RunFx {
   overdrive = 0;
   private unstoppable = false;
   private readonly aura: Phaser.GameObjects.Image;
+  private readonly wingGlow: Phaser.GameObjects.Image;
+  private readonly wingFar: Phaser.GameObjects.Image;
+  private readonly wingNear: Phaser.GameObjects.Image;
+  private readonly comet: Phaser.GameObjects.Image;
+  private readonly feathers: Particle[];
+  /** 0..1 wing/comet presence, eased toward the unstoppable state. */
+  private wingT = 0;
+  private cometT = 0;
+  private cometIn = 0;
 
   constructor(private readonly scene: Phaser.Scene, private readonly wheelGlow: Phaser.GameObjects.Graphics) {
     this.dustPool = this.pool(CONFIG.fx.dust.pool, TEXTURES.dust, 4);
@@ -56,6 +65,11 @@ export class RunFx {
     this.nutGlow = scene.add.image(0, 0, TEXTURES.glowBlue).setDepth(3.8).setVisible(false);
     this.coinGlow = scene.add.image(0, 0, TEXTURES.glowGold).setDepth(3.8).setVisible(false);
     this.aura = scene.add.image(0, 0, TEXTURES.glowGold).setDepth(3.9).setVisible(false);
+    this.wingGlow = scene.add.image(0, 0, TEXTURES.glowWhite).setDepth(4.6).setVisible(false);
+    this.wingFar = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(4.7).setVisible(false);
+    this.wingNear = scene.add.image(0, 0, TEXTURES.wing).setOrigin(0.85, 0.82).setDepth(4.8).setVisible(false);
+    this.comet = scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.5).setVisible(false);
+    this.feathers = this.pool(28, TEXTURES.feather, 5.6);
     this.milestone = label(scene, CONFIG.width / 2, CONFIG.fx.milestones.y, '', CONFIG.fx.milestones.fontSize, '#ffdf96', true)
       .setOrigin(0.5).setDepth(19).setFontStyle('bold').setStroke('#131b27', 5).setVisible(false);
   }
@@ -108,10 +122,33 @@ export class RunFx {
 
   /** ≥80 RPM (sim rule): glowing aura plus a continuous ghost trail until it ends. */
   setUnstoppable(on: boolean): void {
+    if (this.unstoppable !== on) this.featherBurst(on);
     this.unstoppable = on;
     if (!on) this.aura.setVisible(false);
     this.trailIn = 0;
   }
+
+  private wingAnchor = { x: 0, y: 0 };
+
+  /** White feathers burst out when the wings unfold, and scatter when they fold away. */
+  private featherBurst(appear: boolean): void {
+    let count: number = CONFIG.fx.unstoppable.wings.feathers;
+    if (this.reduced) count = Math.ceil(count / 3);
+    for (const p of this.feathers) {
+      if (count <= 0) break;
+      if (p.life > 0) continue;
+      const angle = appear ? -Math.PI / 2 + (Math.random() - 0.5) * 2.4 : Math.PI * (0.6 + Math.random() * 0.9);
+      const speed = 60 + Math.random() * (appear ? 120 : 80);
+      p.duration = p.life = 0.6 + Math.random() * 0.5;
+      p.vx = Math.cos(angle) * speed; p.vy = Math.sin(angle) * speed; p.gravity = appear ? 40 : 90;
+      p.alpha = 1;
+      p.image.setPosition(this.wingAnchor.x, this.wingAnchor.y).setAngle(Math.random() * 360)
+        .setScale(0.8 + Math.random() * 0.8).setAlpha(1).setVisible(true);
+      count--;
+    }
+    this.flashWings = appear ? 1 : 0.6;
+  }
+  private flashWings = 0;
 
   /** A crate shattered by an unstoppable hamster. */
   smash(x: number, y: number): void {
@@ -143,13 +180,14 @@ export class RunFx {
     this.trailLeft = 0;
     for (const line of this.lines) line.setVisible(false);
     this.vignette.setAlpha(0);
+    for (const img of [this.aura, this.wingGlow, this.wingFar, this.wingNear, this.comet]) img.setVisible(false);
   }
 
   update(dt: number, intensity: number, speed: number, player: Phaser.GameObjects.Sprite, grounded: boolean, playing: boolean): void {
     const fx = CONFIG.fx, reduced = this.reduced, camera = this.scene.cameras.main;
     this.clock += dt;
     if (reduced && camera.shakeEffect.isRunning) camera.shakeEffect.reset();
-    for (const pool of [this.dustPool, this.sparks, this.ghosts]) {
+    for (const pool of [this.dustPool, this.sparks, this.ghosts, this.feathers]) {
       for (const p of pool) {
         if (p.life <= 0) continue;
         p.life = Math.max(0, p.life - dt);
@@ -201,14 +239,57 @@ export class RunFx {
       this.aura.setPosition(player.x, player.y - player.displayHeight / 2).setDisplaySize(size, size)
         .setAlpha(Math.min(1, u.auraAlpha * (1 + beat * 0.15)));
     }
+    // Angel wings on the back: unfold (ease-out-back + white flash) and fold away (shrink + fade).
+    const wcfg = u.wings;
+    this.wingT = on ? Math.min(1, this.wingT + dt / wcfg.appear) : Math.max(0, this.wingT - dt / wcfg.vanish);
+    this.wingAnchor = { x: player.x - 10, y: player.y - 34 };
+    const wingsVisible = this.wingT > 0 && playing;
+    for (const img of [this.wingGlow, this.wingFar, this.wingNear]) img.setVisible(wingsVisible);
+    if (wingsVisible) {
+      const t = this.wingT, back = 1.70158;
+      const grow = on ? 1 + (back + 1) * Math.pow(t - 1, 3) + back * Math.pow(t - 1, 2) : t; // easeOutBack in, linear out
+      const flap = reduced ? 0 : Math.sin(this.clock * Math.PI * 2 * wcfg.flapHz) * wcfg.flapDeg;
+      const { x, y } = this.wingAnchor;
+      this.wingFar.setPosition(x + 5, y - 3).setScale(0.82 * grow).setAngle(-8 + flap * 0.8).setAlpha(0.75 * t);
+      this.wingNear.setPosition(x, y).setScale(grow).setAngle(flap).setAlpha(t);
+      this.flashWings = Math.max(0, this.flashWings - dt * 2.5);
+      const glow = wcfg.glowSize * (0.9 + 0.1 * Math.sin(this.clock * 9)) * (1 + this.flashWings * 0.8) * Math.max(0.2, grow);
+      this.wingGlow.setPosition(x - 18, y - 18).setDisplaySize(glow, glow)
+        .setAlpha(Math.min(1, wcfg.glowAlpha * t + this.flashWings * 0.5));
+    }
+
+    // Comet bow shock in front of the face, like entering the atmosphere: flickering arc + sparks streaming back.
+    const ccfg = u.comet;
+    this.cometT = on ? Math.min(1, this.cometT + dt / ccfg.fade) : Math.max(0, this.cometT - dt / ccfg.fade);
+    this.comet.setVisible(this.cometT > 0 && playing);
+    if (this.comet.visible) {
+      const flicker = reduced ? 0 : (Math.random() - 0.5) * 2 * ccfg.flicker;
+      const od = 1 + this.overdrive * 0.35;
+      this.comet.setPosition(player.x + ccfg.offsetX - 6 * (1 - this.cometT), player.y - ccfg.offsetY)
+        .setScale((0.85 + 0.15 * this.cometT) * od * (1 + flicker * 0.4), (0.9 + 0.1 * this.cometT) * od)
+        .setAlpha(Math.min(1, ccfg.alpha * this.cometT * (1 + flicker)));
+      this.cometIn -= dt;
+      if (on && this.cometIn <= 0 && !reduced) {
+        const spark = this.sparks.find(p => p.life <= 0);
+        if (spark) {
+          const edge = (Math.random() - 0.5) * 80;
+          spark.duration = spark.life = 0.35 + Math.random() * 0.25;
+          spark.vx = -(speed * 0.6 + 120 + Math.random() * 120); spark.vy = edge * 0.6; spark.gravity = 0; spark.alpha = 1;
+          spark.image.setTexture(TEXTURES.sparkGold).setPosition(player.x + ccfg.offsetX + 10, player.y - ccfg.offsetY + edge * 0.5)
+            .setScale(0.5 + Math.random() * 0.6).setAlpha(1).setVisible(true);
+        }
+        this.cometIn = ccfg.sparkInterval;
+      }
+    }
+
     if (playing && !reduced && (on || (!grounded && this.trailLeft > 0))) {
       this.trailIn -= dt;
       if (this.trailIn <= 0) {
         const ghost = this.ghosts.find(p => p.life <= 0);
         if (ghost) {
-          ghost.duration = ghost.life = fx.trail.life;
+          ghost.duration = ghost.life = on ? u.ghostLife : fx.trail.life;
           ghost.vx = -speed * 0.25;
-          ghost.alpha = fx.trail.alpha;
+          ghost.alpha = on ? u.ghostAlpha : fx.trail.alpha;
           ghost.image.setTexture(player.texture.key, player.frame.name).setPosition(player.x, player.y)
             .setAngle(player.angle).setScale(player.scaleX, player.scaleY).setAlpha(ghost.alpha).setVisible(true);
         }

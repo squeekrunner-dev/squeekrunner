@@ -38,6 +38,10 @@ export const TEXTURES = {
   sparkGold: 'fx-spark-gold',
   sparkBlue: 'fx-spark-blue',
   vignette: 'fx-vignette',
+  wing: 'fx-wing',
+  glowWhite: 'fx-glow-white',
+  cometArc: 'fx-comet-arc',
+  feather: 'fx-feather',
 } as const;
 
 export const COLORS = {
@@ -465,7 +469,7 @@ export function createTextures(scene: Phaser.Scene): void {
     g.fillStyle(color).fillRect(2, 0, 2, 6).fillRect(0, 2, 6, 2);
     g.generateTexture(key, 6, 6);
   }
-  for (const [key, rgb] of [[TEXTURES.glowGold, '255,198,90'], [TEXTURES.glowBlue, '100,203,255']] as const) {
+  for (const [key, rgb] of [[TEXTURES.glowGold, '255,198,90'], [TEXTURES.glowBlue, '100,203,255'], [TEXTURES.glowWhite, '255,255,255']] as const) {
     const texture = scene.textures.createCanvas(key, 128, 128)!;
     const ctx = texture.getContext();
     const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
@@ -476,6 +480,7 @@ export function createTextures(scene: Phaser.Scene): void {
     ctx.fillRect(0, 0, 128, 128);
     texture.refresh();
   }
+  drawUnstoppableTextures(scene);
   const vignette = scene.textures.createCanvas(TEXTURES.vignette, 256, 144)!;
   const ctx = vignette.getContext();
   ctx.save();
@@ -490,4 +495,54 @@ export function createTextures(scene: Phaser.Scene): void {
   vignette.refresh();
 
   g.destroy();
+}
+
+/** UNSTOPPABLE (80+ RPM) art: an angel wing, a white feather and a comet bow-shock arc. Canvas-only. */
+function drawUnstoppableTextures(scene: Phaser.Scene): void {
+  // Wing (96x80): feathers fan from the root at the bottom-right up and back (the hamster faces right).
+  const wing = scene.textures.createCanvas(TEXTURES.wing, 96, 80)!;
+  const w = wing.getContext();
+  const rootX = 82, rootY = 66;
+  const feathers = 7;
+  for (let i = feathers - 1; i >= 0; i--) {
+    const angle = (-158 + i * 13) * Math.PI / 180;   // fan from back-left to up
+    const length = 40 + (feathers - i) * 5;
+    w.save();
+    w.translate(rootX, rootY);
+    w.rotate(angle);
+    const g = w.createLinearGradient(0, 0, length, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0.98)');
+    g.addColorStop(0.7, 'rgba(240,247,255,0.95)');
+    g.addColorStop(1, 'rgba(200,222,255,0.85)');
+    w.fillStyle = g;
+    w.strokeStyle = 'rgba(150,180,220,0.55)';
+    w.lineWidth = 1.2;
+    w.beginPath();
+    w.ellipse(length / 2, 0, length / 2, 7 - i * 0.35, 0, 0, Math.PI * 2);
+    w.fill(); w.stroke();
+    w.restore();
+  }
+  // Shoulder covert.
+  w.fillStyle = 'rgba(255,255,255,1)';
+  w.beginPath(); w.ellipse(rootX - 10, rootY - 10, 16, 11, -0.6, 0, Math.PI * 2); w.fill();
+  wing.refresh();
+
+  // Feather (12x6) for appear/vanish bursts.
+  const feather = scene.textures.createCanvas(TEXTURES.feather, 12, 6)!;
+  const f = feather.getContext();
+  f.fillStyle = 'rgba(255,255,255,0.95)';
+  f.beginPath(); f.ellipse(6, 3, 6, 2.6, 0, 0, Math.PI * 2); f.fill();
+  feather.refresh();
+
+  // Comet bow-shock arc (64x112): a bright crescent bulging forward (to the right) with a hot core.
+  const arc = scene.textures.createCanvas(TEXTURES.cometArc, 64, 112)!;
+  const a = arc.getContext();
+  const layers: [number, string][] = [[14, 'rgba(255,170,60,0.18)'], [9, 'rgba(255,214,120,0.4)'], [5, 'rgba(255,245,215,0.85)'], [2, 'rgba(255,255,255,1)']];
+  for (const [width, color] of layers) {
+    a.strokeStyle = color; a.lineWidth = width; a.lineCap = 'round';
+    a.beginPath();
+    a.ellipse(4, 56, 46, 50, 0, -Math.PI * 0.42, Math.PI * 0.42);
+    a.stroke();
+  }
+  arc.refresh();
 }
