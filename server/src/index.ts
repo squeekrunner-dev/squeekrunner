@@ -122,7 +122,7 @@ export async function handle(request: Request, env: Env, rt: Runtime = runtime):
 export default {
   fetch: (request: Request, env: Env) => handle(request, env),
   async scheduled(_event: ScheduledController, env: Env): Promise<void> {
-    // Cron is a watchdog only; the singleton alarm collects every ~10 seconds.
+    // Cron is a watchdog only; the singleton alarm collects every ~2.5 seconds.
     await env.COLLECTOR.get(env.COLLECTOR.idFromName('wheel')).fetch('https://collector/wake');
   },
 };

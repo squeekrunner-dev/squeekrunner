@@ -81,6 +81,10 @@ export const CONFIG = {
   telemetry: {
     url: 'https://api.squeekchain.com/v1/status',
     pollMs: 1500,
+    /** Server collector cadence (one Squeekchain /v1/status read → one timeline point). */
+    collectMs: 2500,
+    /** A lone 0 RPM right after live RPM is held at the last live value for up to this long. */
+    zeroHoldMs: 6000,
     timeoutMs: 8000,
     maxReadAgeMs: 12000,
     maxMeasurementAgeMs: 120000,

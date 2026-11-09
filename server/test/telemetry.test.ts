@@ -4,6 +4,7 @@ import type { ProjectedPoint } from '../../src/chain/pending';
 import { TELEMETRY_LEAD_MS, TimelineCursor, type TimelinePoint } from '../../src/net/timeline';
 import { history, TelemetryCollector } from '../src/telemetry';
 import { harness } from './harness';
+import { CONFIG } from '../../src/config';
 
 type DisplayPoint = TimelinePoint & ProjectedPoint;
 
@@ -105,5 +106,35 @@ describe('optional projected telemetry over the public endpoint', () => {
     expect(c.values.has(oldKey)).toBe(false);
     expect([...c.values.keys()].filter(key => key.startsWith('projected:'))).toHaveLength(1);
     expect((await c.page()).points).toHaveLength(1);
+  });
+});
+
+describe('collector cadence and zero smoothing', () => {
+  const withRpm = (rpmMilli: number) => { const body = sampleStatus(); body.measurement.rpmMilli = rpmMilli; return body; };
+
+  it('bridges a brief 0 between live readings but publishes a real stop', async () => {
+    const c = collectorHarness();
+    const rpms: number[] = [];
+    const step = async (rpmMilli: number) => {
+      c.setBody(withRpm(rpmMilli)); await c.alarm();
+      const { points } = await c.page(); rpms.push(points[points.length - 1].rpmMilli!);
+      c.h.clock.now += CONFIG.telemetry.collectMs;
+    };
+    await step(64000);  // live
+    await step(0);      // lone dropout → held
+    await step(70000);  // live again
+    await step(0); await step(0); // still within zeroHoldMs of the last live reading → held
+    await step(0);      // beyond the hold → real stop
+    await step(0);
+    expect(CONFIG.telemetry.zeroHoldMs).toBeLessThan(3 * CONFIG.telemetry.collectMs);
+    expect(rpms).toEqual([64000, 64000, 70000, 70000, 70000, 0, 0]);
+  });
+
+  it('collects every collectMs and ignores an early alarm retry', async () => {
+    const c = collectorHarness();
+    await c.alarm();
+    c.h.clock.now += 500; await c.alarm(); // at-least-once retry
+    c.h.clock.now += CONFIG.telemetry.collectMs; await c.alarm();
+    expect((await c.page()).points).toHaveLength(2);
   });
 });
