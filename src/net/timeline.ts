@@ -1,5 +1,6 @@
 import { BlockDetector } from '../chain/blocks';
 import { TICK_HZ, type TickInput } from '../sim/core';
+import { CONFIG } from '../config';
 
 /** Published server points become effective five seconds after collection. */
 export const TELEMETRY_LEAD_MS = 5000;
@@ -11,6 +12,8 @@ export interface MapPage { chunks: MapChunk[]; nextAt: number; serverNow: number
 export interface TimelinePoint {
   at: number; validUntil: number; rpmMilli: number | null;
   installationId: string | null; height: string | null;
+  /** squeek-6: projected (pending) Squeek height; golden nuts follow it. Null on older points. */
+  projected?: string | null;
 }
 export interface TimelinePage { points: TimelinePoint[]; completeThrough: number; serverNow: number }
 export interface SessionReply {
@@ -19,6 +22,15 @@ export interface SessionReply {
   map: MapPage;
 }
 export interface RunReply { score: number; distance: number; endTick: number; coins: number; eligible: boolean; runToken: string; runId: string }
+
+/** squeek-6: nuts follow the projected (pending) height, not batch-settled rounds: one nut each time the
+ *  projected height crosses a multiple of CONFIG.blocksPerNut. */
+export function nutStep(height: bigint | null): bigint | null {
+  return height === null ? null : height / BigInt(CONFIG.blocksPerNut);
+}
+function nutHeight(point: TimelinePoint): bigint | null {
+  return nutStep(point.projected === undefined || point.projected === null ? null : BigInt(point.projected));
+}
 
 /** Identical chronological interpretation in the browser and verifier. No wall clock reads. */
 export class TimelineCursor {
@@ -29,7 +41,7 @@ export class TimelineCursor {
     // Baseline every point already known at start; none awards a pre-run nut.
     while (this.points[this.index]?.at <= startedAt) {
       const point = this.points[this.index++]; this.current = point;
-      if (point.installationId) this.detector.observe(point.installationId, point.height === null ? null : BigInt(point.height));
+      if (point.installationId) this.detector.observe(point.installationId, nutHeight(point));
     }
   }
   input(tick: number): TickInput {
@@ -38,7 +50,7 @@ export class TimelineCursor {
     while (this.points[this.index]?.at <= at) {
       const point = this.points[this.index++]; this.current = point;
       if (point.installationId) {
-        const update = this.detector.observe(point.installationId, point.height === null ? null : BigInt(point.height));
+        const update = this.detector.observe(point.installationId, nutHeight(point));
         if (update.reset) { event.resetNut = true; event.nut = false; }
         if (update.bonus) event.nut = true;
       }

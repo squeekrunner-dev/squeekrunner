@@ -4,7 +4,7 @@ export const CONFIG = {
   fx: {
     /** Effects follow the real wheel RPM (not world speed). Full strength at fullRpm (typical hard run);
      *  between fullRpm and overdriveRpm everything ramps far beyond normal (rare peaks, ~never seen). */
-    drive: { fullRpm: 75, overdriveRpm: 90, smoothingSeconds: 0.8 },
+    drive: { fullRpm: 70, overdriveRpm: 85, smoothingSeconds: 0.8 },
     overdrive: { dust: 1.6, dustReach: 0.7, wind: 0.8, vignette: 1.4, glow: 0.9, glowSize: 0.45, shake: 7, shakeInterval: 0.5 },
     dust: { pool: 320, intervalSlow: 0.12, intervalFast: 0.035, countSlow: 1, countFast: 5,
       life: 0.48, lifeBoost: 0.85, scale: 0.55, scaleRandom: 0.65, scaleBoost: 0.45, grow: 0.9,
@@ -73,8 +73,11 @@ export const CONFIG = {
   },
   /** Double jumps are a budget (sim squeek-4): a run starts with `start`; every golden nut adds `perNut`. */
   doubleJumps: { start: 15, perNut: 5 },
-  /** squeek-5 rule: at ≥ onRpmMilli live wheel RPM crates break on contact; ends below offRpmMilli. */
-  unstoppable: { onRpmMilli: 80000, offRpmMilli: 78000 },
+  /** squeek-6 rule: at ≥ onRpmMilli live wheel RPM crates break on contact; ends below offRpmMilli, but never
+   *  before minTicks (3 s) have passed, so a wobbling wheel does not flicker the mode on and off. */
+  unstoppable: { onRpmMilli: 70000, offRpmMilli: 66000, minTicks: 180 },
+  /** squeek-6: one golden nut per this many projected (pending) Squeek blocks. */
+  blocksPerNut: 5,
   bonus: {
     points: 150,
     /** The shield lasts until it absorbs one hit; a second nut does not stack shields. */

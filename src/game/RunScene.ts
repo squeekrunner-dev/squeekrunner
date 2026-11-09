@@ -17,6 +17,7 @@ import { centerCamera, MAX_PAD, sideFades } from './viewport';
 import { startRanked, submitRanked, type RankedRun } from '../net/ranked';
 import { RunFx } from './fx/RunFx';
 import { rpmDrive } from './fx/profile';
+import { nutStep } from '../net/timeline';
 
 type RunState = 'ready' | 'playing' | 'paused' | 'ended';
 
@@ -357,7 +358,8 @@ export class RunScene extends Phaser.Scene {
   }
 
   private onSnapshot(snapshot: ChainSnapshot): void {
-    const { bonus, reset } = this.detector.observe(snapshot.installationId, snapshot.confirmedHeight);
+    // squeek-6: nuts follow projected (pending) blocks, not batch-settled confirmations.
+    const { bonus, reset } = this.detector.observe(snapshot.installationId, nutStep(snapshot.projectedHeight));
     if (this.ranked) {
       // Ranked nuts come only from the server timeline inside the simulation ('nut' events).
       if (this.state === 'playing' && !this.runBlock && snapshot.confirmedHeight !== null) {
@@ -412,7 +414,7 @@ export class RunScene extends Phaser.Scene {
         if (!sound.cometPlaying) sound.startComet(true); // not pre-rolled (practice/offline): fast attack
         sound.playNewBlock();
         sound.vibrate(CONFIG.fx.haptics.shieldMs);
-        this.notice("🔥 UNSTOPPABLE! 80+ RPM · CRATES CAN'T STOP YOU · KEEP CATCHING COINS");
+        this.notice("🔥 UNSTOPPABLE! 70+ RPM · CRATES CAN'T STOP YOU · KEEP CATCHING COINS");
       } else if (event === 'unstoppableEnd') {
         this.fx.setUnstoppable(false);
         sound.stopComet();

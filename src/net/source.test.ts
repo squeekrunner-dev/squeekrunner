@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiClient } from './api';
 import { ServerSource } from './source';
-import { TimelineCursor, type TimelinePage, type TimelinePoint } from './timeline';
+import { TimelineCursor, type TimelinePoint } from './timeline';
 import type { ProjectedPoint } from '../chain/pending';
 import { pendingBlocks } from '../chain/pending';
 import { formatTelemetry } from '../site/telemetry';
@@ -42,16 +42,14 @@ describe('server projected display metadata', () => {
     expect(source.read().snapshot).toMatchObject({ confirmedHeight: 4332n, projectedHeight: null });
   });
 
-  it('awards nuts only for confirmed growth, with identical timeline inputs whether projected exists or not', () => {
-    const points = [point(at, '4332', '4357'), point(at + 1000, '4332', '99999'), point(at + 2000, '4333', '4357')];
-    const page: TimelinePage = { points, serverNow: at, completeThrough: at + 3000 };
-    const withDisplay = new TimelineCursor(page.points, at);
-    const legacy = new TimelineCursor(points.map(({ projected: _projected, ...confirmed }) => confirmed), at);
-    for (let tick = 0; tick <= 180; tick++) {
-      const input = withDisplay.input(tick);
-      expect(input).toEqual(legacy.input(tick));
-      if (tick === 60) expect(input.nut).toBeUndefined();
-      if (tick === 120) expect(input.nut).toBe(true);
-    }
+  it('squeek-6: awards a nut each time projected crosses a multiple of 5, ignoring confirmed (batch) growth', () => {
+    const points = [point(at, '4332', '4357'), point(at + 1000, '4332', '4359'), point(at + 2000, '4350', '4360'),
+      point(at + 3000, '4355', '4362')];
+    const cursor = new TimelineCursor(points, at);
+    const nuts: number[] = [];
+    for (let tick = 0; tick <= 240; tick++) if (cursor.input(tick).nut) nuts.push(tick);
+    expect(nuts).toEqual([120]);          // 4359→4360 crosses 4360; batch settlement 4332→4355 gives nothing
+    const legacy = new TimelineCursor(points.map(({ projected: _p, ...confirmed }) => confirmed), at);
+    for (let tick = 0; tick <= 240; tick++) expect(legacy.input(tick).nut).toBeUndefined();
   });
 });

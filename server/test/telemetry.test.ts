@@ -42,7 +42,7 @@ function collectorHarness() {
   };
 }
 
-describe('optional projected telemetry over the public endpoint', () => {
+describe('projected telemetry (authoritative since squeek-6)', () => {
   it('publishes projected strings and preserves authoritative DB history across DO restart', async () => {
     const c = collectorHarness(), body = sampleStatus();
     body.builder.anchor.blockHeight = '18446744073709551590';
@@ -54,8 +54,8 @@ describe('optional projected telemetry over the public endpoint', () => {
     expect(points).toHaveLength(1);
     expect(points[0]).toMatchObject({ at: SAMPLE_TIME + TELEMETRY_LEAD_MS, height: '18446744073709551590', projected: '18446744073709551615', rpmMilli: 98316 });
     expect(completeThrough).toBe(SAMPLE_TIME + TELEMETRY_LEAD_MS);
-    const { projected: _projected, ...authoritative } = points[0];
-    expect(await history(c.h.env.DB, SAMPLE_TIME, completeThrough)).toEqual([authoritative]);
+    // squeek-6: projected is part of the authoritative D1 history the verifier replays.
+    expect(await history(c.h.env.DB, SAMPLE_TIME, completeThrough)).toEqual([points[0]]);
     await c.alarm(); // at-least-once alarm retry does not create duplicate points
     expect((await c.page()).points).toEqual(points);
   });
@@ -69,46 +69,44 @@ describe('optional projected telemetry over the public endpoint', () => {
 
   it('returns projected=null for pre-upgrade D1 points and unavailable upstream data', async () => {
     const c = collectorHarness();
-    c.h.addPoint({ at: SAMPLE_TIME - 1000, height: '4332' });
+    c.h.addPoint({ at: SAMPLE_TIME - 1000, height: '4332', projected: null });
     expect((await c.page()).points[0]).toMatchObject({ height: '4332', projected: null });
     c.setBody(null);
     await c.alarm();
     expect((await c.page()).points.at(-1)).toMatchObject({ height: null, projected: null, rpmMilli: null });
   });
 
-  it('keeps projections on their own sample and triggers a nut only when the confirmed anchor grows', async () => {
+  it('squeek-6: a nut drops each time pending crosses a multiple of 5 blocks, not when a batch settles', async () => {
     const c = collectorHarness(), body = sampleStatus();
     body.builder.anchor.blockHeight = '4332'; body.builder.projected.blockHeight = '4357';
     c.setBody(body); await c.alarm();
     c.h.clock.now += 10000;
-    body.builder.projected.blockHeight = '4360';
+    body.builder.projected.blockHeight = '4360';           // pending crosses a multiple of 5 → nut
     c.setBody(body); await c.alarm();
     c.h.clock.now += 10000;
-    body.builder.anchor.blockHeight = '4333';
+    body.builder.anchor.blockHeight = '4350';              // a batch of 18 settles, projected unchanged → no nut
     c.setBody(body); await c.alarm();
     const { points } = await c.page();
-    expect(points.map(p => [p.height, p.projected])).toEqual([['4332', '4357'], ['4332', '4360'], ['4333', '4360']]);
-    const displayed = new TimelineCursor(points, points[0].at);
-    const authoritative = new TimelineCursor(await history(c.h.env.DB, points[0].at, points[2].at), points[0].at);
-    for (let tick = 0; tick <= 1200; tick++) {
-      const input = displayed.input(tick);
-      expect(input).toEqual(authoritative.input(tick));
-      if (tick === 600) expect(input.nut).toBeUndefined();
-      if (tick === 1200) expect(input.nut).toBe(true);
+    expect(points.map(p => [p.height, p.projected])).toEqual([['4332', '4357'], ['4332', '4360'], ['4350', '4360']]);
+    const fromPage = new TimelineCursor(points, points[0].at);
+    const fromDb = new TimelineCursor(await history(c.h.env.DB, points[0].at, points[2].at), points[0].at);
+    const nutTicks: number[] = [];
+    for (let tick = 0; tick <= 1300; tick++) {
+      const input = fromPage.input(tick);
+      expect(input).toEqual(fromDb.input(tick));
+      if (input.nut) nutTicks.push(tick);
     }
+    expect(nutTicks).toEqual([600]);
   });
 
-  it('expires display buckets with the existing 48h retention instead of accumulating DO storage', async () => {
-    const c = collectorHarness(); await c.alarm();
-    const oldKey = [...c.values.keys()].find(key => key.startsWith('projected:'))!;
-    c.h.clock.now += 49 * 3600000;
-    await c.alarm();
-    expect(c.values.has(oldKey)).toBe(false);
-    expect([...c.values.keys()].filter(key => key.startsWith('projected:'))).toHaveLength(1);
-    expect((await c.page()).points).toHaveLength(1);
+  it('pre-upgrade points without projected never produce a nut', async () => {
+    const c = collectorHarness();
+    c.h.addPoint({ at: SAMPLE_TIME + 1000, height: '4332', projected: null });
+    c.h.addPoint({ at: SAMPLE_TIME + 11000, height: '4340', projected: null });
+    const cursor = new TimelineCursor(await history(c.h.env.DB, SAMPLE_TIME, SAMPLE_TIME + 20000), SAMPLE_TIME);
+    for (let tick = 0; tick <= 1200; tick++) expect(cursor.input(tick).nut).toBeUndefined();
   });
 });
-
 describe('collector cadence and zero smoothing', () => {
   const withRpm = (rpmMilli: number) => { const body = sampleStatus(); body.measurement.rpmMilli = rpmMilli; return body; };
 

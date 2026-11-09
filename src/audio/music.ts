@@ -10,7 +10,7 @@ export const MUSIC = {
   /** RPM → tempo factor: 0 RPM plays at 0.85×, a hard run (75 RPM, same as fx full strength) and above at 1.25×. */
   minFactor: 0.85,
   maxFactor: 1.25,
-  peakRpm: 75,
+  peakRpm: 70,
   /** Per-tick (25 ms) smoothing toward the target tempo, ≈1 s to settle. */
   smoothing: 0.045,
   lookaheadMs: 25,

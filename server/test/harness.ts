@@ -18,7 +18,7 @@ class Statement {
 }
 export function fakeD1(): D1Database & { raw: DatabaseSync } {
   const db = new DatabaseSync(':memory:');
-  for (const m of ['0001_initial.sql', '0002_coins.sql', '0003_map.sql', '0004_applications.sql']) db.exec(readFileSync(fileURLToPath(new URL(`../migrations/${m}`, import.meta.url).href), 'utf8'));
+  for (const m of ['0001_initial.sql', '0002_coins.sql', '0003_map.sql', '0004_applications.sql', '0005_projected.sql']) db.exec(readFileSync(fileURLToPath(new URL(`../migrations/${m}`, import.meta.url).href), 'utf8'));
   const facade = {
     raw: db,
     prepare: (sql: string) => new Statement(db, sql),
@@ -98,7 +98,8 @@ export function harness(overrides: Partial<Env> = {}): Harness {
       method, body: body === undefined ? undefined : JSON.stringify(body),
       headers: { Origin: ORIGIN, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
     }), env, rt),
-    addPoint: p => db.raw.prepare('INSERT INTO telemetry(at,valid_until,rpm_milli,installation_id,height) VALUES(?,?,?,?,?)')
-      .run(p.at, p.validUntil ?? p.at + 120000, p.rpmMilli ?? null, p.installationId ?? 'inst-1', p.height ?? '100'),
+    addPoint: p => db.raw.prepare('INSERT INTO telemetry(at,valid_until,rpm_milli,installation_id,height,projected) VALUES(?,?,?,?,?,?)')
+      .run(p.at, p.validUntil ?? p.at + 120000, p.rpmMilli ?? null, p.installationId ?? 'inst-1', p.height ?? '100',
+        p.projected === undefined ? (p.height ?? '100') : p.projected),
   };
 }

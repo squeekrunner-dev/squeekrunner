@@ -125,3 +125,11 @@ replays. Golden fixture expected scores/ticks/hashes are in `test-data/expected.
 - While unstoppable an overlapping obstacle is removed with event `smash`; the shield is not spent and the
   run continues. Coins and nuts are unchanged (a missed coin still disqualifies).
 - Golden replays below 80 RPM keep identical scores and end ticks; only the state hash changed (new field).
+
+## squeek-6 (2026-11-10): unstoppable at 70, nuts from pending blocks
+
+- Unstoppable turns on at >= 70000 RPM input, turns off below 66000 but never before 180 ticks (3 s)
+  after it started (`unstoppableSince`), so a wobbling wheel does not flicker it.
+- Golden nuts follow the projected (pending) Squeek height from the server timeline (`projected`, now an
+  authoritative D1 column): one nut each time projected crosses a multiple of `CONFIG.blocksPerNut` (5).
+  Batch-settled confirmations no longer drop nuts. Points without `projected` (pre-upgrade) never do.
