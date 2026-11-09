@@ -52,6 +52,8 @@ export class RunFx {
   private fireRemainder = 0;
   private readonly ripples: { image: Phaser.GameObjects.Image; life: number }[];
   private rippleIn = 0;
+  private readonly bowFlames: Particle[];
+  private bowRemainder = 0;
   /** 0..1 wing/comet presence, eased toward the unstoppable state. */
   private wingT = 0;
   private cometT = 0;
@@ -76,7 +78,9 @@ export class RunFx {
       ({ image: scene.add.image(0, 0, TEXTURES.cometArc).setOrigin(0, 0.5).setDepth(5.45).setVisible(false), life: 0 }));
     this.feathers = this.pool(28, TEXTURES.feather, 5.6);
     this.flames = this.pool(CONFIG.fx.unstoppable.comet.fire.pool, TEXTURES.flameHot, 4.95); // behind the hamster
-    for (const flame of this.flames) flame.image.setBlendMode('ADD'); // string form keeps Phaser a type-only import
+    for (const flame of this.flames) flame.image.setBlendMode('ADD');
+    this.bowFlames = this.pool(CONFIG.fx.unstoppable.comet.bow.pool, TEXTURES.flameHot, 4.96); // behind the face
+    for (const flame of this.bowFlames) flame.image.setBlendMode('ADD'); // string form keeps Phaser a type-only import
     this.milestone = label(scene, CONFIG.width / 2, CONFIG.fx.milestones.y, '', CONFIG.fx.milestones.fontSize, '#ffdf96', true)
       .setOrigin(0.5).setDepth(19).setFontStyle('bold').setStroke('#131b27', 5).setVisible(false);
   }
@@ -272,31 +276,51 @@ export class RunFx {
     const ccfg = u.comet, fire = ccfg.fire;
     this.cometT = on ? Math.min(1, this.cometT + dt / ccfg.fade) : Math.max(0, this.cometT - dt / ccfg.fade);
     const noseX = player.x + 14, noseY = player.y - ccfg.offsetY;
-    // Supersonic bow shock just ahead of the fire: a shimmering orange crescent plus expanding ripples.
-    const arcX = player.x + ccfg.offsetX, arcY = noseY;
-    this.comet.setVisible(playing && this.cometT > 0);
-    if (this.comet.visible) {
-      const flicker = reduced ? 0 : (Math.random() - 0.5) * 2 * ccfg.flicker;
-      const breathe = reduced ? 0 : Math.sin(this.clock * 38) * 0.05;
-      const k = ccfg.scale * (1 + this.overdrive * 0.3);
-      this.comet.setPosition(arcX - 3 * (1 - this.cometT), arcY)
-        .setScale(k * (0.9 + 0.1 * this.cometT + breathe + flicker * 0.3), k * (0.95 + 0.05 * this.cometT - breathe * 0.5))
-        .setAlpha(Math.min(1, ccfg.alpha * this.cometT * (1 + flicker)));
+    // Supersonic bow shock made of fire: puffs are born along a crescent just ahead of the snout and flow
+    // back around it (top half up-and-back, bottom half down-and-back), cooling white -> orange -> red.
+    // Every waveEvery seconds a ring of puffs bursts forward from the bow like a sonic boom.
+    const arcX = player.x + ccfg.offsetX, arcY = noseY, bow = ccfg.bow;
+    this.comet.setVisible(false);
+    for (const r of this.ripples) r.image.setVisible(false);
+    const spawnBow = (count: number, wave: boolean): void => {
+      for (const p of this.bowFlames) {
+        if (count <= 0) break;
+        if (p.life > 0) continue;
+        const theta = (Math.random() - 0.5) * bow.spanDeg * Math.PI / 180;
+        const radius = bow.radius * (1 + this.overdrive * 0.25) * (0.92 + Math.random() * 0.16);
+        const cx = Math.cos(theta), cy = Math.sin(theta);
+        p.duration = p.life = bow.life * (0.7 + Math.random() * 0.6) * (wave ? 1.4 : 1);
+        if (wave) { p.vx = cx * bow.waveSpeed - speed * 0.15; p.vy = cy * bow.waveSpeed * bow.stretch; }
+        else { p.vx = -bow.flow * (0.6 + Math.abs(cy)) - speed * 0.2; p.vy = cy * bow.flow * 1.1; }
+        p.gravity = -20; p.alpha = bow.alpha * (wave ? 0.8 : 1);
+        p.scale = bow.size * (0.75 + Math.random() * 0.5) * (wave ? 0.8 : 1) * (1 + this.overdrive * 0.3);
+        p.grow = bow.grow;
+        p.image.setTexture(TEXTURES.flameHot)
+          .setPosition(arcX - radius + cx * radius, arcY + cy * radius * bow.stretch)
+          .setScale(p.scale).setAlpha(p.alpha).setVisible(true);
+        count--;
+      }
+    };
+    if (playing && this.cometT > 0) {
+      this.bowRemainder += bow.rate * this.cometT * (1 + this.overdrive * 0.5) * (reduced ? 0.35 : 1) * dt;
+      const count = Math.floor(this.bowRemainder);
+      this.bowRemainder -= count;
+      spawnBow(count, false);
+      this.rippleIn -= dt;
+      if (on && !reduced && this.rippleIn <= 0) {
+        spawnBow(bow.wavePuffs, true);
+        this.rippleIn = bow.waveEvery / (1 + this.overdrive * 0.6);
+      }
+    } else this.bowRemainder = 0;
+    for (const p of this.bowFlames) {
+      if (p.life <= 0) continue;
+      p.life = Math.max(0, p.life - dt);
+      p.image.x += p.vx * dt; p.image.y += p.vy * dt; p.vy += p.gravity * dt;
+      const age = 1 - p.life / p.duration;
+      p.image.setTexture(age < 0.15 ? TEXTURES.flameHot : age < 0.6 ? TEXTURES.flameMid : TEXTURES.flameCool)
+        .setScale(p.scale! * (1 + p.grow! * age)).setAlpha(p.alpha * (1 - age)).setVisible(p.life > 0);
     }
-    const rp = ccfg.ripple;
-    this.rippleIn -= dt;
-    if (on && playing && !reduced && this.rippleIn <= 0) {
-      const free = this.ripples.find(r => r.life <= 0);
-      if (free) free.life = rp.life;
-      this.rippleIn = rp.every / (1 + this.overdrive * 0.6);
-    }
-    for (const r of this.ripples) {
-      if (r.life <= 0) { r.image.setVisible(false); continue; }
-      r.life = Math.max(0, r.life - dt);
-      const t = 1 - r.life / rp.life, k = ccfg.scale * (1 + t * rp.grow);
-      r.image.setVisible(playing).setPosition(arcX + t * rp.drift, arcY).setScale(k, k * (1 + t * 0.25))
-        .setAlpha(rp.alpha * (1 - t) * this.cometT);
-    }
+
     if (playing && this.cometT > 0) {
       this.fireRemainder += fire.rate * this.cometT * (1 + this.overdrive * 0.5) * (reduced ? 0.35 : 1) * dt;
       let count = Math.floor(this.fireRemainder);
