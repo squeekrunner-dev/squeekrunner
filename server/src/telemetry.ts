@@ -1,17 +1,21 @@
 import { CONFIG } from '../../src/config';
 import { parseStatus, telemetryView } from '../../src/chain/parse';
+import type { ProjectedPoint } from '../../src/chain/pending';
 import { TELEMETRY_LEAD_MS, type TimelinePage, type TimelinePoint } from '../../src/net/timeline';
 import { MAX_RPM_MILLI } from '../../src/sim/replay';
 import { type Env, type Runtime, runtime } from './security';
 
 const RETENTION = 48 * 60 * 60 * 1000;
+const PROJECTION_HOUR = 60 * 60 * 1000;
+const projectionKey = (at: number): string => `projected:${Math.floor(at / PROJECTION_HOUR).toString().padStart(12, '0')}`;
+type Projections = Record<string, string | null>;
 const SELECT = 'SELECT at, valid_until AS validUntil, rpm_milli AS rpmMilli, installation_id AS installationId, height FROM telemetry';
 export async function history(db: D1Database, since: number, until: number): Promise<TimelinePoint[]> {
   const baseline = await db.prepare(`${SELECT} WHERE at <= ? ORDER BY at DESC LIMIT 1`).bind(since).first<TimelinePoint>();
   const later = await db.prepare(`${SELECT} WHERE at > ? AND at <= ? ORDER BY at LIMIT 18000`).bind(since, until).all<TimelinePoint>();
   return [...(baseline ? [baseline] : []), ...later.results];
 }
-export async function collect(env: Env, rt: Runtime): Promise<void> {
+export async function collect(env: Env, rt: Runtime): Promise<{ at: number; projected: string | null }> {
   let snapshot = null;
   try {
     const reply = await rt.fetcher(CONFIG.telemetry.url, { signal: AbortSignal.timeout(4000) });
@@ -29,6 +33,7 @@ export async function collect(env: Env, rt: Runtime): Promise<void> {
     env.DB.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(now - 60000),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ? AND id NOT IN (SELECT session_id FROM runs)').bind(now - RETENTION),
   ]);
+  return { at, projected: snapshot?.projectedHeight?.toString() ?? null };
 }
 
 /** A single publisher. Serialize collection and reads so no late write can cross a returned watermark. */
@@ -44,7 +49,14 @@ export class TelemetryCollector {
       const until = Math.min(now + TELEMETRY_LEAD_MS, Number(url.searchParams.get('until') ?? now + TELEMETRY_LEAD_MS));
       if (!Number.isFinite(since) || !Number.isFinite(until)) return new Response('Invalid time', { status: 400 });
       const points = await history(this.env.DB, since, until);
-      return Response.json({ points, serverNow: now, completeThrough: now + TELEMETRY_LEAD_MS } satisfies TimelinePage);
+      // Display-only sidecar in DO storage: no D1 schema change, no change to verifier history().
+      const keys = [...new Set(points.map(point => projectionKey(point.at)))];
+      const buckets = new Map(await Promise.all(keys.map(async key =>
+        [key, await this.state.storage.get<Projections>(key)] as const)));
+      const displayPoints: (TimelinePoint & ProjectedPoint)[] = points.map(point => ({
+        ...point, projected: buckets.get(projectionKey(point.at))?.[point.at] ?? null,
+      }));
+      return Response.json({ points: displayPoints, serverNow: now, completeThrough: now + TELEMETRY_LEAD_MS } satisfies TimelinePage);
     });
   }
   async alarm(): Promise<void> {
@@ -54,7 +66,16 @@ export class TelemetryCollector {
       // At-least-once delivery and retry after restart must not manufacture a burst of points.
       if (last && now - last < 9000) { await this.state.storage.setAlarm(last + 10000); return; }
       await this.state.storage.setAlarm(now + 10000);
-      await collect(this.env, this.rt);
+      const projection = await collect(this.env, this.rt);
+      // Hour buckets stay small (~360 entries) and survive DO eviction/restart.
+      const key = projectionKey(projection.at);
+      const bucket = await this.state.storage.get<Projections>(key) ?? {};
+      if (!(projection.at in bucket)) {
+        bucket[projection.at] = projection.projected;
+        await this.state.storage.put(key, bucket);
+      }
+      const expired = await this.state.storage.list({ prefix: 'projected:', end: projectionKey(now - RETENTION) });
+      if (expired.size) await this.state.storage.delete([...expired.keys()]);
       await this.state.storage.put('lastCollection', now);
     });
   }

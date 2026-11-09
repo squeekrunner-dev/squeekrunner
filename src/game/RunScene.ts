@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CONFIG } from '../config';
 import { BlockDetector } from '../chain/blocks';
 import type { ChainSnapshot } from '../chain/types';
+import { pendingBlocks } from '../chain/pending';
 import { baseSpeed } from '../logic/speed';
 import { coinX, COIN_Y, distance, TICK_HZ, UNIT, type SimEvent } from '../sim/core';
 import { RunDriver, rpmSample } from './runDriver';
@@ -537,14 +538,14 @@ export class RunScene extends Phaser.Scene {
     this.rpmGaugeFill.setFillStyle(view.mode === 'LIVE' ? COLORS.lime : 0x48606f);
 
     this.heightText.setText(`#${compactHeight(view.snapshot?.confirmedHeight ?? null)}`);
-    const projected = view.snapshot?.projectedHeight;
+    const pending = pendingBlocks(view.snapshot?.confirmedHeight, view.snapshot?.projectedHeight);
     this.provisionalText.setText(
       view.snapshot?.confirmedHeight === null || !view.snapshot
         ? 'awaiting confirmed height'
         : view.mode === 'NO DATA'
           ? 'last known confirmed height'
-          : projected !== null && projected !== undefined && projected !== view.snapshot.confirmedHeight
-            ? `provisional #${compactHeight(projected)}`
+          : pending
+            ? pending
             : this.context.source.kind === 'demo'
               ? 'PRACTICE · SIMULATED WHEEL'
               : 'SEPOLIA · SETTLED',

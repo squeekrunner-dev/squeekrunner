@@ -17,6 +17,14 @@ describe('status wire contract and data modes', () => {
     expect(telemetryView(parseStatus(body, SAMPLE_TIME), SAMPLE_TIME).mode).toBe('WHEEL IDLE');
   });
 
+  it.each([undefined, null, {}, { blockHeight: 'bad', lifecycle: 'optimistic' },
+    { blockHeight: '2000', lifecycle: 'unknown' }])('keeps confirmed telemetry when optional projected data is absent or invalid: %j', projected => {
+    const body = sampleStatus();
+    const parsed = parseStatus({ ...body, builder: { ...body.builder, projected } }, SAMPLE_TIME);
+    expect(parsed).toMatchObject({ confirmedHeight: 1999n, projectedHeight: null });
+    expect(telemetryView(parsed, SAMPLE_TIME)).toMatchObject({ mode: 'LIVE', rpm: 98.316 });
+  });
+
   it.each(['stale', 'fault', 'null', 'unavailable'] as const)('%s becomes NO DATA, not sleep', kind => {
     const body = sampleStatus();
     let value: unknown = body;

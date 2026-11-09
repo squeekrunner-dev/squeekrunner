@@ -1,4 +1,5 @@
 import { LiveSource } from '../chain/live';
+import { projectedHeight, type ProjectedPoint } from '../chain/pending';
 import type { ChainSnapshot, TelemetrySource, TelemetryView } from '../chain/types';
 import { CHUNK_TICKS, MAX_TICKS, type TickInput } from '../sim/core';
 import { TimelineCursor, type MapPage, type SessionReply, type TimelinePage, type TimelinePoint } from './timeline';
@@ -51,7 +52,8 @@ export class ServerSource implements TelemetrySource {
     for (let i = this.points.length - 1; i >= 0; i--) if (this.points[i].at <= now) { point = this.points[i]; break; }
     if (!point) return { mode: 'NO DATA', rpm: 0, reason: 'Server telemetry warming up', snapshot: null };
     const snapshot: ChainSnapshot = { installationId: point.installationId ?? 'unavailable', fetchedAt: now, measurement: null,
-      builderAvailable: point.height !== null, confirmedHeight: point.height === null ? null : BigInt(point.height), projectedHeight: null };
+      builderAvailable: point.height !== null, confirmedHeight: point.height === null ? null : BigInt(point.height),
+      projectedHeight: projectedHeight((point as TimelinePoint & ProjectedPoint).projected) };
     if (point.at !== this.lastAt) { this.lastAt = point.at; for (const fn of this.listeners) fn(snapshot); }
     const rpm = now >= point.validUntil || now > this.completeThrough ? null : point.rpmMilli;
     return { mode: rpm === null ? 'NO DATA' : rpm === 0 ? 'WHEEL IDLE' : 'LIVE', rpm: (rpm ?? 0) / 1000,

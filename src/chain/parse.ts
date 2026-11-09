@@ -50,10 +50,13 @@ export function parseStatus(value: unknown, now = Date.now()): ChainSnapshot | n
   let confirmedHeight: bigint | null = null;
   let projectedHeight: bigint | null = null;
   if (builder.status === 'available') {
-    if (!isRecord(builder.anchor) || !isRecord(builder.projected)) return null;
+    if (!isRecord(builder.anchor)) return null;
     confirmedHeight = height(builder.anchor.blockHeight);
-    projectedHeight = height(builder.projected.blockHeight);
-    if (confirmedHeight === null || projectedHeight === null || builder.projected.lifecycle !== 'optimistic') return null;
+    if (confirmedHeight === null) return null;
+    // Optional display data must not invalidate an otherwise valid confirmed anchor/measurement.
+    if (isRecord(builder.projected) && builder.projected.lifecycle === 'optimistic') {
+      projectedHeight = height(builder.projected.blockHeight);
+    }
   }
   return {
     installationId: value.installationId, fetchedAt: now, measurement,
