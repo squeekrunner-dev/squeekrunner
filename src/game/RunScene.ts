@@ -159,6 +159,7 @@ export class RunScene extends Phaser.Scene {
 
     onSceneExit(this.events, () => {
       document.body.classList.remove('is-playing');
+      sound.stopMusic(0.1);
       this.abort.abort();
       unsubscribe();
       this.input.off('pointerdown', pointer);
@@ -290,6 +291,7 @@ export class RunScene extends Phaser.Scene {
     this.player.play('hamster-run');
     this.detector = new BlockDetector();
     const current = this.context.source.read();
+    sound.startMusic(current.mode === 'NO DATA' ? 0 : current.rpm);
     if (current.mode !== 'NO DATA' && current.snapshot) this.onSnapshot(current.snapshot);
   }
 
@@ -334,6 +336,7 @@ export class RunScene extends Phaser.Scene {
       this.driver.pause();
       this.player.anims.pause();
       this.pauseOverlay.setVisible(true);
+      sound.stopMusic(0.15);
       sound.playUiClick();
     } else if (this.state === 'paused' && !document.hidden) {
       this.detector.rebaseNext();
@@ -341,6 +344,8 @@ export class RunScene extends Phaser.Scene {
       this.player.anims.resume();
       this.pauseOverlay.setVisible(false);
       sound.playUiClick();
+      const resumed = this.context.source.read();
+      sound.startMusic(resumed.mode === 'NO DATA' ? 0 : resumed.rpm);
     }
   }
 
@@ -461,6 +466,7 @@ export class RunScene extends Phaser.Scene {
 
   private endRun(): void {
     document.body.classList.remove('is-playing');
+    sound.stopMusic(0.6);
     this.ranked?.timeline.stop();
     if (this.driver.replay) this.context.lastReplay = this.driver.replay;
     const { api, source } = this.context;
@@ -523,6 +529,7 @@ export class RunScene extends Phaser.Scene {
       .setText(`${view.mode === 'LIVE' ? '●' : '○'}  ${view.mode}`)
       .setColor(view.mode === 'LIVE' ? '#c4ef6e' : view.mode === 'WHEEL IDLE' ? '#81cce4' : '#ec8a79');
     this.rpmText.setText(view.mode === 'NO DATA' ? '—' : view.rpm.toFixed(1));
+    if (this.state === 'playing') sound.setMusicRpm(view.mode === 'NO DATA' ? 0 : view.rpm);
 
     // Gauge bar for RPM (0 to 100 RPM)
     const rpmClamped = Math.min(100, Math.max(0, view.rpm));

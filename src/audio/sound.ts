@@ -4,6 +4,8 @@
  * Respects autoplay policies and stores mute preference in localStorage.
  */
 
+import { RunMusic } from './music';
+
 export interface StoragePort {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -25,6 +27,7 @@ export class SoundManager {
   private muted = false;
   private noiseBuffer: AudioBuffer | null = null;
   private unlocked = false;
+  private music: RunMusic | null = null;
   private readonly storageProvider: () => StoragePort | null;
 
   constructor(storageProvider: () => StoragePort | null = defaultStorage) {
@@ -82,6 +85,8 @@ export class SoundManager {
 
   /** One shared context across scenes; release it when its game is destroyed. */
   dispose(): void {
+    this.music?.stop(0.02);
+    this.music = null;
     const ctx = this.ctx;
     this.ctx = null;
     this.masterGain = null;
@@ -106,6 +111,20 @@ export class SoundManager {
     this.setMuted(!this.muted);
     return this.muted;
   }
+
+  /** Run soundtrack ("Zero Kelvin"): starts with the run, tempo follows the wheel RPM, respects M. */
+  startMusic(rpm: number): void {
+    const ctx = this.ensureContext();
+    if (!ctx || !this.masterGain) return;
+    try {
+      this.music ??= new RunMusic(ctx, this.masterGain);
+      this.music.start(rpm);
+    } catch { /* Audio is optional. */ }
+  }
+
+  stopMusic(fadeSeconds = 0.25): void { this.music?.stop(fadeSeconds); }
+
+  setMusicRpm(rpm: number): void { this.music?.setRpm(rpm); }
 
   /** Short optional haptics share the M preference; unsupported/blocked devices are harmless. */
   vibrate(milliseconds: number): void {
